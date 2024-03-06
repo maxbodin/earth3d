@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import React from "react";
-import {Providers} from "@/app/components/providers";
+import {DynamicProviders} from "@/app/components/providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,7 +19,7 @@ export default function RootLayout({
   return (
       <html lang="en">
               <body className={`overflow-hidden ${inter.className}`}>
-                <Providers>{children}</Providers>
+                <DynamicProviders>{children}</DynamicProviders>
               </body>
       </html>
   );

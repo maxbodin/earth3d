@@ -3,8 +3,6 @@ import React from 'react';
 const lookup = require('country-data').lookup;
 
 export function DetailsCard({ selectedPlaneData }: { selectedPlaneData: Record<string, any> }) {
-    console.log("Data received in the details card: ", selectedPlaneData);
-
     const callsign = selectedPlaneData?.data?.[1] || "N/A";
     const originCountry = selectedPlaneData?.data?.[2] || "N/A";
     const timePosition = selectedPlaneData?.data?.[3] || "N/A";

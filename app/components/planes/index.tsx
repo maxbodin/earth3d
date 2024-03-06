@@ -31,7 +31,6 @@ export function Planes({  data, scene, camera, onPlaneClick}:
 
     // Create group of planes.
     const addPlanes = () => {
-        console.log("addPlanes called with data: ", data, "Planet is:", planet)
         if (!planesGroup.current) return;
 
         // Clear previous planes.
@@ -52,7 +51,6 @@ export function Planes({  data, scene, camera, onPlaneClick}:
                 });
 
                 data.forEach(state => {
-                    console.log("Plane state read : ", state)
                     const lat = state[5];
                     const lon = state[6];
                     const altitude = state[7]; // Altitude represents the distance between the planet and the plane.

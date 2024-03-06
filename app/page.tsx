@@ -24,7 +24,6 @@ export default function Home() {
                 setData(jsonData.states || []); // Handle null data
                 setIsLoading(false);
 
-                console.log("Data fetched is: ", data)
             } catch (error : any) {
                 setError(error.message);
                 setIsLoading(false);
@@ -36,7 +35,8 @@ export default function Home() {
 
     const [selectedPlaneData, setSelectedPlaneData] = useState({});
 
-    const { dangerToastIsDisplayed, setDangerToastIsDisplayed, successToastIsDisplayed, setSuccessToastIsDisplayed } = useToast();
+    const { dangerToastIsDisplayed, setDangerToastIsDisplayed,
+        successToastIsDisplayed, setSuccessToastIsDisplayed } = useToast();
 
     // Callback function to handle search.
     const handleSearch = (searchTerm: string) => {
@@ -44,9 +44,6 @@ export default function Home() {
         const filtered = data.filter((state: any) => state[1].includes(searchTerm));
 
         setSelectedPlaneData(filtered.length > 0 ? filtered[0] : {});
-
-        // Call addPlanes with filtered data.
-        console.log("handleSearch called with filtered data: ", filtered);
 
         if (filtered.length > 0) {
             setSuccessToastIsDisplayed(true);
