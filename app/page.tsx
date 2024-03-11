@@ -1,74 +1,98 @@
-'use client';
-import React, {useState, useEffect} from 'react';
-import {DetailsCard} from "@/app/components/detailsCard";
-import {SearchBar} from "@/app/components/searchBar";
-import {ThreeScene} from "@/app/components/threeScene";
-import {ToastDanger} from "@/app/components/toastDanger";
-import {ToastSuccess} from "@/app/components/toastSuccess";
-import {useToast} from "@/app/context/toastsContext";
+'use client'
+import React, { useEffect, useState } from 'react'
+import { DetailsCard } from '@/app/components/organisms/detailsCard'
+import { SearchBar } from '@/app/components/organisms/searchBar'
+import { ThreeScene } from '@/app/components/templates/threeScene'
+import { ToastDanger } from '@/app/components/molecules/toastDanger'
+import { ToastSuccess } from '@/app/components/molecules/toastSuccess'
+import { useToast } from '@/app/context/toastsContext'
+import { NavigationBar } from '@/app/components/molecules/navigationBar'
+import { useData } from '@/app/context/dataContext'
+import {
+   fetchPlanesData,
+   fetchPlaneTrackData,
+} from '@/app/services/planeDataService'
+
+//import { startConnection } from '@/app/services/boatDataService'
 
 export default function Home() {
+   const [data, setData] = useState<any[]>([])
+   const [isLoading, setIsLoading] = useState(true)
+   const [error, setError] = useState(null)
 
-    const [data, setData] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+   const { setPlaneTrackData, setSelectedObjectData, selectedObjectData } =
+      useData()
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch('https://api.opensky-network.org/api/states/all');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-                const jsonData = await response.json();
-                setData(jsonData.states || []); // Handle null data
-                setIsLoading(false);
+   useEffect(() => {
+      fetchPlanesData()
+         .then((jsonData) => {
+            setData(jsonData.states || [])
+            setIsLoading(false)
+         })
+         .catch((error) => {
+            setError(error.message)
+            setIsLoading(false)
+         })
+   }, [])
 
-            } catch (error : any) {
-                setError(error.message);
-                setIsLoading(false);
-            }
-        };
+   const {
+      dangerToastIsDisplayed,
+      setDangerToastIsDisplayed,
+      successToastIsDisplayed,
+      setSuccessToastIsDisplayed,
+   } = useToast()
 
-        fetchData();
-    }, []);
+   // Callback function to handle search.
+   const handleSearch = (searchTerm: string) => {
+      // Filter data based on search term (assuming data is an array)
+      const filtered = data.filter((state: any) =>
+         state[1].includes(searchTerm)
+      )
 
-    const [selectedPlaneData, setSelectedPlaneData] = useState({});
+      setSelectedObjectData(filtered.length > 0 ? { data: filtered[0] } : {})
 
-    const { dangerToastIsDisplayed, setDangerToastIsDisplayed,
-        successToastIsDisplayed, setSuccessToastIsDisplayed } = useToast();
+      if (filtered.length > 0) {
+         setSuccessToastIsDisplayed(true)
+         setDangerToastIsDisplayed(false)
+      } else {
+         setSuccessToastIsDisplayed(false)
+         setDangerToastIsDisplayed(true)
+      }
+   }
 
-    // Callback function to handle search.
-    const handleSearch = (searchTerm: string) => {
-        // Filter data based on search term (assuming data is an array)
-        const filtered = data.filter((state: any) => state[1].includes(searchTerm));
+   const handleOpenDashboard = () => {
+      console.log('OPENING DASHBOARD')
+   }
 
-        setSelectedPlaneData(filtered.length > 0 ? filtered[0] : {});
+   const onPlaneSelected = (data: Record<string, any>): void => {
+      setSelectedObjectData(data)
 
-        if (filtered.length > 0) {
-            setSuccessToastIsDisplayed(true);
-            setDangerToastIsDisplayed(false);
-        } else {
-            setSuccessToastIsDisplayed(false);
-            setDangerToastIsDisplayed(true);
-        }
-    };
+      fetchPlaneTrackData(data.data[0])
+         .then((jsonData) => {
+            const pathData = jsonData.path
+            setPlaneTrackData(jsonData.path)
+         })
+         .catch((error) => {
+            setError(error.message)
+         })
+   }
 
-    return (
-        <main className="flex min-h-screen h-full flex-col items-center justify-between p-24">
-            <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-                <SearchBar onSearch={handleSearch}/>
-                <ThreeScene data={data} onPlaneClick={(data: Record<string, any>) => {
-                    setSelectedPlaneData(data);
-                }}/>
-                {selectedPlaneData && Object.keys(selectedPlaneData).length > 0  && (
-                    <DetailsCard selectedPlaneData={selectedPlaneData}/>
-                )}
-            </div>
-            {isLoading && <p>Loading...</p>}
-            {error && <p>Error: {error}</p>}
-            {successToastIsDisplayed && <ToastSuccess message={"Plane found."} />}
-            {dangerToastIsDisplayed && <ToastDanger message={"Plane not found."} />}
-        </main>
-    );
+   //startConnection()
+
+   return (
+      <main className="flex min-h-screen h-full flex-col items-center justify-between p-24">
+         <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
+            <SearchBar onSearch={handleSearch} />
+            <ThreeScene data={data} onPlaneClick={onPlaneSelected} />
+            <DetailsCard />
+         </div>
+         {isLoading && <p>Loading...</p>}
+         {error && <p>Error: {error}</p>}
+         {successToastIsDisplayed && <ToastSuccess message={'Plane found.'} />}
+         {dangerToastIsDisplayed && (
+            <ToastDanger message={'Plane not found.'} />
+         )}
+         <NavigationBar onClick={handleOpenDashboard} />
+      </main>
+   )
 }

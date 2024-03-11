@@ -1,26 +1,26 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import {DynamicProviders} from "@/app/components/providers";
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { DynamicProviders } from '@/app/components/templates/providers'
+import React from 'react'
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Flight Radar 3D",
-  description: "Flight Radar 3D",
-};
-
+   title: 'Flight Radar 3D',
+   description: 'Flight Radar 3D',
+}
 
 export default function RootLayout({
-  children,
+   children,
 }: Readonly<{
-  children: React.ReactNode;
+   children: React.ReactNode
 }>) {
-  return (
+   return (
       <html lang="en">
-              <body className={`overflow-hidden ${inter.className}`}>
-                <DynamicProviders>{children}</DynamicProviders>
-              </body>
+         <body className={`overflow-hidden ${inter.className}`}>
+            <DynamicProviders>{children}</DynamicProviders>
+         </body>
       </html>
-  );
+   )
 }
