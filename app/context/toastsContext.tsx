@@ -11,7 +11,7 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null)
 
 // Custom hook to access context.
-export function useToast() {
+export function useToast(): ToastContextValue {
    const context = useContext(ToastContext)
    if (!context) {
       throw new Error('useDangerToast must be used within a ToastProvider')

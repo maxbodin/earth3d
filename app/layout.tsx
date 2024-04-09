@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { DynamicProviders } from '@/app/components/templates/providers'
+import { DynamicProviders } from '@/app/components/templates/providers/dynamicProviders'
 import React from 'react'
+import { NextFont } from 'next/dist/compiled/@next/font'
+import { ErrorSecurity } from '@/app/components/atoms/ui/errorSecurity/errorSecurity'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter: NextFont = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-   title: 'Flight Radar 3D',
-   description: 'Flight Radar 3D',
+   title: 'Earth 3D',
+   description: 'Earth 3D',
 }
 
 export default function RootLayout({
@@ -19,7 +21,9 @@ export default function RootLayout({
    return (
       <html lang="en">
          <body className={`overflow-hidden ${inter.className}`}>
-            <DynamicProviders>{children}</DynamicProviders>
+            <DynamicProviders>
+               <ErrorSecurity>{children}</ErrorSecurity>
+            </DynamicProviders>
          </body>
       </html>
    )

@@ -1,11 +1,13 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react'
-import { ObjectType } from '@/app/components/atoms/objectType'
+import { ObjectType } from '@/app/components/enums/objectType'
 
 interface DataContextValue {
    planesData: any
    setPlanesData: React.Dispatch<React.SetStateAction<any>>
    planeTrackData: any
    setPlaneTrackData: React.Dispatch<React.SetStateAction<any>>
+   vesselsData: any
+   setVesselsData: React.Dispatch<React.SetStateAction<any>>
    selectedObjectData: any
    setSelectedObjectData: React.Dispatch<React.SetStateAction<any>>
    selectedObjectType: ObjectType
@@ -16,7 +18,7 @@ interface DataContextValue {
 const DataContext = createContext<DataContextValue | null>(null)
 
 // Custom hook to access context.
-export function useData() {
+export function useData(): DataContextValue {
    const context = useContext(DataContext)
    if (!context) {
       throw new Error('useData must be used within a DataProvider')
@@ -26,9 +28,10 @@ export function useData() {
 
 // Provider component.
 export function DataProvider({ children }: { children: ReactNode }) {
-   const [planesData, setPlanesData] = useState<any>(null)
-   const [planeTrackData, setPlaneTrackData] = useState<any>(null)
-   const [selectedObjectData, setSelectedObjectData] = useState({})
+   const [planesData, setPlanesData] = useState<any>([])
+   const [planeTrackData, setPlaneTrackData] = useState<any>([])
+   const [vesselsData, setVesselsData] = useState<any>([])
+   const [selectedObjectData, setSelectedObjectData] = useState([])
    const [selectedObjectType, setSelectedObjectType] = useState(ObjectType.NULL)
 
    const value: DataContextValue = {
@@ -36,6 +39,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setPlanesData,
       planeTrackData,
       setPlaneTrackData,
+      vesselsData,
+      setVesselsData,
       selectedObjectData,
       setSelectedObjectData,
       selectedObjectType,

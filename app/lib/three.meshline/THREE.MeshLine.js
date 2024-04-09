@@ -173,7 +173,7 @@
 
             if (distSq > precisionSq) continue
 
-            interRay.applyMatrix4(this.matrixWorld) //Move back to world space for distance calculation
+            interRay.applyMatrix4(this.matrixWorld) //Move back to world outerSpace for distance calculation
 
             var distance = raycaster.ray.origin.distanceTo(interRay)
 

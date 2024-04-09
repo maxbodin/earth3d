@@ -1,0 +1,16 @@
+export const GLOBE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1.1
+export const PLANE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1e5
+export const GLOBE_SCENE_VESSEL_SCALE: number = 5e2
+export const PLANE_SCENE_VESSEL_SCALE: number = 10
+export const MAX_DISPLAYED_VESSELS: number = 10000
+export const MIN_WINDOW_WIDTH: number = 830
+export const EARTH_RADIUS: number = 6371008
+export const OUTER_SPACE_RADIUS: number = EARTH_RADIUS * 1e18
+export const EARTH_ANGLE: number = -60
+export const SPHERE_WIDTH_SEGMENTS: number = 90
+export const SPHERE_HEIGHT_SEGMENTS: number = 45
+export const PLANET_RESOLUTION_FACTOR: number = 10
+export const PLANET_DISPLACEMENT_SCALE: number = 0.03
+export const ZOOM_THRESHOLD: number = EARTH_RADIUS * 1.3
+export const AIRPORT_SCALE: number = 0.003
+export const PLANE_SCALE: number = 0.001

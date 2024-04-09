@@ -9,7 +9,7 @@ interface PlanetContextValue {
 const PlanetContext = createContext<PlanetContextValue | null>(null)
 
 // Custom hook to access context.
-export function usePlanet() {
+export function usePlanet(): PlanetContextValue {
    const context = useContext(PlanetContext)
    if (!context) {
       throw new Error('usePlanet must be used within a PlanetProvider')

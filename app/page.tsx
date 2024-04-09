@@ -1,40 +1,20 @@
 'use client'
-import React, { useEffect, useState } from 'react'
-import { DetailsCard } from '@/app/components/organisms/detailsCard'
-import { SearchBar } from '@/app/components/organisms/searchBar'
-import { ThreeScene } from '@/app/components/templates/threeScene'
-import { ToastDanger } from '@/app/components/molecules/toastDanger'
-import { ToastSuccess } from '@/app/components/molecules/toastSuccess'
+import React from 'react'
+import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
+import { SearchBar } from '@/app/components/organisms/searchBar/searchBar'
+import { ThreeScene } from '@/app/components/templates/threeScene/threeScene'
+import { ToastDanger } from '@/app/components/molecules/toasts/toastDanger/toastDanger'
+import { ToastSuccess } from '@/app/components/molecules/toasts/toastSuccess/toastSuccess'
 import { useToast } from '@/app/context/toastsContext'
-import { NavigationBar } from '@/app/components/molecules/navigationBar'
+import { NavigationBar } from '@/app/components/molecules/navigationBar/navigationBar'
 import { useData } from '@/app/context/dataContext'
-import {
-   fetchPlanesData,
-   fetchPlaneTrackData,
-} from '@/app/services/planeDataService'
-
-//import { startConnection } from '@/app/services/boatDataService'
+import { DashboardView } from '@/app/components/organisms/dashboard/view'
+import { ScenesProvider } from '@/app/context/scenesContext'
+import { VesselDataFetch } from '@/app/components/atoms/dataFetch/vesselDataFetch/vesselDataFetch'
+import { MapProvider } from '@/app/context/mapContext'
+import { CreditView } from '@/app/components/organisms/credit/view'
 
 export default function Home() {
-   const [data, setData] = useState<any[]>([])
-   const [isLoading, setIsLoading] = useState(true)
-   const [error, setError] = useState(null)
-
-   const { setPlaneTrackData, setSelectedObjectData, selectedObjectData } =
-      useData()
-
-   useEffect(() => {
-      fetchPlanesData()
-         .then((jsonData) => {
-            setData(jsonData.states || [])
-            setIsLoading(false)
-         })
-         .catch((error) => {
-            setError(error.message)
-            setIsLoading(false)
-         })
-   }, [])
-
    const {
       dangerToastIsDisplayed,
       setDangerToastIsDisplayed,
@@ -42,10 +22,17 @@ export default function Home() {
       setSuccessToastIsDisplayed,
    } = useToast()
 
-   // Callback function to handle search.
-   const handleSearch = (searchTerm: string) => {
+   const { setSelectedObjectData } = useData()
+
+   const dataToFilter: any = null
+
+   /**
+    * Callback function to handle search.
+    * @param searchTerm
+    */
+   const handleSearch = (searchTerm: string): void => {
       // Filter data based on search term (assuming data is an array)
-      const filtered = data.filter((state: any) =>
+      const filtered = dataToFilter.filter((state: any) =>
          state[1].includes(searchTerm)
       )
 
@@ -60,39 +47,30 @@ export default function Home() {
       }
    }
 
-   const handleOpenDashboard = () => {
-      console.log('OPENING DASHBOARD')
-   }
-
-   const onPlaneSelected = (data: Record<string, any>): void => {
-      setSelectedObjectData(data)
-
-      fetchPlaneTrackData(data.data[0])
-         .then((jsonData) => {
-            const pathData = jsonData.path
-            setPlaneTrackData(jsonData.path)
-         })
-         .catch((error) => {
-            setError(error.message)
-         })
-   }
-
-   //startConnection()
-
    return (
-      <main className="flex min-h-screen h-full flex-col items-center justify-between p-24">
-         <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-            <SearchBar onSearch={handleSearch} />
-            <ThreeScene data={data} onPlaneClick={onPlaneSelected} />
-            <DetailsCard />
-         </div>
-         {isLoading && <p>Loading...</p>}
-         {error && <p>Error: {error}</p>}
+      <>
+         <MapProvider>
+            <DashboardView />
+            <CreditView />
+
+            <div className="w-full items-center justify-between font-mono text-sm lg:flex">
+               <SearchBar onSearch={handleSearch} />
+               <DetailsCard />
+               <NavigationBar />
+            </div>
+
+            <ScenesProvider>
+               <ThreeScene />
+            </ScenesProvider>
+         </MapProvider>
+
+         {/*         <PlaneDataFetch />
+          */}
+         <VesselDataFetch />
          {successToastIsDisplayed && <ToastSuccess message={'Plane found.'} />}
          {dangerToastIsDisplayed && (
             <ToastDanger message={'Plane not found.'} />
          )}
-         <NavigationBar onClick={handleOpenDashboard} />
-      </main>
+      </>
    )
 }
