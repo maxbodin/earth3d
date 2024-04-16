@@ -17,9 +17,9 @@ import {
    PLANE_SCENE_NAME,
    RESIZE_LISTENER_STRING,
 } from '@/app/constants/strings'
-import { VisibleZoneProvider } from '@/app/components/atoms/three/visibleZone/model'
 import { Vessels } from '@/app/components/atoms/three/vessels/vessels'
-import { VisibleZone } from '@/app/components/atoms/three/visibleZone/controller'
+import { CountriesProvider } from '@/app/components/atoms/three/countries/countries.model'
+import { CountriesController } from '@/app/components/atoms/three/countries/countries.controller'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -46,6 +46,8 @@ export function ThreeScene() {
          logarithmicDepthBuffer: true,
          depth: true,
          premultipliedAlpha: true,
+         precision: 'mediump', //highp", "mediump" or "lowp"
+         powerPreference: 'default', //"high-performance", "low-power" or "default"
       })
       renderer.current.setSize(window.innerWidth, window.innerHeight)
       renderer.current.setPixelRatio(window.devicePixelRatio)
@@ -298,7 +300,9 @@ export function ThreeScene() {
       if (currentScene == null) return
       setDisplayedSceneData(currentScene)
       currentScene.controls.update()
-      renderer.current?.render(currentScene.scene!, currentScene.camera!)
+
+      renderer.current.clear()
+      renderer.current.render(currentScene.scene!, currentScene.camera!)
 
       handleLOD(currentScene)
    }
@@ -340,6 +344,7 @@ export function ThreeScene() {
       // Set up renderer, scene, and camera.
       setupRenderer()
       if (!mountRef.current) return
+
       animate()
 
       return cleanup
@@ -362,14 +367,15 @@ export function ThreeScene() {
                <PlanetProvider>
                   <Planet />
 
-                  <VisibleZoneProvider>
-                     <VisibleZone />
-                     <Vessels />
-                  </VisibleZoneProvider>
+                  <Vessels />
                </PlanetProvider>
 
                <OuterSpace />
                <Atmosphere />
+
+               <CountriesProvider>
+                  <CountriesController />
+               </CountriesProvider>
 
                {/*
                      <Airports /> // TODO AIRPORT ONLY POUR LA PLANE SCENE ET UTILISER LA VISIBLE ZONE DE LA PLANE SCENE

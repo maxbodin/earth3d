@@ -6,8 +6,8 @@ import dynamic from 'next/dynamic'
 import { DataProvider } from '@/app/context/dataContext'
 import { UiProvider } from '@/app/context/UIContext'
 import { DashboardTabsProviders } from '@/app/components/templates/providers/dashboardTabsProviders'
-import { DashboardProvider } from '@/app/components/organisms/dashboard/model'
-import { CreditProvider } from '@/app/components/organisms/credit/model'
+import { DashboardProvider } from '@/app/components/organisms/dashboard/dashboard.model'
+import { CreditProvider } from '@/app/components/organisms/credit/credit.model'
 
 /**
  * Hell.

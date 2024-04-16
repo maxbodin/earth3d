@@ -17,10 +17,11 @@ export const CONSTELLATION_FIGURES_NAME: string = 'Constellation Figures'
 export const RESIZE_LISTENER_STRING: string = 'resize'
 export const TAB_TITLES: string[] = [
    'Planes',
-   'Airport',
+   'Airports',
    'Vessels',
    'Map',
    'Outer Space',
+   'Countries',
 ]
 
 /**
@@ -39,4 +40,4 @@ export const NO_ERROR_MESSAGE: string = ''
  */
 export const N_A_VALUE: string = 'N/A'
 
-// export const CYCLOSM_MAP_LINK: string = `https://{s}.tile-cyclosm.openstreetmap.fr/[cyclosm|cyclosm-lite]/{z}/{x}/{y}.png`
+// TODO export const CYCLOSM_MAP_LINK: string = `https://{s}.tile-cyclosm.openstreetmap.fr/[cyclosm|cyclosm-lite]/{z}/{x}/{y}.png`

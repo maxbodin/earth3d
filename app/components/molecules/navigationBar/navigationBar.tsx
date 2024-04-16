@@ -7,8 +7,8 @@ import { CreditIcon } from '@/public/svgs/creditIcon'
 import { DataIcon } from '@/public/svgs/dataIcon'
 import './styles.css'
 import { PanelType } from '@/app/components/enums/panelType'
-import { useDashboard } from '@/app/components/organisms/dashboard/model'
-import { useCredit } from '@/app/components/organisms/credit/model'
+import { useDashboard } from '@/app/components/organisms/dashboard/dashboard.model'
+import { useCredit } from '@/app/components/organisms/credit/credit.model'
 
 export function NavigationBar() {
    const {

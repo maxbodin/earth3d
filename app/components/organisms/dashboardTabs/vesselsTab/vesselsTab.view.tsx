@@ -1,6 +1,6 @@
 import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
-import { useVesselsTab } from '@/app/components/organisms/dashboardTabs/vesselsTab/model'
-import { VesselsTabController } from '@/app/components/organisms/dashboardTabs/vesselsTab/controller'
+import { useVesselsTab } from '@/app/components/organisms/dashboardTabs/vesselsTab/vesselsTab.model'
+import { VesselsTabController } from '@/app/components/organisms/dashboardTabs/vesselsTab/vesselsTab.controller'
 
 export function VesselsTabView() {
    const { activateVessels, deactivateVessels } = VesselsTabController()

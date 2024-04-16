@@ -1,9 +1,6 @@
 import { useEffect } from 'react'
 import { useData } from '@/app/context/dataContext'
-import {
-   processAndSaveMessages,
-   startConnection,
-} from '@/app/server/services/vesselDataService'
+import { processAndSaveMessages } from '@/app/server/services/vesselDataService'
 
 export function VesselDataFetch(): null {
    const { setVesselsData, vesselsData } = useData()
@@ -23,9 +20,6 @@ export function VesselDataFetch(): null {
          clearInterval(intervalId) // Clear interval on component unmount.
       }
    }, [setVesselsData])
-
-   // TODO ACTIVATE USING BUTTON ON DASHBOARD
-   startConnection()
 
    return null
 }

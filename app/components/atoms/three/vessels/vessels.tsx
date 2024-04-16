@@ -9,32 +9,36 @@ import { SceneType } from '@/app/components/enums/sceneType'
 // @ts-ignore
 import { UnitsUtils } from 'geo-three'
 import {
-   GLOBE_SCENE_VESSEL_SCALE,
-   MAX_DISPLAYED_VESSELS,
-   PLANE_SCENE_VESSEL_SCALE,
+   GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA,
+   GLOBE_SCENE_VESSEL_MAX_SCALE,
+   GLOBE_SCENE_VESSEL_MIN_SCALE,
+   PLANE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA,
+   PLANE_SCENE_VESSEL_MAX_SCALE,
+   PLANE_SCENE_VESSEL_MIN_SCALE,
 } from '@/app/constants/numbers'
 import { VESSEL_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { VESSEL_GLB_MODEL } from '@/app/constants/paths'
 import { clamp } from '@/app/helpers/numberHelper'
-import { useVisibleZone } from '@/app/components/atoms/three/visibleZone/model'
 import { ObjectType } from '@/app/components/enums/objectType'
 import { VESSEL_MATERIAL } from '@/app/constants/materials'
 
 export function Vessels(): null {
    const { vesselsData } = useData()
    const { displayedSceneData } = useScenes()
-   const { sphereVisibleZone } = useVisibleZone()
    const { setSelectedObjectType, setSelectedObjectData } = useData()
 
    const displayedVesselsGroup = useRef<THREE.Group>(new THREE.Group())
-   const vesselModel = useRef<any | null>(null)
+   const vesselModel = useRef<THREE.Group<THREE.Object3DEventMap> | null>(null)
    const selectedVessel = useRef<THREE.Object3D<THREE.Object3DEventMap> | null>(
       null
    )
    const loader: GLTFLoader = new GLTFLoader()
 
-   // Keep track of previously added vessels and their coordinates.
-   const previousVesselCoordinates: { [key: string]: [number, number] } = {}
+   const vesselsCommunicationsFrequencies: Map<string, any> = new Map()
+   const totalVesselsData = useRef<Map<string, any>>(new Map())
+   const vesselsModels = useRef<
+      Map<string, THREE.Group<THREE.Object3DEventMap>>
+   >(new Map())
 
    /**
     * Load vessel model to load it only once.
@@ -65,30 +69,32 @@ export function Vessels(): null {
       )
    }
 
+   function interpolateColor(value: number): string {
+      const hue: number = (1 - value) * 250
+      const saturation: number = 50
+      const lightness: number = 50
+      // Convert HSL values to a CSS color string
+      return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+   }
+
    /**
-    * Remove updated vessel.
+    * Update vessel communication frequency ratio.
+    * The vessel communication frequency ratio is used for vessel's material color.
     * @param mmsi
-    * @param lat
-    * @param lon
     */
-   const removeUpdatedVessel = (
-      mmsi: string,
-      lat: number,
-      lon: number
-   ): void => {
+   function updateVesselCommunicationFrequency(mmsi: string): void {
+      const vesselCommunicationFrequency =
+         vesselsCommunicationsFrequencies.get(mmsi)
       if (
-         previousVesselCoordinates[mmsi] &&
-         (previousVesselCoordinates[mmsi][0] !== lat ||
-            previousVesselCoordinates[mmsi][1] !== lon)
+         vesselCommunicationFrequency !== undefined &&
+         vesselCommunicationFrequency <= 0.8
       ) {
-         // Remove the vessel from the scene.
-         const previousVessel = displayedVesselsGroup.current.getObjectByName(
-            `Vessel: ${mmsi}`
+         vesselsCommunicationsFrequencies.set(
+            mmsi,
+            vesselCommunicationFrequency + 0.05
          )
-         if (previousVessel) {
-            displayedVesselsGroup.current.remove(previousVessel)
-            //console.log(`Previously added vessel ${mmsi} is removed!`)
-         }
+      } else {
+         vesselsCommunicationsFrequencies.set(mmsi, 0)
       }
    }
 
@@ -97,56 +103,53 @@ export function Vessels(): null {
       displayedVesselsGroup.current.clear()
 
       vessels.forEach((vesselData: any): void => {
+         if (vesselModel.current == null) return
+         const vessel: THREE.Group<THREE.Object3DEventMap> =
+            vesselModel.current.clone()
+
          const mmsi = vesselData.message.mmsi
-         const coordinates = vesselData.message.location.coordinates
-         const lat = coordinates[0]
-         const lon = coordinates[1]
-
-         removeUpdatedVessel(mmsi, lat, lon)
-
-         const vessel = vesselModel.current.clone()
-
          vessel.name = `Vessel: ${mmsi}`
 
-         if (displayedSceneData.type == SceneType.SPHERICAL) {
-            const worldPos: THREE.Vector3 = latLongToVector3(
-               lon as number,
-               lat as number
-            )
-            const normal: THREE.Vector3 = worldPos.clone().normalize()
-            const adjustedPosition: THREE.Vector3 = worldPos.add(normal)
+         // Save vessel model in map to allow lerping model position in animation.
+         vesselsModels.current.set(mmsi, vessel)
 
-            vessel.position.copy(adjustedPosition)
+         updateVesselCommunicationFrequency(mmsi)
+
+         // Apply material to all meshes in the vessel model.
+         vessel.traverse((child: any): void => {
+            if (child instanceof THREE.Mesh) {
+               child.material = new THREE.MeshBasicMaterial({
+                  color: interpolateColor(
+                     vesselsCommunicationsFrequencies.get(mmsi) ?? 0
+                  ),
+               })
+            }
+         })
+
+         if (displayedSceneData.type == SceneType.SPHERICAL) {
+            vessel.position.copy(vesselData.globePosition)
             vessel.scale.set(
-               GLOBE_SCENE_VESSEL_SCALE,
-               GLOBE_SCENE_VESSEL_SCALE,
-               GLOBE_SCENE_VESSEL_SCALE
+               globeAdjustedScale.current,
+               globeAdjustedScale.current,
+               globeAdjustedScale.current
             )
          } else if (displayedSceneData.type == SceneType.PLANE) {
-            const worldPos: THREE.Vector3 = UnitsUtils.datumsToSpherical(
-               lon as number,
-               lat as number
-            )
-            vessel.position.set(worldPos.x, 0, -worldPos.y)
-
             const hdg = vesselData.message.hdg
             if (hdg !== null) {
                vessel.rotateY(hdg)
             }
-
+            vessel.position.copy(vesselData.planePosition)
             vessel.scale.set(
-               PLANE_SCENE_VESSEL_SCALE,
-               PLANE_SCENE_VESSEL_SCALE,
-               PLANE_SCENE_VESSEL_SCALE
+               planeAdjustedScale.current,
+               planeAdjustedScale.current,
+               planeAdjustedScale.current
             )
          }
 
          vessel.renderOrder = VESSEL_RENDER_ORDER
          vessel.userData = { data: vesselData }
-         displayedVesselsGroup.current.add(vessel)
 
-         // Update previous coordinates for this vessel.
-         previousVesselCoordinates[mmsi] = [lat, lon]
+         displayedVesselsGroup.current.add(vessel)
       })
 
       if (displayedVesselsGroup.current && displayedSceneData.scene) {
@@ -154,71 +157,134 @@ export function Vessels(): null {
       }
    }
 
-   const totalVesselsData = useRef<any[]>([])
+   function updateVesselCoordinates(vesselData: any): void {
+      const vesselDataMessage = vesselData.message
+      if (vesselDataMessage == undefined) return
+      const mmsi = vesselDataMessage.mmsi
+      if (mmsi == undefined) return
+
+      // Check if the vessel exists in the map.
+      if (totalVesselsData.current.has(mmsi)) {
+         const previousData = totalVesselsData.current.get(mmsi)
+         const newCoordinates = vesselDataMessage.location.coordinates
+         delete vesselDataMessage.location.coordinates
+
+         // Update the coordinates and save the previous coordinates as oldCoordinates.
+         previousData.message.location.oldCoordinates =
+            previousData.message.location.newCoordinates
+
+         if (displayedSceneData.type == SceneType.PLANE) {
+            const test = new THREE.Mesh(
+               new THREE.SphereGeometry(1e4, 16, 16),
+               new THREE.MeshBasicMaterial({ color: '#ff0000' })
+            )
+
+            const worldPos: THREE.Vector3 = UnitsUtils.datumsToSpherical(
+               previousData.message.location.newCoordinates[0] as number,
+               previousData.message.location.newCoordinates[1] as number
+            )
+            test.position.set(worldPos.x, 0, -worldPos.y)
+            displayedSceneData.scene?.add(test)
+         }
+
+         previousData.message.location.newCoordinates = newCoordinates
+      } else {
+         // If the vessel doesn't exist in the map, add it.
+         vesselDataMessage.location.newCoordinates =
+            vesselDataMessage.location.coordinates
+         delete vesselDataMessage.location.coordinates
+         totalVesselsData.current.set(mmsi, vesselData)
+      }
+   }
+
+   const visibleVessels = useRef<any[]>([])
 
    /**
     * Process vessels data to display on the current scene.
     */
    const processVessels = (): void => {
-      if (
-         vesselModel.current == null ||
-         Math.random() < 0.5 ||
-         displayedSceneData == null ||
-         !vesselsData
-      ) {
+      if (!vesselsData) {
+         // Clear previous vessels.
+         displayedVesselsGroup.current.clear()
+         return
+      }
+
+      if (vesselModel.current == null || displayedSceneData == null) {
          return
       }
 
       // Clear first half of vessels if more than threshold children.
-      if (totalVesselsData.current.length > MAX_DISPLAYED_VESSELS) {
+      /*TODO if (totalVesselsData.current.length > MAX_DISPLAYED_VESSELS) {
          const halfLength: number = Math.ceil(
             totalVesselsData.current.length / 2
          )
          totalVesselsData.current.splice(0, halfLength)
-      }
+      }*/
 
-      totalVesselsData.current.push(...vesselsData)
+      vesselsData.forEach((vesselData: any): void => {
+         updateVesselCoordinates(vesselData)
+      })
 
       // Remove vessels that are out of visible zone.
-      const filteredVessels: any[] = totalVesselsData.current.filter(
-         (vesselData: any): boolean => {
-            const coordinates = vesselData.message.location.coordinates
-            const lon = coordinates[0]
-            const lat = coordinates[1]
+      visibleVessels.current = Array.from(
+         totalVesselsData.current.values()
+      ).filter((vesselData: any): boolean => {
+         let coordinates = vesselData.message.location.newCoordinates
 
-            if (lat == null || lon == null) {
-               return false
-            }
+         // Set coordinates as old to allow lerping from old to new in animate.
+         const oldCoordinates = vesselData.message.location.oldCoordinates
+         // TODO if (oldCoordinates != undefined) coordinates = oldCoordinates
 
-            if (displayedSceneData.type === SceneType.SPHERICAL) {
-               return true /* TODO: Sphere visible zone is degrading performance too much.
+         const lat = coordinates[0]
+         const lon = coordinates[1]
 
-               (
-                  lat <= sphereVisibleZone.topLatLon.lat &&
-                  lat >= sphereVisibleZone.bottomLatLon.lat &&
-                  lon <= sphereVisibleZone.rightLatLon.lon &&
-                  lon >= sphereVisibleZone.leftLatLon.lon
-               )*/
-            } else if (displayedSceneData.type === SceneType.PLANE) {
-               /* TODO: Frustrum limitation is not working on plane.
-
-             const frustum: THREE.Frustum = new THREE.Frustum()
-
-             frustum.setFromProjectionMatrix(
-             new THREE.Matrix4().multiplyMatrices(
-             displayedSceneData.camera.projectionMatrix,
-             displayedSceneData.camera.matrixWorldInverse
-             )
-             )
-*/
-               return true // frustum.containsPoint(latLongToVector3(lon, lat))
-            } else {
-               return false
-            }
+         if (lat == null || lon == null) {
+            return false
          }
-      )
 
-      displayVessels(filteredVessels)
+         if (displayedSceneData.type == SceneType.SPHERICAL) {
+            const worldPos: THREE.Vector3 = latLongToVector3(
+               lon as number,
+               lat as number
+            )
+
+            // TODO FIX ROTATION AND AXIS
+            const normal: THREE.Vector3 = worldPos.clone().normalize()
+            vesselData.globePosition = worldPos.add(normal)
+
+            const distanceToCamera: number =
+               displayedSceneData.camera.position.distanceTo(
+                  vesselData.globePosition
+               )
+
+            return (
+               distanceToCamera <= GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA
+            )
+         } else if (displayedSceneData.type == SceneType.PLANE) {
+            const worldPos: THREE.Vector3 = UnitsUtils.datumsToSpherical(
+               lon as number,
+               lat as number
+            )
+            vesselData.planePosition = new THREE.Vector3(
+               worldPos.x,
+               0,
+               -worldPos.y
+            )
+
+            const distanceToCamera: number =
+               displayedSceneData.camera.position.distanceTo(
+                  vesselData.planePosition
+               )
+
+            return (
+               distanceToCamera <= PLANE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA
+            )
+         } else {
+            return false
+         }
+      })
+
+      displayVessels(visibleVessels.current)
    }
 
    /**
@@ -257,34 +323,117 @@ export function Vessels(): null {
       )
 
       if (intersects.length > 0) {
-         selectedVessel.current = intersects[0].object.parent!
+         const selectedVesselObject: any = intersects[0].object.parent
+         const selectedVesselData: any = selectedVesselObject.userData.data
+         selectedVessel.current = selectedVesselObject
+
+         if (selectedVesselData === null || selectedVesselData === undefined)
+            return
+
          setSelectedObjectType(ObjectType.VESSEL)
-         setSelectedObjectData(intersects[0].object.parent!.userData.data)
-         // TODO console.log(intersects[0].object.parent!.userData.data)
+         setSelectedObjectData(selectedVesselData)
       }
    }
 
+   const cameraDistanceToPlanetCenter = useRef<number>(0)
+   const planeAdjustedScale = useRef<number>(PLANE_SCENE_VESSEL_MAX_SCALE)
+   const globeAdjustedScale = useRef<number>(GLOBE_SCENE_VESSEL_MAX_SCALE)
+
+   /**
+    * Called each times controls change (Zoom, camera move, ...)
+    */
    const onControlsChange = (): void => {
-      if (
-         displayedVesselsGroup.current == null ||
-         displayedSceneData == null ||
-         displayedSceneData.type == SceneType.SPHERICAL
-      ) {
+      if (displayedVesselsGroup.current == null || displayedSceneData == null) {
          return
       }
 
-      const adjustedScale: number = clamp(
-         displayedSceneData.controls.getDistance() / 1e3,
-         8,
-         400
+      cameraDistanceToPlanetCenter.current =
+         displayedSceneData.controls.getDistance()
+
+      planeAdjustedScale.current = clamp(
+         cameraDistanceToPlanetCenter.current / 1e3,
+         PLANE_SCENE_VESSEL_MIN_SCALE,
+         PLANE_SCENE_VESSEL_MAX_SCALE
+      )
+
+      globeAdjustedScale.current = clamp(
+         cameraDistanceToPlanetCenter.current / 1e4,
+         GLOBE_SCENE_VESSEL_MIN_SCALE,
+         GLOBE_SCENE_VESSEL_MAX_SCALE
       )
 
       displayedVesselsGroup.current.children.forEach((vessel): void => {
-         vessel.scale.set(adjustedScale, adjustedScale, adjustedScale)
+         if (displayedSceneData.type == SceneType.SPHERICAL) {
+            vessel.scale.set(
+               globeAdjustedScale.current,
+               globeAdjustedScale.current,
+               globeAdjustedScale.current
+            )
+         } else if (displayedSceneData.type == SceneType.PLANE) {
+            vessel.scale.set(
+               planeAdjustedScale.current,
+               planeAdjustedScale.current,
+               planeAdjustedScale.current
+            )
+         }
+      })
+   }
+
+   const lerpAlpha = useRef<number>(0.0002)
+
+   const animate: () => void = (): void => {
+      requestAnimationFrame(animate)
+
+      visibleVessels.current.forEach((visibleVesselData: any): void => {
+         const mmsi: string = visibleVesselData.message.mmsi
+         if (
+            visibleVesselData.message.location.oldCoordinates &&
+            visibleVesselData.message.location.newCoordinates &&
+            vesselsModels.current.has(mmsi)
+         ) {
+            const vesselModel = vesselsModels.current.get(mmsi)
+
+            const newCoordinates =
+               visibleVesselData.message.location.newCoordinates
+            const lat = newCoordinates[0]
+            const lon = newCoordinates[1]
+
+            if (lat == null || lon == null) {
+               return
+            }
+
+            if (displayedSceneData.type == SceneType.SPHERICAL) {
+               const worldPos: THREE.Vector3 = latLongToVector3(
+                  lon as number,
+                  lat as number
+               )
+
+               // TODO FIX ROTATION AND AXIS
+               const normal: THREE.Vector3 = worldPos.clone().normalize()
+               vesselModel?.position.lerp(worldPos.add(normal), 0.0001)
+            } else if (displayedSceneData.type == SceneType.PLANE) {
+               const worldPos: THREE.Vector3 = UnitsUtils.datumsToSpherical(
+                  lon as number,
+                  lat as number
+               )
+
+               vesselModel?.position.setY(0)
+               vesselModel?.position.lerp(
+                  new THREE.Vector3(
+                     worldPos.x,
+                     vesselModel?.position.y,
+                     -worldPos.y
+                  ),
+                  lerpAlpha.current
+               )
+            }
+         }
       })
    }
 
    useEffect(() => {
+      if (displayedSceneData?.camera == null) return
+
       if (vesselModel.current == null) {
          loadVesselModel()
       }
@@ -296,8 +445,10 @@ export function Vessels(): null {
 
       processVessels()
 
+      // TODO LERP ANIMATION NOT WORKING CURRENTLY animate()
+
       return cleanup
-   }, [vesselsData, sphereVisibleZone])
+   }, [vesselsData])
 
    return null
 }

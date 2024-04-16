@@ -15,22 +15,24 @@ export function VesselDataDisplay(): React.JSX.Element {
       )
    }
 
-   const mmsi: string = message.mmsi || N_A_VALUE
-   const name: string = message.name || N_A_VALUE
+   const mmsi: string = message.mmsi?.toString() || N_A_VALUE
+   const name: string = message.name?.toString() || N_A_VALUE
    const time_utc: string = message.time_utc?.toString() || N_A_VALUE
-   const callsign: string = message.callsign || N_A_VALUE
-   const destination: string = message.destination || N_A_VALUE
-   const dimension: string = message.dimension?.toString() || N_A_VALUE
-   const eta: string = message.eta || N_A_VALUE
-   const imo: string = message.imo || N_A_VALUE
-   const cargo_type_code: string = message.imo || N_A_VALUE
-   const cog: string = message.cog || N_A_VALUE
-   const sog: string = message.sog || N_A_VALUE
-   const hdg: string = message.hdg || N_A_VALUE
+   const callsign: string = message.callsign?.toString() || N_A_VALUE
+   const destination: string = message.destination?.toString() || N_A_VALUE
+   const dimension: string =
+      JSON.stringify(message.dimension)?.toString() || N_A_VALUE
+   const eta: string = message.eta?.toString() || N_A_VALUE
+   const imo: string = message.imo?.toString() || N_A_VALUE
+   const cargo_type_code: string = message.imo?.toString() || N_A_VALUE
+   const cog: string = message.cog?.toString() || N_A_VALUE
+   const sog: string = message.sog?.toString() || N_A_VALUE
+   const hdg: string = message.hdg?.toString() || N_A_VALUE
+   const newCoordinates: any = message.location?.newCoordinates
    const latitude: string =
-      message.location.coordinates[0]?.toFixed(3) || N_A_VALUE
+      newCoordinates[0]?.toFixed(3)?.toString() || N_A_VALUE
    const longitude: string =
-      message.location.coordinates[1]?.toFixed(3) || N_A_VALUE
+      newCoordinates[1]?.toFixed(3)?.toString() || N_A_VALUE
 
    return (
       <div>

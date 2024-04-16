@@ -46,7 +46,6 @@ function handlePositionReportMessage(aisMessage: any) {
       sog: aisMessage.Message.PositionReport.Sog, // Speed Over Ground
       hdg: aisMessage.Message.PositionReport.TrueHeading,
       location: {
-         type: 'Point',
          coordinates: [
             aisMessage.MetaData.longitude,
             aisMessage.MetaData.latitude,
@@ -88,7 +87,6 @@ function handleShipStaticDataMessage(aisMessage: any) {
       imo: aisMessage.Message.ShipStaticData.ImoNumber,
       cargo_type_code: aisMessage.Message.ShipStaticData.Type,
       location: {
-         type: 'Point',
          coordinates: [
             aisMessage.MetaData.longitude,
             aisMessage.MetaData.latitude,
@@ -108,7 +106,6 @@ function handleOtherMessages(aisMessage: any) {
       name: aisMessage.MetaData.ShipName,
       time_utc: new Date(aisMessage.MetaData.time_utc),
       location: {
-         type: 'Point',
          coordinates: [
             aisMessage.MetaData.longitude,
             aisMessage.MetaData.latitude,
@@ -117,15 +114,28 @@ function handleOtherMessages(aisMessage: any) {
    }
 }
 
-const socket: WebSocket = new WebSocket('wss://stream.aisstream.io/v0/stream')
+let socket: WebSocket | null = null
 const POSITION_REPORT_STRING: string = 'PositionReport'
 const SHIP_STATIC_DATA_STRING: string = 'ShipStaticData'
 const messagesMap: Map<any, any> = new Map()
 const messageBuffer: any[] = []
 
+export const stopConnection = (): void => {
+   socket?.close()
+   socket = null
+}
+
 export const startConnection = (): void => {
+   socket = new WebSocket('wss://stream.aisstream.io/v0/stream')
+
+   setSocketListeners()
+}
+
+export const setSocketListeners = (): void => {
+   if (!socket) return
+
    // WebSocket event handlers.
-   socket.onopen = function (_): void {
+   socket.onopen = function (_: Event): void {
       logInfo('WebSocket aisstream Connected!')
       let subscriptionMessage = {
          Apikey: process.env.AISSTREAM_TOKEN,
@@ -136,7 +146,7 @@ export const startConnection = (): void => {
             ],
          ],
       }
-      socket.send(JSON.stringify(subscriptionMessage))
+      socket?.send(JSON.stringify(subscriptionMessage))
    }
 
    socket.onmessage = async (event): Promise<void> => {
@@ -156,18 +166,21 @@ export const startConnection = (): void => {
             message = handleOtherMessages(aisMessage)
          }
 
-         if (mmsi && message) {
-            message = {
-               ...message,
-               ...Object.fromEntries(
-                  Object.entries(mmsi).filter(
-                     ([key, value]) => !message[key] || message[key] === null
-                  )
-               ),
-            }
-         }
+         const existingMessage = messagesMap.get(mmsi)
 
-         messagesMap.set(mmsi, message)
+         if (existingMessage) {
+            for (let field in message) {
+               if (
+                  message.hasOwnProperty(field) &&
+                  existingMessage[field] != message[field]
+               ) {
+                  existingMessage[field] = message[field]
+               }
+            }
+            messagesMap.set(mmsi, existingMessage)
+         } else {
+            messagesMap.set(mmsi, message)
+         }
 
          if (!messageBuffer.includes(mmsi)) {
             messageBuffer.push(mmsi)
@@ -192,8 +205,6 @@ export async function processAndSaveMessages() {
          const mmsi = messageBuffer[i]
          const message = messagesMap.get(mmsi)
 
-         delete message._id
-
          bulkOperations.push({
             message: message,
          })
@@ -205,6 +216,6 @@ export async function processAndSaveMessages() {
 
       return bulkOperations
    } else {
-      logInfo('No messages to process or already processing...')
+      // logInfo('No messages to process or already processing...')
    }
 }

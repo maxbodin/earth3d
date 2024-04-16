@@ -4,4 +4,5 @@ export enum TabType {
    VESSELS,
    MAP,
    OUTER_SPACE,
+   COUNTRIES,
 }

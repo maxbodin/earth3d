@@ -36,7 +36,9 @@ export function DetailsCard() {
                         />
                      ) : selectedObjectType === ObjectType.VESSEL ? (
                         <VesselDataDisplay />
-                     ) : null
+                     ) : (
+                        <></>
+                     )
                   }
                   onClose={(): void => {
                      setSelectedObjectType(ObjectType.NULL)

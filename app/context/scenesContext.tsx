@@ -1,12 +1,19 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react'
 import * as THREE from 'three'
+import { SceneType } from '@/app/components/enums/sceneType'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 interface ScenesContextValue {
    globeScene: THREE.Scene
    setGlobeScene: React.Dispatch<React.SetStateAction<any>>
    planeScene: THREE.Scene
    setPlaneScene: React.Dispatch<React.SetStateAction<any>>
-   displayedSceneData: any
+   displayedSceneData: {
+      type: SceneType
+      camera: THREE.PerspectiveCamera
+      controls: OrbitControls
+      scene: THREE.Scene
+   }
    setDisplayedSceneData: React.Dispatch<React.SetStateAction<any>>
 }
 

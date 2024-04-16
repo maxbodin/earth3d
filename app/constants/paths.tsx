@@ -21,3 +21,8 @@ export const MILKY_WAY_PNG: string = '/textures/png/milkyway_2020_4k_gal.png' //
 export const MAP_TEXTURE_JPG: string = '/textures/jpg/map.jpg'
 export const DISPLACEMENT_MAP_TEXTURE_JPG: string =
    '/textures/jpg/srtm_ramp2.world.5400x2700.jpg'
+
+/**
+ * Fonts.
+ */
+export const TEXT_FONT: string = '/fonts/helvetiker_regular.typeface.json'

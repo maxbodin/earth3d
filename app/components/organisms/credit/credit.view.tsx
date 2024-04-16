@@ -1,8 +1,8 @@
 import React from 'react'
 import { useUi } from '@/app/context/UIContext'
 import { Tabs } from '../../atoms/ui/tabs/tabs'
-import { CreditController } from '@/app/components/organisms/credit/controller'
-import { useCredit } from '@/app/components/organisms/credit/model'
+import { CreditController } from '@/app/components/organisms/credit/credit.controller'
+import { useCredit } from '@/app/components/organisms/credit/credit.model'
 import { TabType } from '@/app/components/enums/tabType'
 import { TAB_TITLES } from '@/app/constants/strings'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
@@ -27,11 +27,24 @@ export function CreditView() {
                <>
                   <Tabs tabTitles={TAB_TITLES} onTabClick={onTabSelection} />
 
-                  {activeCreditTab == TabType.AIRPORTS && <div>TODO</div>}
-                  {activeCreditTab == TabType.PLANES && <div>TODO</div>}
-                  {activeCreditTab == TabType.VESSELS && <div>TODO</div>}
-                  {activeCreditTab == TabType.MAP && <div>TODO</div>}
-                  {activeCreditTab == TabType.OUTER_SPACE && <div>TODO</div>}
+                  {activeCreditTab == TabType.AIRPORTS && (
+                     <div>Work In Progress</div>
+                  )}
+                  {activeCreditTab == TabType.PLANES && (
+                     <div>Work In Progress</div>
+                  )}
+                  {activeCreditTab == TabType.VESSELS && (
+                     <div>Work In Progress</div>
+                  )}
+                  {activeCreditTab == TabType.MAP && (
+                     <div>Work In Progress</div>
+                  )}
+                  {activeCreditTab == TabType.OUTER_SPACE && (
+                     <div>Work In Progress</div>
+                  )}
+                  {activeCreditTab == TabType.COUNTRIES && (
+                     <div>Work In Progress</div>
+                  )}
                </>
             }
             onClose={(): void => {

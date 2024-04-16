@@ -75,6 +75,10 @@
     --active: 4;
 }
 
+.tabs:has(:checked:nth-of-type(6)) {
+    --active: 5;
+}
+
 .tabs :checked + .label {
     --highlight: 1;
 }
@@ -93,6 +97,10 @@
 
 .tabs:has(.input:nth-of-type(5)) {
     --count: 5;
+}
+
+.tabs:has(.input:nth-of-type(6)) {
+    --count: 6;
 }
 
 .tabs .label {

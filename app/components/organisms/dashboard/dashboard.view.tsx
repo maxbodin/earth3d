@@ -1,14 +1,16 @@
+'use client'
 import React from 'react'
 import { useUi } from '@/app/context/UIContext'
-import { DashboardController } from '@/app/components/organisms/dashboard/controller'
-import { useDashboard } from '@/app/components/organisms/dashboard/model'
+import { DashboardController } from '@/app/components/organisms/dashboard/dashboard.controller'
+import { useDashboard } from '@/app/components/organisms/dashboard/dashboard.model'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
 import { Tabs } from '@/app/components/atoms/ui/tabs/tabs'
 import { TAB_TITLES } from '@/app/constants/strings'
 import { TabType } from '@/app/components/enums/tabType'
-import { VesselsTabView } from '@/app/components/organisms/dashboardTabs/vesselsTab/view'
-import { MapTabView } from '@/app/components/organisms/dashboardTabs/mapTab/view'
+import { VesselsTabView } from '@/app/components/organisms/dashboardTabs/vesselsTab/vesselsTab.view'
+import { MapTabView } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.view'
 import { OuterSpaceTabView } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/view'
+import { CountriesTabView } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.view'
 
 export function DashboardView() {
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
@@ -31,12 +33,19 @@ export function DashboardView() {
                <>
                   <Tabs tabTitles={TAB_TITLES} onTabClick={onTabSelection} />
 
-                  {activeDashboardTab == TabType.AIRPORTS && <div>TODO</div>}
-                  {activeDashboardTab == TabType.PLANES && <div>TODO</div>}
+                  {activeDashboardTab == TabType.AIRPORTS && (
+                     <div>Work In Progress</div>
+                  )}
+                  {activeDashboardTab == TabType.PLANES && (
+                     <div>Work In Progress</div>
+                  )}
                   {activeDashboardTab == TabType.VESSELS && <VesselsTabView />}
                   {activeDashboardTab == TabType.MAP && <MapTabView />}
                   {activeDashboardTab == TabType.OUTER_SPACE && (
                      <OuterSpaceTabView />
+                  )}
+                  {activeDashboardTab == TabType.COUNTRIES && (
+                     <CountriesTabView />
                   )}
                </>
             }

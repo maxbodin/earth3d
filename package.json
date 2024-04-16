@@ -20,10 +20,12 @@
     "country-data": "^0.0.31",
     "dotenv": "^16.4.5",
     "geo-three": "^0.1.14",
+    "meshline": "^3.3.0",
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18",
     "three": "^0.161.0",
+    "world-geojson": "^3.1.0",
     "ws": "^8.16.0"
   },
   "devDependencies": {

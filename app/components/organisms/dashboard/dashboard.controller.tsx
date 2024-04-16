@@ -1,4 +1,4 @@
-import { useDashboard } from '@/app/components/organisms/dashboard/model'
+import { useDashboard } from '@/app/components/organisms/dashboard/dashboard.model'
 import { TAB_TITLES } from '@/app/constants/strings'
 
 export function DashboardController() {
@@ -20,6 +20,9 @@ export function DashboardController() {
             break
          case TAB_TITLES[4]:
             setActiveDashboardTab(4)
+            break
+         case TAB_TITLES[5]:
+            setActiveDashboardTab(5)
             break
       }
    }

@@ -6,13 +6,11 @@ import layers from '../../../../data/Airports.json'
 import { AIRPORT_SCALE, ZOOM_THRESHOLD } from '@/app/constants/numbers'
 import { ObjectType } from '@/app/components/enums/objectType'
 import { useData } from '@/app/context/dataContext'
-import { useVisibleZone } from '@/app/components/atoms/three/visibleZone/model'
 import { useScenes } from '@/app/context/scenesContext'
 import { AIRPORT_MATERIAL } from '@/app/constants/materials'
 
 export function Airports(): null {
    const { displayedSceneData } = useScenes()
-   const { sphereVisibleZone } = useVisibleZone()
    const airportsGroup = useRef<THREE.Group>(new THREE.Group())
 
    // Create group of airports.
@@ -38,12 +36,12 @@ export function Airports(): null {
                if (lat == null || lon == null) return false
                if (Math.random() < 0.9) return false // TODO DELETE CONDITION
 
-               return (
+               return true /* TODO Use distance to camera like used for vessels. (
                   lat <= sphereVisibleZone.topLatLon.lat &&
                   lat >= sphereVisibleZone.bottomLatLon.lat &&
                   lon <= sphereVisibleZone.rightLatLon.lon &&
                   lon >= sphereVisibleZone.leftLatLon.lon
-               )
+               )*/
             }
          )
 
@@ -132,7 +130,7 @@ export function Airports(): null {
 
       // Clean up the event listener.
       return cleanup
-   }, [displayedSceneData, sphereVisibleZone])
+   }, [displayedSceneData])
 
    return null
 }

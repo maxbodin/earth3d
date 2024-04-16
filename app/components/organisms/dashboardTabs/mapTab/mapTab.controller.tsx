@@ -1,4 +1,4 @@
-import { useMapTab } from '@/app/components/organisms/dashboardTabs/mapTab/model'
+import { useMapTab } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.model'
 import { useMap } from '@/app/context/mapContext'
 
 export function MapTabController() {

@@ -72,9 +72,9 @@ export function Planet(): null {
                   vertexNormal = normalize(normalMatrix * normal);
                
                   height = texture2D(displacementTexture, vertexUV).r;
-                  vec3 newPosition = position * 0.99 + normal * height * scale;
+                  vec3 newPosition = position + normal * height * scale;
                   
-                  gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0 );
+                  gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
                } `,
             fragmentShader: `
                uniform sampler2D globeTexture;
@@ -82,12 +82,12 @@ export function Planet(): null {
                varying vec3 vertexNormal;
                
                void main(){
-               
-               float intensity = 0.1 - dot(vertexNormal, vec3(0.0, 0.0, 0.0));
-               vec3 atmosphere = vec3(0.3, 0.6, 1.0) * pow(intensity, 1.8);
-               
-               gl_FragColor = vec4(atmosphere + texture2D(globeTexture, vertexUV).xyz, 1.0);
+                  float intensity = 0.1 - dot(vertexNormal, vec3(0.0, 0.0, 0.0));
+                  vec3 atmosphere = vec3(0.3, 0.6, 1.0) * pow(intensity, 1.8);
+                  
+                  gl_FragColor = vec4(atmosphere + texture2D(globeTexture, vertexUV).xyz, 1.0);
                }`,
+
             uniforms: {
                globeTexture: {
                   value: mapTexture,
@@ -109,7 +109,7 @@ export function Planet(): null {
       displayedSceneData.scene?.add(newPlanet)
    }
 
-   /*
+   /* TODO CLEAN UP CODE
   const distance = useRef(EARTH_RADIUS * 2)
    const isWatchingAirport = useRef(false)
 const onDistanceChange = (): void => {

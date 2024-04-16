@@ -8,11 +8,11 @@ import { ToastSuccess } from '@/app/components/molecules/toasts/toastSuccess/toa
 import { useToast } from '@/app/context/toastsContext'
 import { NavigationBar } from '@/app/components/molecules/navigationBar/navigationBar'
 import { useData } from '@/app/context/dataContext'
-import { DashboardView } from '@/app/components/organisms/dashboard/view'
+import { DashboardView } from '@/app/components/organisms/dashboard/dashboard.view'
 import { ScenesProvider } from '@/app/context/scenesContext'
 import { VesselDataFetch } from '@/app/components/atoms/dataFetch/vesselDataFetch/vesselDataFetch'
 import { MapProvider } from '@/app/context/mapContext'
-import { CreditView } from '@/app/components/organisms/credit/view'
+import { CreditView } from '@/app/components/organisms/credit/credit.view'
 
 export default function Home() {
    const {

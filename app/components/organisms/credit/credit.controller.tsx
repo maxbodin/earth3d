@@ -1,4 +1,4 @@
-import { useCredit } from '@/app/components/organisms/credit/model'
+import { useCredit } from '@/app/components/organisms/credit/credit.model'
 import { TAB_TITLES } from '@/app/constants/strings'
 
 export function CreditController() {
@@ -20,6 +20,9 @@ export function CreditController() {
             break
          case TAB_TITLES[4]:
             setActiveCreditTab(4)
+            break
+         case TAB_TITLES[5]:
+            setActiveCreditTab(5)
             break
       }
    }

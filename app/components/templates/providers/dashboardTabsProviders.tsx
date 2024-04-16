@@ -2,8 +2,9 @@
 
 import React from 'react'
 import { OuterSpaceTabProvider } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
-import { MapTabProvider } from '@/app/components/organisms/dashboardTabs/mapTab/model'
-import { VesselsTabProvider } from '@/app/components/organisms/dashboardTabs/vesselsTab/model'
+import { MapTabProvider } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.model'
+import { VesselsTabProvider } from '@/app/components/organisms/dashboardTabs/vesselsTab/vesselsTab.model'
+import { CountriesTabProvider } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
 
 /**
  * Hell. x2
@@ -18,7 +19,9 @@ export function DashboardTabsProviders({
    return (
       <MapTabProvider>
          <OuterSpaceTabProvider>
-            <VesselsTabProvider>{children}</VesselsTabProvider>
+            <VesselsTabProvider>
+               <CountriesTabProvider>{children}</CountriesTabProvider>
+            </VesselsTabProvider>
          </OuterSpaceTabProvider>
       </MapTabProvider>
    )
