@@ -1,6 +1,6 @@
+'use client'
 // @ts-ignore
-import { MapBoxProvider, MapProvider } from 'geo-three'
-import { getMapboxToken } from '@/app/server/actions/getMapboxToken'
+import { MapProvider } from 'geo-three'
 
 /**
  * Map box service tile provider. Map tiles can be fetched from style or from a map id.
@@ -12,7 +12,7 @@ export class CustomMapBoxProvider extends MapProvider {
    /**
     * Base adress of the mapbox service.
     */
-   public static ADDRESS: string = 'https://api.mapbox.com/v4/mapbox.satellite/'
+   public static ADDRESS: string = 'https://api.mapbox.com/'
 
    /**
     * Map image tile format, the formats available are:
@@ -25,37 +25,21 @@ export class CustomMapBoxProvider extends MapProvider {
     *  - jpg80 80% quality JPG
     *  - jpg90 90% quality JPG
     *  - pngraw Raw png (no interpolation)
-    */
-
-   /**
+    *
     * Map identifier composed of \{username\}.\{style\}
     */
    public mapStyle: string = 'mapbox.satellite'
 
-   //private isHeight: boolean
+   public publicToken: string = ''
 
-   private publicToken: string = ''
-
-   /**
-    * @param isHeight - Provider is used for height map.
-    */
-   public constructor(isHeight: boolean) {
+   public constructor() {
       super()
-      //this.isHeight = isHeight
-   }
-
-   public async savePublicToken(): Promise<void> {
-      this.publicToken = await getMapboxToken()
-      if (this.publicToken == null) {
-         console.error('MISSING MAPBOX PUBLIC TOKEN.')
-         return
-      }
    }
 
    public fetchTile(zoom: number, x: number, y: number): Promise<any> {
       return new Promise(async (resolve, reject): Promise<any> => {
-         this.savePublicToken().then((): void => {
-            const image = window.document.createElement('img')
+         if (typeof window !== 'undefined') {
+            const image: HTMLImageElement = window.document.createElement('img')
             image.onload = function (): void {
                resolve(image)
             }
@@ -63,8 +47,8 @@ export class CustomMapBoxProvider extends MapProvider {
                reject()
             }
             image.crossOrigin = 'Anonymous'
-            image.src = `${MapBoxProvider.ADDRESS}v4/${this.mapStyle}/${zoom}/${x}/${y}@2x.jpg?access_token=${this.publicToken}`
-         })
+            image.src = `${CustomMapBoxProvider.ADDRESS}v4/${this.mapStyle}/${zoom}/${x}/${y}@2x.jpg?access_token=${this.publicToken}`
+         }
       })
    }
 }

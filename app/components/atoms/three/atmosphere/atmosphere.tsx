@@ -8,13 +8,13 @@ import {
    SPHERE_HEIGHT_SEGMENTS,
    SPHERE_WIDTH_SEGMENTS,
 } from '@/app/constants/numbers'
-import { removeObject3D } from '@/app/components/templates/threeScene/threeScene'
-import { useScenes } from '@/app/context/scenesContext'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/components/enums/sceneType'
 import {
    GLOBE_SCENE_ATMOSPHERE_NAME,
    PLANE_SCENE_ATMOSPHERE_NAME,
 } from '@/app/constants/strings'
+import { removeObject3D } from '@/app/helpers/threeHelper'
 
 export function Atmosphere(): null {
    const globeAtmosphere = useRef<THREE.Mesh | null>(null)

@@ -10,11 +10,6 @@ export const GLOBE_SCENE_ATMOSPHERE_NAME: string = 'Globe Scene Atmosphere'
 export const MILKY_WAY_NAME: string = 'Milky Way'
 export const HYPTIC_NAME: string = 'Hyptic'
 export const CONSTELLATION_FIGURES_NAME: string = 'Constellation Figures'
-
-/**
- * Listeners
- */
-export const RESIZE_LISTENER_STRING: string = 'resize'
 export const TAB_TITLES: string[] = [
    'Planes',
    'Airports',

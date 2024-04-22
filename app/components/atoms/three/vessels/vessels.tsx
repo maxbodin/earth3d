@@ -4,10 +4,8 @@ import { useData } from '@/app/context/dataContext'
 import * as THREE from 'three'
 import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
-import { useScenes } from '@/app/context/scenesContext'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/components/enums/sceneType'
-// @ts-ignore
-import { UnitsUtils } from 'geo-three'
 import {
    GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA,
    GLOBE_SCENE_VESSEL_MAX_SCALE,
@@ -21,6 +19,7 @@ import { VESSEL_GLB_MODEL } from '@/app/constants/paths'
 import { clamp } from '@/app/helpers/numberHelper'
 import { ObjectType } from '@/app/components/enums/objectType'
 import { VESSEL_MATERIAL } from '@/app/constants/materials'
+import { ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
 
 export function Vessels(): null {
    const { vesselsData } = useData()
@@ -179,10 +178,11 @@ export function Vessels(): null {
                new THREE.MeshBasicMaterial({ color: '#ff0000' })
             )
 
-            const worldPos: THREE.Vector3 = UnitsUtils.datumsToSpherical(
-               previousData.message.location.newCoordinates[0] as number,
-               previousData.message.location.newCoordinates[1] as number
-            )
+            const worldPos: THREE.Vector2 =
+               ThreeGeoUnitsUtils.datumsToSpherical(
+                  previousData.message.location.newCoordinates[0] as number,
+                  previousData.message.location.newCoordinates[1] as number
+               )
             test.position.set(worldPos.x, 0, -worldPos.y)
             displayedSceneData.scene?.add(test)
          }
@@ -261,10 +261,11 @@ export function Vessels(): null {
                distanceToCamera <= GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA
             )
          } else if (displayedSceneData.type == SceneType.PLANE) {
-            const worldPos: THREE.Vector3 = UnitsUtils.datumsToSpherical(
-               lon as number,
-               lat as number
-            )
+            const worldPos: THREE.Vector2 =
+               ThreeGeoUnitsUtils.datumsToSpherical(
+                  lon as number,
+                  lat as number
+               )
             vesselData.planePosition = new THREE.Vector3(
                worldPos.x,
                0,
@@ -412,10 +413,11 @@ export function Vessels(): null {
                const normal: THREE.Vector3 = worldPos.clone().normalize()
                vesselModel?.position.lerp(worldPos.add(normal), 0.0001)
             } else if (displayedSceneData.type == SceneType.PLANE) {
-               const worldPos: THREE.Vector3 = UnitsUtils.datumsToSpherical(
-                  lon as number,
-                  lat as number
-               )
+               const worldPos: THREE.Vector2 =
+                  ThreeGeoUnitsUtils.datumsToSpherical(
+                     lon as number,
+                     lat as number
+                  )
 
                vesselModel?.position.setY(0)
                vesselModel?.position.lerp(

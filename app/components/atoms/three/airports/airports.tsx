@@ -6,7 +6,7 @@ import layers from '../../../../data/Airports.json'
 import { AIRPORT_SCALE, ZOOM_THRESHOLD } from '@/app/constants/numbers'
 import { ObjectType } from '@/app/components/enums/objectType'
 import { useData } from '@/app/context/dataContext'
-import { useScenes } from '@/app/context/scenesContext'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { AIRPORT_MATERIAL } from '@/app/constants/materials'
 
 export function Airports(): null {

@@ -4,7 +4,6 @@ import { ToastDanger } from '@/app/components/molecules/toasts/toastDanger/toast
 import { MIN_WINDOW_WIDTH } from '@/app/constants/numbers'
 import {
    NO_ERROR_MESSAGE,
-   RESIZE_LISTENER_STRING,
    SAFARI_ERROR_MESSAGE,
    WAITING_TO_DETECT_ERROR_MESSAGE,
    WINDOW_WIDTH_ERROR_MESSAGE,
@@ -44,10 +43,10 @@ export function ErrorSecurity({
       handleResize()
 
       // Executed when window is resized.
-      window.addEventListener(RESIZE_LISTENER_STRING, handleResize)
+      window.addEventListener('resize', handleResize)
 
       return (): void => {
-         window.removeEventListener(RESIZE_LISTENER_STRING, handleResize)
+         window.removeEventListener('resize', handleResize)
       }
    }, [errorMessage])
 

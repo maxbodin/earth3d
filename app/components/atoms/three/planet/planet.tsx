@@ -15,7 +15,7 @@ import {
    MAP_TEXTURE_JPG,
 } from '@/app/constants/paths'
 import { EARTH_RENDER_ORDER } from '@/app/constants/renderOrder'
-import { useScenes } from '@/app/context/scenesContext'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/components/enums/sceneType'
 
 export function Planet(): null {

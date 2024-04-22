@@ -1,3 +1,4 @@
+'use client'
 import { useMapTab } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.model'
 import { useMap } from '@/app/context/mapContext'
 
@@ -12,7 +13,7 @@ export function MapTabController() {
 
    function activateBlackLabelMapStyle(): void {
       deactivateAllMapStyles()
-      mapProvider.mapStyle = 'mapbox.mapbox-streets-v7'
+      mapProvider.mapStyle = 'mapbox.mapbox-streets-v8'
       setBlackLabelMapStyleActivated(true)
    }
 

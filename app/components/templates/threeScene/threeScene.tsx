@@ -1,25 +1,23 @@
 'use client'
 import * as THREE from 'three'
 import React, { useEffect, useRef } from 'react'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js' // @ts-ignore
-import { MapView, UnitsUtils } from 'geo-three' // @ts-ignore
-import { MapControls } from 'three/examples/jsm/controls/MapControls'
-import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
-import { useScenes } from '@/app/context/scenesContext'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { MapControls } from 'three/examples/jsm/controls/MapControls.js'
 import { PlanetProvider } from '@/app/context/planetContext'
 import { Planet } from '@/app/components/atoms/three/planet/planet'
 import { Atmosphere } from '@/app/components/atoms/three/atmosphere/atmosphere'
 import { SceneType } from '@/app/components/enums/sceneType'
 import { useMap } from '@/app/context/mapContext'
 import { OuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace'
-import {
-   GLOBE_SCENE_NAME,
-   PLANE_SCENE_NAME,
-   RESIZE_LISTENER_STRING,
-} from '@/app/constants/strings'
+import { GLOBE_SCENE_NAME, PLANE_SCENE_NAME } from '@/app/constants/strings'
 import { Vessels } from '@/app/components/atoms/three/vessels/vessels'
 import { CountriesProvider } from '@/app/components/atoms/three/countries/countries.model'
 import { CountriesController } from '@/app/components/atoms/three/countries/countries.controller'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
+import { EARTH_RADIUS } from '@/app/constants/numbers'
+import { Geolocation, ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
+import { getMapboxToken } from '@/app/server/actions/getMapboxToken'
+import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -32,6 +30,8 @@ export function ThreeScene() {
 
    const { globeScene, planeScene, setDisplayedSceneData, displayedSceneData } =
       useScenes()
+
+   const { map, setMap, setMapProvider } = useMap()
 
    /**
     * Function to set up renderer, scene, and camera.
@@ -87,8 +87,8 @@ export function ThreeScene() {
       globeControls.current!.zoomSpeed = 1
       globeControls.current!.enablePan = false
       globeControls.current!.autoRotate = false
-      globeControls.current!.minDistance = UnitsUtils.EARTH_RADIUS + 3e4
-      globeControls.current!.maxDistance = UnitsUtils.EARTH_RADIUS + 2e7
+      globeControls.current!.minDistance = EARTH_RADIUS + 3e4
+      globeControls.current!.maxDistance = EARTH_RADIUS + 2e7
       globeControls.current!.mouseButtons = {
          LEFT: THREE.MOUSE.ROTATE,
          MIDDLE: THREE.MOUSE.DOLLY,
@@ -99,7 +99,7 @@ export function ThreeScene() {
       globeControls.current!.update()
 
       // Set initial camera position
-      globeCamera.current.position.set(10e9, 8e9, UnitsUtils.EARTH_RADIUS + 1e9)
+      globeCamera.current.position.set(10e9, 8e9, EARTH_RADIUS + 1e9)
 
       return {
          type: SceneType.SPHERICAL,
@@ -108,8 +108,6 @@ export function ThreeScene() {
          scene: globeScene,
       }
    }
-
-   const { setMap, setMapProvider } = useMap()
 
    /**
     * Create scene for planar map.
@@ -125,16 +123,6 @@ export function ThreeScene() {
          0.001,
          1e12
       )
-
-      const mapBoxProvider: CustomMapBoxProvider = new CustomMapBoxProvider(
-         false
-      )
-      setMapProvider(mapBoxProvider)
-      const map = new MapView(MapView.PLANAR, mapBoxProvider)
-      map.cacheTiles = false
-      planeScene.add(map)
-      map.updateMatrixWorld(true)
-      setMap(map)
 
       planeScene.add(new THREE.AmbientLight(0x777777, 1.2))
 
@@ -161,16 +149,16 @@ export function ThreeScene() {
 
    const raycaster = new THREE.Raycaster()
    const handleLOD = (currentScene: any) => {
-      const toggleDistance = 1e6
+      const toggleDistance: number = 1e6
 
       if (activeSceneType.current === SceneType.SPHERICAL) {
          // Get distance to the surface of earth.
-         const distance =
-            currentScene.controls.getDistance() - UnitsUtils.EARTH_RADIUS
+         const distance: number =
+            currentScene.controls.getDistance() - EARTH_RADIUS
 
          if (distance < toggleDistance) {
             // Set raycaster to the camera center.
-            const pointer = new THREE.Vector2(0.0, 0.0)
+            const pointer: THREE.Vector2 = new THREE.Vector2(0.0, 0.0)
             raycaster.setFromCamera(pointer, currentScene.camera)
 
             // Raycast from center of the camera to the sphere surface
@@ -179,20 +167,22 @@ export function ThreeScene() {
             )
 
             if (intersects.length > 0) {
-               const point = intersects[0].point
+               const point: THREE.Vector3 = intersects[0].point
 
                // Get coordinates from sphere surface
-               const planetPos = UnitsUtils.vectorToDatums(point)
+               const planetPos: Geolocation =
+                  ThreeGeoUnitsUtils.vectorToDatums(point)
 
                const planeScene = scenes.current[SceneType.PLANE]
                planeScene.scene.visible = true
                scenes.current[SceneType.SPHERICAL].scene.visible = false
 
                // Calculate plane coordinates.
-               const worldCoords = UnitsUtils.datumsToSpherical(
-                  planetPos.latitude,
-                  planetPos.longitude
-               )
+               const worldCoords: THREE.Vector2 =
+                  ThreeGeoUnitsUtils.datumsToSpherical(
+                     planetPos.latitude,
+                     planetPos.longitude
+                  )
 
                /* TODO DELETE, THIS IS TEST TO PLACE MODEL AT LAT LON ON PLANE.
                const test = new THREE.Mesh(
@@ -233,7 +223,7 @@ export function ThreeScene() {
          const ratio = 0.8
          if (distance > toggleDistance * ratio) {
             // Transition progress (0 to 1)
-            const progress =
+            const progress: number =
                (toggleDistance - distance) / (toggleDistance * (1 - ratio))
 
             // Limit polar angle
@@ -247,10 +237,13 @@ export function ThreeScene() {
          if (distance > toggleDistance) {
             // Datum coordinates
             const target = currentScene.controls.target
-            const coords = UnitsUtils.sphericalToDatums(target.x, -target.z)
+            const coords: Geolocation = ThreeGeoUnitsUtils.sphericalToDatums(
+               target.x,
+               -target.z
+            )
 
             // Get sphere surface point from coordinates
-            const dir = UnitsUtils.datumsToVector(
+            const dir: THREE.Vector3 = ThreeGeoUnitsUtils.datumsToVector(
                coords.latitude,
                coords.longitude
             )
@@ -260,7 +253,7 @@ export function ThreeScene() {
             scenes.current[SceneType.PLANE].scene.visible = false
 
             // Set camera position
-            dir.multiplyScalar(UnitsUtils.EARTH_RADIUS + distance)
+            dir.multiplyScalar(EARTH_RADIUS + distance)
             sphereScene.camera.position.copy(dir)
 
             console.log(
@@ -330,7 +323,7 @@ export function ThreeScene() {
     * Function to clean up on component unmount.
     */
    const cleanup: () => void = (): void => {
-      window.removeEventListener(RESIZE_LISTENER_STRING, handleResize)
+      window.removeEventListener('click', handleResize)
       if (renderer.current && renderer.current.domElement.parentNode) {
          renderer.current.domElement.parentNode.removeChild(
             renderer.current.domElement
@@ -338,11 +331,54 @@ export function ThreeScene() {
       }
    }
 
+   // Async function to dynamically import CustomMapBoxProvider class
+   const importCustomMapBoxProvider = async () => {
+      // Dynamically import the CustomMapBoxProvider class.
+      const { CustomMapBoxProvider } = await import(
+         '../../../lib/customMapBoxProvider'
+      )
+
+      const mapBoxProvider: CustomMapBoxProvider = new CustomMapBoxProvider()
+
+      if (mapBoxProvider.publicToken == '') {
+         mapBoxProvider.publicToken = await getMapboxToken()
+         if (mapBoxProvider.publicToken == null) {
+            console.error('MISSING MAPBOX PUBLIC TOKEN.')
+         }
+      }
+
+      setMapProvider(mapBoxProvider)
+
+      return mapBoxProvider
+   }
+
    useEffect(() => {
-      window.addEventListener(RESIZE_LISTENER_STRING, handleResize)
+      window.addEventListener('click', handleResize)
 
       // Set up renderer, scene, and camera.
       setupRenderer()
+
+      if (typeof window !== 'undefined' && map == null) {
+         // Import the CustomMapBoxProvider and initialize the map view.
+         importCustomMapBoxProvider()
+            .then((mapBoxProvider: CustomMapBoxProvider): void => {
+               // Import MapView dynamically.
+               // @ts-ignore
+               import('geo-three').then(({ MapView }): void => {
+                  const map = new MapView(MapView.PLANAR, mapBoxProvider)
+                  planeScene.add(map)
+                  map.updateMatrixWorld(true)
+                  setMap(map)
+               })
+            })
+            .catch((error): void => {
+               console.error(
+                  'Error importing or initializing map components:',
+                  error
+               )
+            })
+      }
+
       if (!mountRef.current) return
 
       animate()
@@ -392,23 +428,4 @@ export function ThreeScene() {
          </div>
       </>
    )
-}
-
-export function removeObject3D(
-   object3D: THREE.Mesh,
-   scene: THREE.Scene | null
-): void {
-   if (object3D.geometry) object3D.geometry.dispose()
-
-   if (object3D.material) {
-      if (object3D.material instanceof Array) {
-         object3D.material.forEach((material: THREE.Material) =>
-            material.dispose()
-         )
-      } else {
-         object3D.material.dispose()
-      }
-   }
-   object3D.removeFromParent()
-   scene?.remove(object3D)
 }

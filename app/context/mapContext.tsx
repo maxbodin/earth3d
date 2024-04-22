@@ -1,12 +1,10 @@
+'use client'
 import React, { createContext, ReactNode, useContext, useState } from 'react'
-// @ts-ignore
-import { MapView } from 'geo-three'
-import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
 
 interface MapContextValue {
-   map: MapView
+   map: any
    setMap: React.Dispatch<React.SetStateAction<any>>
-   mapProvider: CustomMapBoxProvider
+   mapProvider: any
    setMapProvider: React.Dispatch<React.SetStateAction<any>>
    mapStyle: string
    setMapStyle: React.Dispatch<React.SetStateAction<any>>

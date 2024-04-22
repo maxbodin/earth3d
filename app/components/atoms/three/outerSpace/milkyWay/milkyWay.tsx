@@ -9,12 +9,12 @@ import {
    SPHERE_HEIGHT_SEGMENTS,
    SPHERE_WIDTH_SEGMENTS,
 } from '@/app/constants/numbers'
-import { removeObject3D } from '@/app/components/templates/threeScene/threeScene'
-import { useScenes } from '@/app/context/scenesContext'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/components/enums/sceneType'
 import { OUTER_SPACE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { MILKY_WAY_NAME } from '@/app/constants/strings'
 import { MILKY_WAY_PNG } from '@/app/constants/paths'
+import { removeObject3D } from '@/app/helpers/threeHelper'
 
 export function MilkyWay(): null {
    const milkyWay = useRef<THREE.Mesh | null>(null)

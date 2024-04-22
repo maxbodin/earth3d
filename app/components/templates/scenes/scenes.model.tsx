@@ -1,3 +1,4 @@
+'use client'
 import React, { createContext, ReactNode, useContext, useState } from 'react'
 import * as THREE from 'three'
 import { SceneType } from '@/app/components/enums/sceneType'
@@ -36,12 +37,12 @@ export function ScenesProvider({ children }: { children: ReactNode }) {
    const [displayedSceneData, setDisplayedSceneData] = useState<any>(null)
 
    const value: ScenesContextValue = {
-      globeScene,
-      setGlobeScene,
-      planeScene,
-      setPlaneScene,
-      displayedSceneData,
-      setDisplayedSceneData,
+      globeScene: globeScene,
+      setGlobeScene: setGlobeScene,
+      planeScene: planeScene,
+      setPlaneScene: setPlaneScene,
+      displayedSceneData: displayedSceneData,
+      setDisplayedSceneData: setDisplayedSceneData,
    }
 
    return (

@@ -1,6 +1,6 @@
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import * as THREE from 'three'
-import { useScenes } from '@/app/context/scenesContext'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { useEffect, useRef } from 'react'
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
 import {
@@ -20,9 +20,8 @@ import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TEXT_FONT } from '@/app/constants/paths'
 import { clamp } from '@/app/helpers/numberHelper'
 import { SceneType } from '@/app/components/enums/sceneType'
-// @ts-ignore
-import { UnitsUtils } from 'geo-three'
 import { useCountriesTab } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
+import { ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
 
 const geoJson = require('world-geojson')
 
@@ -88,10 +87,11 @@ export function CountriesController(): null {
                   country.longitude as number
                )
             } else if (displayedSceneData.type == SceneType.PLANE) {
-               const worldPos: THREE.Vector3 = UnitsUtils.datumsToSpherical(
-                  country.latitude as number,
-                  country.longitude as number
-               )
+               const worldPos: THREE.Vector2 =
+                  ThreeGeoUnitsUtils.datumsToSpherical(
+                     country.latitude as number,
+                     country.longitude as number
+                  )
                position = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
             }
 
@@ -166,8 +166,8 @@ export function CountriesController(): null {
                         value[0] as number
                      )
                   } else if (displayedSceneData.type == SceneType.PLANE) {
-                     const worldPos: THREE.Vector3 =
-                        UnitsUtils.datumsToSpherical(
+                     const worldPos: THREE.Vector2 =
+                        ThreeGeoUnitsUtils.datumsToSpherical(
                            value[1] as number,
                            value[0] as number
                         )
