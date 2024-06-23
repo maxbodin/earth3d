@@ -1,13 +1,15 @@
 'use client'
 
 import React from 'react'
-import { ToastProvider } from '@/app/context/toastsContext'
+import { ToastProvider } from '@/app/context_todo_improve/toastsContext'
 import dynamic from 'next/dynamic'
-import { DataProvider } from '@/app/context/dataContext'
-import { UiProvider } from '@/app/context/UIContext'
+import { DataProvider } from '@/app/context_todo_improve/dataContext'
+import { UiProvider } from '@/app/context_todo_improve/UIContext'
 import { DashboardTabsProviders } from '@/app/components/templates/providers/dashboardTabsProviders'
 import { DashboardProvider } from '@/app/components/organisms/dashboard/dashboard.model'
 import { CreditProvider } from '@/app/components/organisms/credit/credit.model'
+import { EntitiesProviders } from '@/app/components/templates/providers/entitiesProviders'
+import { SearchBarProvider } from '@/app/components/organisms/searchBar/searchBar.model'
 
 /**
  * Hell.
@@ -18,13 +20,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
    return (
       <UiProvider>
          <ToastProvider>
-            <DashboardTabsProviders>
-               <DataProvider>
-                  <DashboardProvider>
-                     <CreditProvider>{children}</CreditProvider>
-                  </DashboardProvider>
-               </DataProvider>
-            </DashboardTabsProviders>
+            <SearchBarProvider>
+               <DashboardTabsProviders>
+                  <EntitiesProviders>
+                     <DataProvider>
+                        <DashboardProvider>
+                           <CreditProvider>{children}</CreditProvider>
+                        </DashboardProvider>
+                     </DataProvider>
+                  </EntitiesProviders>
+               </DashboardTabsProviders>
+            </SearchBarProvider>
          </ToastProvider>
       </UiProvider>
    )

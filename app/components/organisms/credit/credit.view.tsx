@@ -1,9 +1,9 @@
 import React from 'react'
-import { useUi } from '@/app/context/UIContext'
+import { useUi } from '@/app/context_todo_improve/UIContext'
 import { Tabs } from '../../atoms/ui/tabs/tabs'
 import { CreditController } from '@/app/components/organisms/credit/credit.controller'
 import { useCredit } from '@/app/components/organisms/credit/credit.model'
-import { TabType } from '@/app/components/enums/tabType'
+import { TabType } from '@/app/enums/tabType'
 import { TAB_TITLES } from '@/app/constants/strings'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
 

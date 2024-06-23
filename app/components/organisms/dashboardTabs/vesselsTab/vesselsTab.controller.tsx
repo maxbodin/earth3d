@@ -1,9 +1,6 @@
 import { useVesselsTab } from '@/app/components/organisms/dashboardTabs/vesselsTab/vesselsTab.model'
-import {
-   startConnection,
-   stopConnection,
-} from '@/app/server/services/vesselDataService'
-import { useData } from '@/app/context/dataContext'
+import { startConnection, stopConnection } from '@/app/server/services/vesselDataService'
+import { useData } from '@/app/context_todo_improve/dataContext'
 
 export function VesselsTabController() {
    const { setVesselsActivated } = useVesselsTab()

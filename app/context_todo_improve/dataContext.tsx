@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react'
-import { ObjectType } from '@/app/components/enums/objectType'
+import { ObjectType } from '@/app/enums/objectType'
 
 interface DataContextValue {
    planesData: any
@@ -14,10 +14,8 @@ interface DataContextValue {
    setSelectedObjectType: React.Dispatch<React.SetStateAction<any>>
 }
 
-// Create context.
 const DataContext = createContext<DataContextValue | null>(null)
 
-// Custom hook to access context.
 export function useData(): DataContextValue {
    const context = useContext(DataContext)
    if (!context) {
@@ -26,7 +24,6 @@ export function useData(): DataContextValue {
    return context
 }
 
-// Provider component.
 export function DataProvider({ children }: { children: ReactNode }) {
    const [planesData, setPlanesData] = useState<any>([])
    const [planeTrackData, setPlaneTrackData] = useState<any>([])

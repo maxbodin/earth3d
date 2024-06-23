@@ -1,12 +1,12 @@
 import React from 'react'
-import { useUi } from '@/app/context/UIContext'
+import { useUi } from '@/app/context_todo_improve/UIContext'
 import { Button } from '../../atoms/ui/button/button'
 import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut/fadeInOut'
 import { DashboardIcon } from '@/public/svgs/dashboardIcon'
 import { CreditIcon } from '@/public/svgs/creditIcon'
 import { DataIcon } from '@/public/svgs/dataIcon'
 import './styles.css'
-import { PanelType } from '@/app/components/enums/panelType'
+import { PanelType } from '@/app/enums/panelType'
 import { useDashboard } from '@/app/components/organisms/dashboard/dashboard.model'
 import { useCredit } from '@/app/components/organisms/credit/credit.model'
 
@@ -56,7 +56,8 @@ export function NavigationBar() {
                }
             }}
          >
-            <div className="navbaricons absolute right-10 p-4 transform bottom-10 z-40 flex items-center rounded-lg bg-white/20 bg-opacity-40 backdrop-blur-md drop-shadow-lg ring-1 ring-black/5">
+            <div
+               className="navbaricons absolute right-10 p-4 transform bottom-10 z-40 flex items-center rounded-lg bg-white/20 bg-opacity-40 backdrop-blur-md drop-shadow-lg ring-1 ring-black/5">
                <Button
                   onClick={openDashboard}
                   svg={<DashboardIcon />}

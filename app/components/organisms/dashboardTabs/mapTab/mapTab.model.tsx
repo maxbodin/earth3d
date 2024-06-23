@@ -6,22 +6,18 @@ interface MapTabContextValue {
 
    purpleElevationMapStyleActivated: boolean
    setPurpleElevationMapStyleActivated: React.Dispatch<
-      React.SetStateAction<any>
+      React.SetStateAction<boolean>
    >
-
    blackLabelMapStyleActivated: boolean
-   setBlackLabelMapStyleActivated: React.Dispatch<React.SetStateAction<any>>
-
+   setBlackLabelMapStyleActivated: React.Dispatch<React.SetStateAction<boolean>>
    activateTrafficMapStyleActivated: boolean
    setActivateTrafficMapStyleActivated: React.Dispatch<
-      React.SetStateAction<any>
+      React.SetStateAction<boolean>
    >
 }
 
-// Create context.
 const MapTabContext = createContext<MapTabContextValue | null>(null)
 
-// Custom hook to access context.
 export function useMapTab(): MapTabContextValue {
    const context = useContext(MapTabContext)
    if (!context) {
@@ -30,7 +26,6 @@ export function useMapTab(): MapTabContextValue {
    return context
 }
 
-// Provider component.
 export function MapTabProvider({ children }: { children: ReactNode }) {
    const [satelliteMapStyleActivated, setSatelliteMapStyleActivated] =
       useState<boolean>(true)

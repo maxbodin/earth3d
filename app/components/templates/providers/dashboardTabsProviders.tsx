@@ -12,8 +12,8 @@ import { CountriesTabProvider } from '@/app/components/organisms/dashboardTabs/c
  * @constructor
  */
 export function DashboardTabsProviders({
-   children,
-}: {
+                                          children,
+                                       }: {
    children: React.ReactNode
 }) {
    return (

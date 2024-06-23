@@ -19,7 +19,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TEXT_FONT } from '@/app/constants/paths'
 import { clamp } from '@/app/helpers/numberHelper'
-import { SceneType } from '@/app/components/enums/sceneType'
+import { SceneType } from '@/app/enums/sceneType'
 import { useCountriesTab } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
 import { ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
 
@@ -40,7 +40,7 @@ export function CountriesController(): null {
 
    function loadFont(): void {
       const loader: FontLoader = new FontLoader()
-      loader.load(TEXT_FONT, function (response: Font): void {
+      loader.load(TEXT_FONT, function(response: Font): void {
          font.current = response
       })
    }
@@ -84,13 +84,13 @@ export function CountriesController(): null {
             if (displayedSceneData.type == SceneType.SPHERICAL) {
                position = latLongToVector3(
                   country.latitude as number,
-                  country.longitude as number
+                  country.longitude as number,
                )
             } else if (displayedSceneData.type == SceneType.PLANE) {
                const worldPos: THREE.Vector2 =
                   ThreeGeoUnitsUtils.datumsToSpherical(
                      country.latitude as number,
-                     country.longitude as number
+                     country.longitude as number,
                   )
                position = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
             }
@@ -100,7 +100,7 @@ export function CountriesController(): null {
             textMesh.userData = country
 
             namesGroup.current.add(textMesh)
-         }
+         },
       )
 
       displayedSceneData.scene.add(namesGroup.current)
@@ -152,7 +152,7 @@ export function CountriesController(): null {
                type: string
                properties: {}
                geometry: { coordinates: number[][][]; type: string }
-            }[]
+            }[],
          ): void => {
             const points: THREE.Vector3[] = []
 
@@ -163,19 +163,19 @@ export function CountriesController(): null {
                   if (displayedSceneData.type == SceneType.SPHERICAL) {
                      position = latLongToVector3(
                         value[1] as number,
-                        value[0] as number
+                        value[0] as number,
                      )
                   } else if (displayedSceneData.type == SceneType.PLANE) {
                      const worldPos: THREE.Vector2 =
                         ThreeGeoUnitsUtils.datumsToSpherical(
                            value[1] as number,
-                           value[0] as number
+                           value[0] as number,
                         )
                      position = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
                   }
 
                   points.push(position)
-               }
+               },
             )
 
             let resolution: THREE.Vector2 =
@@ -186,7 +186,7 @@ export function CountriesController(): null {
             const line: MeshLineGeometry = new MeshLineGeometry()
             line.setPoints(
                points,
-               (p: number): number => GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH
+               (p: number): number => GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH,
             )
             const material: MeshLineMaterial = new MeshLineMaterial({
                resolution: resolution,
@@ -199,7 +199,7 @@ export function CountriesController(): null {
             > = new THREE.Mesh(line, material)
 
             frontiersGroup.current.add(mesh)
-         }
+         },
       )
 
       displayedSceneData.scene.add(frontiersGroup.current)
@@ -214,10 +214,10 @@ export function CountriesController(): null {
          (
             value: THREE.Object3D<THREE.Object3DEventMap>,
             index: number,
-            array: THREE.Object3D<THREE.Object3DEventMap>[]
+            array: THREE.Object3D<THREE.Object3DEventMap>[],
          ): void => {
             value.lookAt(displayedSceneData.camera.position)
-         }
+         },
       )
    }
 
@@ -228,7 +228,7 @@ export function CountriesController(): null {
       window.removeEventListener('click', onMouseClick)
       displayedSceneData?.controls?.removeEventListener(
          'change',
-         onControlsChange
+         onControlsChange,
       )
    }
 
@@ -277,10 +277,10 @@ export function CountriesController(): null {
    }
 
    const planeAdjustedScale = useRef<number>(
-      PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE
+      PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
    )
    const globeAdjustedScale = useRef<number>(
-      GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE
+      GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
    )
 
    /**
@@ -295,13 +295,13 @@ export function CountriesController(): null {
          globeAdjustedScale.current = clamp(
             cameraDistanceToPlanetCenter.current / 1e7 - 0.3,
             GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-            GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE
+            GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
          )
       } else if (displayedSceneData.type == SceneType.PLANE) {
          planeAdjustedScale.current = clamp(
             cameraDistanceToPlanetCenter.current / 1e5,
             PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-            PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE
+            PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
          )
       }
 
@@ -310,13 +310,13 @@ export function CountriesController(): null {
             name.scale.set(
                globeAdjustedScale.current,
                globeAdjustedScale.current,
-               globeAdjustedScale.current
+               globeAdjustedScale.current,
             )
          } else if (displayedSceneData.type == SceneType.PLANE) {
             name.scale.set(
                planeAdjustedScale.current,
                planeAdjustedScale.current,
-               planeAdjustedScale.current
+               planeAdjustedScale.current,
             )
          }
       })
@@ -343,7 +343,7 @@ export function CountriesController(): null {
       raycaster.setFromCamera(mouse, displayedSceneData.camera)
 
       const intersects = raycaster.intersectObjects(
-         namesGroup.current!.children
+         namesGroup.current!.children,
       )
 
       if (intersects.length > 0) {

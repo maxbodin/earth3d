@@ -1,17 +1,13 @@
 import React from 'react'
 import { Link } from '@/app/components/atoms/ui/link/link'
-import {
-   getContinentEmoji,
-   getContinentString,
-   getTypeString,
-} from '@/app/helpers/beautifyHelper'
+import { getContinentEmoji, getContinentString, getTypeString } from '@/app/helpers/beautifyHelper'
 import { N_A_VALUE } from '@/app/constants/strings'
 
 const lookup = require('country-data').lookup
 
 export function AirportDataDisplay({
-   selectedAirportData,
-}: {
+                                      selectedAirportData,
+                                   }: {
    selectedAirportData: Record<string, any>
 }): React.JSX.Element {
    const data = selectedAirportData?.data

@@ -3,14 +3,14 @@ import * as THREE from 'three'
 import React, { useEffect, useRef } from 'react'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js'
-import { PlanetProvider } from '@/app/context/planetContext'
+import { PlanetProvider } from '@/app/context_todo_improve/planetContext'
 import { Planet } from '@/app/components/atoms/three/planet/planet'
 import { Atmosphere } from '@/app/components/atoms/three/atmosphere/atmosphere'
-import { SceneType } from '@/app/components/enums/sceneType'
-import { useMap } from '@/app/context/mapContext'
+import { SceneType } from '@/app/enums/sceneType'
+import { useMap } from '@/app/context_todo_improve/mapContext'
 import { OuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace'
 import { GLOBE_SCENE_NAME, PLANE_SCENE_NAME } from '@/app/constants/strings'
-import { Vessels } from '@/app/components/atoms/three/vessels/vessels'
+import { VesselsController } from '@/app/components/atoms/three/vessels/vessels.controller'
 import { CountriesProvider } from '@/app/components/atoms/three/countries/countries.model'
 import { CountriesController } from '@/app/components/atoms/three/countries/countries.controller'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
@@ -18,6 +18,8 @@ import { EARTH_RADIUS } from '@/app/constants/numbers'
 import { Geolocation, ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
 import { getMapboxToken } from '@/app/server/actions/getMapboxToken'
 import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
+import { PlaneSky } from '@/app/components/atoms/three/planeSky/planeSky'
+import { ClickHandler } from '@/app/components/atoms/clickHandler/clickHandler'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -43,10 +45,11 @@ export function ThreeScene() {
       renderer.current = new THREE.WebGLRenderer({
          alpha: true,
          antialias: true,
+         stencil: true,
          logarithmicDepthBuffer: true,
          depth: true,
          premultipliedAlpha: true,
-         precision: 'mediump', //highp", "mediump" or "lowp"
+         precision: 'highp', //highp", "mediump" or "lowp"
          powerPreference: 'default', //"high-performance", "low-power" or "default"
       })
       renderer.current.setSize(window.innerWidth, window.innerHeight)
@@ -73,16 +76,16 @@ export function ThreeScene() {
          75,
          window.innerWidth / window.innerHeight,
          0.001,
-         1e18
+         1e18,
       )
 
       // Set controls settings.
       globeControls.current = new MapControls(
          globeCamera.current,
-         renderer.current!.domElement
+         renderer.current!.domElement,
       )
       globeControls.current!.enableDamping = true
-      globeControls.current!.dampingFactor = 0.05
+      globeControls.current!.dampingFactor = 0.1
       globeControls.current!.rotateSpeed = 0.1
       globeControls.current!.zoomSpeed = 1
       globeControls.current!.enablePan = false
@@ -121,14 +124,14 @@ export function ThreeScene() {
          75,
          window.innerWidth / window.innerHeight,
          0.001,
-         1e12
+         1e12,
       )
 
       planeScene.add(new THREE.AmbientLight(0x777777, 1.2))
 
       planeControls.current = new MapControls(
          planeCamera.current,
-         renderer.current!.domElement
+         renderer.current!.domElement,
       )
       planeControls.current!.minDistance = 1.0
       planeControls.current!.zoomSpeed = 1
@@ -163,7 +166,7 @@ export function ThreeScene() {
 
             // Raycast from center of the camera to the sphere surface
             const intersects = raycaster.intersectObjects(
-               currentScene.scene.children
+               currentScene.scene.children,
             )
 
             if (intersects.length > 0) {
@@ -181,7 +184,7 @@ export function ThreeScene() {
                const worldCoords: THREE.Vector2 =
                   ThreeGeoUnitsUtils.datumsToSpherical(
                      planetPos.latitude,
-                     planetPos.longitude
+                     planetPos.longitude,
                   )
 
                /* TODO DELETE, THIS IS TEST TO PLACE MODEL AT LAT LON ON PLANE.
@@ -197,14 +200,14 @@ export function ThreeScene() {
                planeScene.camera.position.set(
                   worldCoords.x,
                   distance,
-                  -worldCoords.y
+                  -worldCoords.y,
                )
 
                console.log(
                   'Geo-Three: Switched scene from sphere to plane.',
                   point,
                   planetPos,
-                  worldCoords
+                  worldCoords,
                )
 
                // Change scene to "plane" earth
@@ -239,13 +242,13 @@ export function ThreeScene() {
             const target = currentScene.controls.target
             const coords: Geolocation = ThreeGeoUnitsUtils.sphericalToDatums(
                target.x,
-               -target.z
+               -target.z,
             )
 
             // Get sphere surface point from coordinates
             const dir: THREE.Vector3 = ThreeGeoUnitsUtils.datumsToVector(
                coords.latitude,
-               coords.longitude
+               coords.longitude,
             )
 
             const sphereScene = scenes.current[SceneType.SPHERICAL]
@@ -260,7 +263,7 @@ export function ThreeScene() {
                'Geo-Three: Switched scene from plane to sphere.',
                currentScene.controls,
                coords,
-               dir
+               dir,
             )
 
             // Change to spherical earth model
@@ -323,10 +326,10 @@ export function ThreeScene() {
     * Function to clean up on component unmount.
     */
    const cleanup: () => void = (): void => {
-      window.removeEventListener('click', handleResize)
+      window.removeEventListener('resize', handleResize)
       if (renderer.current && renderer.current.domElement.parentNode) {
          renderer.current.domElement.parentNode.removeChild(
-            renderer.current.domElement
+            renderer.current.domElement,
          )
       }
    }
@@ -336,7 +339,7 @@ export function ThreeScene() {
       // Dynamically import the CustomMapBoxProvider class.
       const { CustomMapBoxProvider } = await import(
          '../../../lib/customMapBoxProvider'
-      )
+         )
 
       const mapBoxProvider: CustomMapBoxProvider = new CustomMapBoxProvider()
 
@@ -353,7 +356,7 @@ export function ThreeScene() {
    }
 
    useEffect(() => {
-      window.addEventListener('click', handleResize)
+      window.addEventListener('resize', handleResize)
 
       // Set up renderer, scene, and camera.
       setupRenderer()
@@ -374,7 +377,7 @@ export function ThreeScene() {
             .catch((error): void => {
                console.error(
                   'Error importing or initializing map components:',
-                  error
+                  error,
                )
             })
       }
@@ -382,6 +385,7 @@ export function ThreeScene() {
       if (!mountRef.current) return
 
       animate()
+
 
       return cleanup
    }, [])
@@ -402,12 +406,13 @@ export function ThreeScene() {
                />
                <PlanetProvider>
                   <Planet />
-
-                  <Vessels />
+                  <ClickHandler />
+                  <VesselsController />
                </PlanetProvider>
 
                <OuterSpace />
                <Atmosphere />
+               <PlaneSky />
 
                <CountriesProvider>
                   <CountriesController />
@@ -417,7 +422,7 @@ export function ThreeScene() {
                      <Airports /> // TODO AIRPORT ONLY POUR LA PLANE SCENE ET UTILISER LA VISIBLE ZONE DE LA PLANE SCENE
 
 // TODO FIX PLANES BEFORE UNCOMMENTING THIS
-               <Planes
+               <PlanesController
                   scene={globeScene.current}
                   camera={globeCamera.current}
                />

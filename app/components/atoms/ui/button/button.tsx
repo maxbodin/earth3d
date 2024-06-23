@@ -1,10 +1,10 @@
 import React, { ReactNode } from 'react'
 
 export function Button({
-   onClick,
-   svg,
-   message,
-}: {
+                          onClick,
+                          svg,
+                          message,
+                       }: {
    onClick: () => void
    svg: ReactNode
    message: string

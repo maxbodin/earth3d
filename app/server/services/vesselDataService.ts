@@ -10,7 +10,7 @@
  */
 function logInfo(message: any): void {
    console.info(
-      `[${new Date().toLocaleString('en-GB', { timeZone: 'Europe/Paris' })}] ${message}`
+      `[${new Date().toLocaleString('en-GB', { timeZone: 'Europe/Paris' })}] ${message}`,
    )
 }
 
@@ -22,7 +22,7 @@ function logInfo(message: any): void {
 function logError(message: any, error: any) {
    console.error(
       `[${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}] ${message}`,
-      error
+      error,
    )
 }
 
@@ -68,12 +68,12 @@ function handleShipStaticDataMessage(aisMessage: any) {
    const etaObj = aisMessage.Message.ShipStaticData.Eta
    const eta = etaObj
       ? new Date(
-           etaObj.Year ?? new Date().getFullYear(),
-           etaObj.Month,
-           etaObj.Day,
-           etaObj.Hour,
-           etaObj.Minute
-        )
+         etaObj.Year ?? new Date().getFullYear(),
+         etaObj.Month,
+         etaObj.Day,
+         etaObj.Hour,
+         etaObj.Minute,
+      )
       : null
 
    return {
@@ -135,7 +135,7 @@ export const setSocketListeners = (): void => {
    if (!socket) return
 
    // WebSocket event handlers.
-   socket.onopen = function (_: Event): void {
+   socket.onopen = function(_: Event): void {
       logInfo('WebSocket aisstream Connected!')
       let subscriptionMessage = {
          Apikey: process.env.AISSTREAM_TOKEN,

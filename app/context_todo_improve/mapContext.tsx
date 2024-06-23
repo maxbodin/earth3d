@@ -10,10 +10,8 @@ interface MapContextValue {
    setMapStyle: React.Dispatch<React.SetStateAction<any>>
 }
 
-// Create context.
 const MapContext = createContext<MapContextValue | null>(null)
 
-// Custom hook to access context.
 export function useMap(): MapContextValue {
    const context = useContext(MapContext)
    if (!context) {
@@ -22,7 +20,6 @@ export function useMap(): MapContextValue {
    return context
 }
 
-// Provider component.
 export function MapProvider({ children }: { children: ReactNode }) {
    const [map, setMap] = useState<any>(null)
    const [mapProvider, setMapProvider] = useState<any>(null)

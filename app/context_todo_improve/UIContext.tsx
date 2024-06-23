@@ -1,19 +1,17 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react'
-import { PanelType } from '@/app/components/enums/panelType'
+import { PanelType } from '@/app/enums/panelType'
 
 interface UiContextValue {
    openedPanelType: PanelType
-   setOpenedPanelType: React.Dispatch<React.SetStateAction<any>>
+   setOpenedPanelType: React.Dispatch<React.SetStateAction<PanelType>>
    isNavBarDisplayed: boolean
-   setIsNavBarDisplayed: React.Dispatch<React.SetStateAction<any>>
+   setIsNavBarDisplayed: React.Dispatch<React.SetStateAction<boolean>>
    isSearchBarDisplayed: boolean
-   setIsSearchBarDisplayed: React.Dispatch<React.SetStateAction<any>>
+   setIsSearchBarDisplayed: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-// Create context.
 const UiContext = createContext<UiContextValue | null>(null)
 
-// Custom hook to access context.
 export function useUi(): UiContextValue {
    const context = useContext(UiContext)
    if (!context) {
@@ -22,10 +20,9 @@ export function useUi(): UiContextValue {
    return context
 }
 
-// Provider component.
 export function UiProvider({ children }: { children: ReactNode }) {
    const [openedPanelType, setOpenedPanelType] = useState<PanelType>(
-      PanelType.NULL
+      PanelType.NULL,
    )
    const [isNavBarDisplayed, setIsNavBarDisplayed] = useState<boolean>(true)
    const [isSearchBarDisplayed, setIsSearchBarDisplayed] =

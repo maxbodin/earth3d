@@ -1,16 +1,17 @@
 'use client'
 import React from 'react'
-import { useUi } from '@/app/context/UIContext'
+import { useUi } from '@/app/context_todo_improve/UIContext'
 import { DashboardController } from '@/app/components/organisms/dashboard/dashboard.controller'
 import { useDashboard } from '@/app/components/organisms/dashboard/dashboard.model'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
 import { Tabs } from '@/app/components/atoms/ui/tabs/tabs'
 import { TAB_TITLES } from '@/app/constants/strings'
-import { TabType } from '@/app/components/enums/tabType'
+import { TabType } from '@/app/enums/tabType'
 import { VesselsTabView } from '@/app/components/organisms/dashboardTabs/vesselsTab/vesselsTab.view'
 import { MapTabView } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.view'
 import { OuterSpaceTabView } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/view'
 import { CountriesTabView } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.view'
+import { AirportsTabView } from '@/app/components/organisms/dashboardTabs/airportsTab/airportsTab.view'
 
 export function DashboardView() {
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
@@ -34,7 +35,7 @@ export function DashboardView() {
                   <Tabs tabTitles={TAB_TITLES} onTabClick={onTabSelection} />
 
                   {activeDashboardTab == TabType.AIRPORTS && (
-                     <div>Work In Progress</div>
+                     <AirportsTabView />
                   )}
                   {activeDashboardTab == TabType.PLANES && (
                      <div>Work In Progress</div>

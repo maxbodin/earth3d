@@ -1,25 +1,26 @@
 'use client'
 import * as THREE from 'three'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import layers from '../../../../data/Airports.json'
 import { AIRPORT_SCALE, ZOOM_THRESHOLD } from '@/app/constants/numbers'
-import { ObjectType } from '@/app/components/enums/objectType'
-import { useData } from '@/app/context/dataContext'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { AIRPORT_MATERIAL } from '@/app/constants/materials'
+import { useAirports } from '@/app/components/atoms/three/airports/airports.model'
 
 export function Airports(): null {
    const { displayedSceneData } = useScenes()
-   const airportsGroup = useRef<THREE.Group>(new THREE.Group())
+   const { displayedAirportsGroup } = useAirports()
 
-   // Create group of airports.
+   /**
+    * Create group of airports.
+    */
    const addAirports = (): void => {
       // Clear previous planes.
-      airportsGroup.current.clear()
+      displayedAirportsGroup.clear()
 
       if (
-         !airportsGroup.current ||
+         !displayedAirportsGroup ||
          displayedSceneData?.camera == null ||
          !displayedSceneData?.controls == null
       )
@@ -42,7 +43,7 @@ export function Airports(): null {
                   lon <= sphereVisibleZone.rightLatLon.lon &&
                   lon >= sphereVisibleZone.leftLatLon.lon
                )*/
-            }
+            },
          )
 
          filteredAirports.forEach((airportData: any): void => {
@@ -53,16 +54,21 @@ export function Airports(): null {
 
             const position: THREE.Vector3 = latLongToVector3(
                lon as number,
-               lat as number
+               lat as number,
             )
             addAirport(position, airportData)
          })
       }
    }
 
+   /**
+    *
+    * @param position
+    * @param airportData
+    */
    const addAirport = (position: THREE.Vector3, airportData: any) => {
       if (
-         !airportsGroup.current ||
+         !displayedAirportsGroup ||
          !displayedSceneData?.scene ||
          !displayedSceneData?.camera
       )
@@ -72,60 +78,36 @@ export function Airports(): null {
       // Create airport.
       const airport = new THREE.Mesh(
          new THREE.SphereGeometry(1, 16, 16),
-         AIRPORT_MATERIAL
+         AIRPORT_MATERIAL,
       )
 
       airport.position.copy(position)
       airport.scale.set(AIRPORT_SCALE, AIRPORT_SCALE, AIRPORT_SCALE)
       if (airportData && airportData.attributes)
          airport.userData = { data: airportData.attributes }
-      airportsGroup.current!.add(airport)
+      displayedAirportsGroup.add(airport)
    }
 
-   // Function to handle click events.
-   const selectedAirport =
-      useRef<THREE.Object3D<THREE.Object3DEventMap> | null>(null)
-
-   const { setSelectedObjectType, setSelectedObjectData } = useData()
-
-   const onMouseClick = (event: { clientX: number; clientY: number }): void => {
-      if (displayedSceneData?.camera == null || !airportsGroup.current) return
-
-      const raycaster: THREE.Raycaster = new THREE.Raycaster()
-      const mouse: THREE.Vector2 = new THREE.Vector2()
-
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
-      raycaster.setFromCamera(mouse, displayedSceneData.camera)
-
-      const intersects = raycaster.intersectObjects(
-         airportsGroup.current!.children
-      )
-
-      if (intersects.length > 0) {
-         selectedAirport.current = intersects[0].object
-
-         setSelectedObjectData(intersects[0].object.userData)
-         setSelectedObjectType(ObjectType.AIRPORT)
-      }
-   }
-
+   /**
+    *
+    */
    const handleCameraMove = (): void => {
       addAirports()
-      displayedSceneData?.scene?.add(airportsGroup.current)
+
+      displayedSceneData?.scene?.add(displayedAirportsGroup)
    }
 
+   /**
+    *
+    */
    const cleanup = (): void => {
-      window.removeEventListener('click', onMouseClick)
       displayedSceneData?.controls?.removeEventListener(
          'change',
-         handleCameraMove
+         handleCameraMove,
       )
    }
 
    useEffect(() => {
-      // Add event listener to detect clicks on the window.
-      window.addEventListener('click', onMouseClick)
       displayedSceneData?.controls?.addEventListener('change', handleCameraMove)
 
       // Clean up the event listener.

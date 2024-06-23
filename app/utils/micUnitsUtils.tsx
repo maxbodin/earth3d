@@ -39,7 +39,7 @@ export class ThreeGeoUnitsUtils {
     */
    public static datumsToSpherical(
       latitude: number,
-      longitude: number
+      longitude: number,
    ): Vector2 {
       const x: number = (longitude * EARTH_ORIGIN) / 180.0
       let y: number =
@@ -80,12 +80,12 @@ export class ThreeGeoUnitsUtils {
    public static quadtreeToDatums(
       zoom: number,
       x: number,
-      y: number
+      y: number,
    ): Geolocation {
       const n: number = Math.pow(2.0, zoom)
       const longitude: number = (x / n) * 360.0 - 180.0
       const latitudeRad: number = Math.atan(
-         Math.sinh(Math.PI * (1.0 - (2.0 * y) / n))
+         Math.sinh(Math.PI * (1.0 - (2.0 * y) / n)),
       )
       const latitude: number = 180.0 * (latitudeRad / Math.PI)
 
@@ -106,7 +106,7 @@ export class ThreeGeoUnitsUtils {
       const latitude: number =
          Math.atan2(
             dir.y,
-            Math.sqrt(Math.pow(dir.x, 2) + Math.pow(-dir.z, 2))
+            Math.sqrt(Math.pow(dir.x, 2) + Math.pow(-dir.z, 2)),
          ) * radToDeg
       const longitude: number = Math.atan2(-dir.z, dir.x) * radToDeg
 
@@ -133,7 +133,7 @@ export class ThreeGeoUnitsUtils {
       return new Vector3(
          -Math.cos(rotX + Math.PI) * cos,
          Math.sin(rotY),
-         Math.sin(rotX + Math.PI) * cos
+         Math.sin(rotX + Math.PI) * cos,
       )
    }
 
@@ -150,7 +150,7 @@ export class ThreeGeoUnitsUtils {
          (color.r * 255.0 * 65536.0 +
             color.g * 255.0 * 256.0 +
             color.b * 255.0) *
-            0.1 -
+         0.1 -
          10000.0
       )
    }

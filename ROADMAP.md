@@ -17,13 +17,16 @@ Project global advancement
 
 - [ ] Explain global structure in README.md
 
-### Ui
+### UI
 
 - [ ] Make panel scrollable
 
+### UX
+
+- [ ] Reduce damping
+
 ### Map
 
-- [ ] Skybox in plane scene
 - [ ] Add Documentation panel for map
 - [ ] Add Data panel for map
 - [ ] Add Credit panel for map
@@ -38,12 +41,12 @@ Project global advancement
 - [ ] Add Data panel for airports
 - [ ] Add Credit panel for airports
 
-### Planes
+### PlanesController
 
 - [ ] Allow user to visualize planes in live on map
 - [ ] Opening details of a plane by clicking on it
-- [ ] Automatic reloading of aircraft after duration (interpolation for moves with multiple cooldown categories)
-- [ ] User is able to search a specific plane using different data (CALLSIGN, onGround?, ..)
+- [ ] Automatic reloading of aircraft after duration (interpolation for moves with multiple cool-down categories)
+- [ ] User is able to search a specific plane using different data (CALLSIGN, onGround?, ...)
 - [ ] User is able to filter planes using different data (Nationality, ...)
 - [ ] By selecting a plane user can display the itinerary of the plane (Use meshline)
 - [ ] Explore the following idea for planes: Pour le mouvement des items on call dès le chargement de la page puis 1
@@ -56,13 +59,14 @@ Project global advancement
 - [ ] Add Credit panel for planes
 - [ ] Allow user to visualize planes data from yesterday to now on map
 
-### Vessels
+### VesselsController
 
 - [ ] Add Documentation panel for vessels
 - [ ] Add Data panel for vessels
 - [ ] Add Credit panel for vessels
 - [ ] Allow user to search a vessel using many parameters (MMSI, CALLSIGN, IMO, ETA, ...)
 - [ ] Make vessels move on map and not only be static
+- [ ] Allow user to visualize vessels on map (Plane and Globe) (We use AIS data from aisstream.io)
 
 ### Outer space
 
@@ -126,35 +130,15 @@ Project global advancement
   be saved in the markers displayed on the map when selected. Allow user to activate or deactivate the displaying of its
   custom data (switch). Display a terminal window like with errors under the custom data block.
 
-## Done
-
-### Global
-
-- [x] Project global structure
-
-### Planet
-
-- [x] Planet made with Three.js
-- [x] Relief on ground using displacement map
-- [x] User can zoom on the planet with no loss of image quality (We achieved this using geo-three lib and MapBox)
-
-### Vessels
-
-- [x] Allow user to visualize vessels on map (Plane and Globe) (We use AIS data from aisstream.io)
-
-### Ui
-
-- [x] Being able to close the details panel
-
 ### Countries
 
-- [x] Countries frontiers can be displayed on globe scene
-- [x] Countries frontiers can be displayed on plane scene using meshlines
-- [x] Countries names can be displayed at the center of the countries
-- [x] User can activate or deactivate countries names
-- [x] User can activate or deactivate countries frontiers
 - [ ] User can select a country by double-clicking on the name
 - [ ] When selecting a country user can visualize data on the country
 - [ ] Flag emoji is visible in each country name
-- [] Countries frontiers can be displayed on plane scene using prebaked texture, only use meshline for selected
+- [ ] Countries frontiers can be displayed on plane scene using prebaked texture, only use meshline for selected
   country ?
+
+// TODO WIP:
+export function getWeatherForLocationEndpoint(location: Coordinate) {
+return `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${location.lat}%2C23&lon${location.lng}%2C8`
+}

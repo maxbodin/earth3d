@@ -4,8 +4,8 @@ import { N_A_VALUE } from '@/app/constants/strings'
 const lookup = require('country-data').lookup
 
 export function PlaneDataDisplay({
-   selectedPlaneData,
-}: {
+                                    selectedPlaneData,
+                                 }: {
    selectedPlaneData: Record<string, any>
 }) {
    const callsign = selectedPlaneData?.data?.[1] || N_A_VALUE

@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useRef } from 'react'
-import { useData } from '@/app/context/dataContext'
+import { useData } from '@/app/context_todo_improve/dataContext'
 import * as THREE from 'three'
 import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
-import { SceneType } from '@/app/components/enums/sceneType'
+import { SceneType } from '@/app/enums/sceneType'
 import {
    GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA,
    GLOBE_SCENE_VESSEL_MAX_SCALE,
@@ -17,20 +17,17 @@ import {
 import { VESSEL_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { VESSEL_GLB_MODEL } from '@/app/constants/paths'
 import { clamp } from '@/app/helpers/numberHelper'
-import { ObjectType } from '@/app/components/enums/objectType'
 import { VESSEL_MATERIAL } from '@/app/constants/materials'
 import { ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
+import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
 
-export function Vessels(): null {
+export function VesselsController(): null {
    const { vesselsData } = useData()
    const { displayedSceneData } = useScenes()
-   const { setSelectedObjectType, setSelectedObjectData } = useData()
+   const { displayedVesselsGroup } = useVessels()
 
-   const displayedVesselsGroup = useRef<THREE.Group>(new THREE.Group())
    const vesselModel = useRef<THREE.Group<THREE.Object3DEventMap> | null>(null)
-   const selectedVessel = useRef<THREE.Object3D<THREE.Object3DEventMap> | null>(
-      null
-   )
+
    const loader: GLTFLoader = new GLTFLoader()
 
    const vesselsCommunicationsFrequencies: Map<string, any> = new Map()
@@ -64,7 +61,7 @@ export function Vessels(): null {
          },
          (error: any): void => {
             console.error('Error loading vessel model:', error)
-         }
+         },
       )
    }
 
@@ -90,7 +87,7 @@ export function Vessels(): null {
       ) {
          vesselsCommunicationsFrequencies.set(
             mmsi,
-            vesselCommunicationFrequency + 0.05
+            vesselCommunicationFrequency + 0.05,
          )
       } else {
          vesselsCommunicationsFrequencies.set(mmsi, 0)
@@ -99,7 +96,7 @@ export function Vessels(): null {
 
    const displayVessels = (vessels: any[]): void => {
       // Clear previous vessels.
-      displayedVesselsGroup.current.clear()
+      displayedVesselsGroup.clear()
 
       vessels.forEach((vesselData: any): void => {
          if (vesselModel.current == null) return
@@ -119,7 +116,7 @@ export function Vessels(): null {
             if (child instanceof THREE.Mesh) {
                child.material = new THREE.MeshBasicMaterial({
                   color: interpolateColor(
-                     vesselsCommunicationsFrequencies.get(mmsi) ?? 0
+                     vesselsCommunicationsFrequencies.get(mmsi) ?? 0,
                   ),
                })
             }
@@ -130,7 +127,7 @@ export function Vessels(): null {
             vessel.scale.set(
                globeAdjustedScale.current,
                globeAdjustedScale.current,
-               globeAdjustedScale.current
+               globeAdjustedScale.current,
             )
          } else if (displayedSceneData.type == SceneType.PLANE) {
             const hdg = vesselData.message.hdg
@@ -141,18 +138,18 @@ export function Vessels(): null {
             vessel.scale.set(
                planeAdjustedScale.current,
                planeAdjustedScale.current,
-               planeAdjustedScale.current
+               planeAdjustedScale.current,
             )
          }
 
          vessel.renderOrder = VESSEL_RENDER_ORDER
          vessel.userData = { data: vesselData }
 
-         displayedVesselsGroup.current.add(vessel)
+         displayedVesselsGroup.add(vessel)
       })
 
-      if (displayedVesselsGroup.current && displayedSceneData.scene) {
-         displayedSceneData.scene.add(displayedVesselsGroup.current)
+      if (displayedVesselsGroup && displayedSceneData.scene) {
+         displayedSceneData.scene.add(displayedVesselsGroup)
       }
    }
 
@@ -175,13 +172,13 @@ export function Vessels(): null {
          if (displayedSceneData.type == SceneType.PLANE) {
             const test = new THREE.Mesh(
                new THREE.SphereGeometry(1e4, 16, 16),
-               new THREE.MeshBasicMaterial({ color: '#ff0000' })
+               new THREE.MeshBasicMaterial({ color: '#ff0000' }),
             )
 
             const worldPos: THREE.Vector2 =
                ThreeGeoUnitsUtils.datumsToSpherical(
                   previousData.message.location.newCoordinates[0] as number,
-                  previousData.message.location.newCoordinates[1] as number
+                  previousData.message.location.newCoordinates[1] as number,
                )
             test.position.set(worldPos.x, 0, -worldPos.y)
             displayedSceneData.scene?.add(test)
@@ -205,7 +202,7 @@ export function Vessels(): null {
    const processVessels = (): void => {
       if (!vesselsData) {
          // Clear previous vessels.
-         displayedVesselsGroup.current.clear()
+         displayedVesselsGroup.clear()
          return
       }
 
@@ -227,7 +224,7 @@ export function Vessels(): null {
 
       // Remove vessels that are out of visible zone.
       visibleVessels.current = Array.from(
-         totalVesselsData.current.values()
+         totalVesselsData.current.values(),
       ).filter((vesselData: any): boolean => {
          let coordinates = vesselData.message.location.newCoordinates
 
@@ -245,7 +242,7 @@ export function Vessels(): null {
          if (displayedSceneData.type == SceneType.SPHERICAL) {
             const worldPos: THREE.Vector3 = latLongToVector3(
                lon as number,
-               lat as number
+               lat as number,
             )
 
             // TODO FIX ROTATION AND AXIS
@@ -254,7 +251,7 @@ export function Vessels(): null {
 
             const distanceToCamera: number =
                displayedSceneData.camera.position.distanceTo(
-                  vesselData.globePosition
+                  vesselData.globePosition,
                )
 
             return (
@@ -264,17 +261,17 @@ export function Vessels(): null {
             const worldPos: THREE.Vector2 =
                ThreeGeoUnitsUtils.datumsToSpherical(
                   lon as number,
-                  lat as number
+                  lat as number,
                )
             vesselData.planePosition = new THREE.Vector3(
                worldPos.x,
                0,
-               -worldPos.y
+               -worldPos.y,
             )
 
             const distanceToCamera: number =
                displayedSceneData.camera.position.distanceTo(
-                  vesselData.planePosition
+                  vesselData.planePosition,
                )
 
             return (
@@ -292,48 +289,10 @@ export function Vessels(): null {
     * Cleanup : remove events listeners.
     */
    const cleanup = (): void => {
-      window.removeEventListener('click', onMouseClick)
       displayedSceneData?.controls?.removeEventListener(
          'change',
-         onControlsChange
+         onControlsChange,
       )
-   }
-
-   const raycaster: THREE.Raycaster = new THREE.Raycaster()
-   const mouse: THREE.Vector2 = new THREE.Vector2()
-
-   /**
-    * Function to handle click events.
-    * @param event
-    */
-   const onMouseClick = (event: { clientX: number; clientY: number }): void => {
-      if (
-         displayedSceneData == null ||
-         displayedSceneData.camera == null ||
-         !displayedVesselsGroup.current
-      )
-         return
-
-      // Use mouse position to create a raycast.
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
-      raycaster.setFromCamera(mouse, displayedSceneData.camera)
-
-      const intersects = raycaster.intersectObjects(
-         displayedVesselsGroup.current!.children
-      )
-
-      if (intersects.length > 0) {
-         const selectedVesselObject: any = intersects[0].object.parent
-         const selectedVesselData: any = selectedVesselObject.userData.data
-         selectedVessel.current = selectedVesselObject
-
-         if (selectedVesselData === null || selectedVesselData === undefined)
-            return
-
-         setSelectedObjectType(ObjectType.VESSEL)
-         setSelectedObjectData(selectedVesselData)
-      }
    }
 
    const cameraDistanceToPlanetCenter = useRef<number>(0)
@@ -344,7 +303,7 @@ export function Vessels(): null {
     * Called each times controls change (Zoom, camera move, ...)
     */
    const onControlsChange = (): void => {
-      if (displayedVesselsGroup.current == null || displayedSceneData == null) {
+      if (displayedVesselsGroup == null || displayedSceneData == null) {
          return
       }
 
@@ -354,27 +313,27 @@ export function Vessels(): null {
       planeAdjustedScale.current = clamp(
          cameraDistanceToPlanetCenter.current / 1e3,
          PLANE_SCENE_VESSEL_MIN_SCALE,
-         PLANE_SCENE_VESSEL_MAX_SCALE
+         PLANE_SCENE_VESSEL_MAX_SCALE,
       )
 
       globeAdjustedScale.current = clamp(
          cameraDistanceToPlanetCenter.current / 1e4,
          GLOBE_SCENE_VESSEL_MIN_SCALE,
-         GLOBE_SCENE_VESSEL_MAX_SCALE
+         GLOBE_SCENE_VESSEL_MAX_SCALE,
       )
 
-      displayedVesselsGroup.current.children.forEach((vessel): void => {
+      displayedVesselsGroup.children.forEach((vessel): void => {
          if (displayedSceneData.type == SceneType.SPHERICAL) {
             vessel.scale.set(
                globeAdjustedScale.current,
                globeAdjustedScale.current,
-               globeAdjustedScale.current
+               globeAdjustedScale.current,
             )
          } else if (displayedSceneData.type == SceneType.PLANE) {
             vessel.scale.set(
                planeAdjustedScale.current,
                planeAdjustedScale.current,
-               planeAdjustedScale.current
+               planeAdjustedScale.current,
             )
          }
       })
@@ -406,7 +365,7 @@ export function Vessels(): null {
             if (displayedSceneData.type == SceneType.SPHERICAL) {
                const worldPos: THREE.Vector3 = latLongToVector3(
                   lon as number,
-                  lat as number
+                  lat as number,
                )
 
                // TODO FIX ROTATION AND AXIS
@@ -416,7 +375,7 @@ export function Vessels(): null {
                const worldPos: THREE.Vector2 =
                   ThreeGeoUnitsUtils.datumsToSpherical(
                      lon as number,
-                     lat as number
+                     lat as number,
                   )
 
                vesselModel?.position.setY(0)
@@ -424,9 +383,9 @@ export function Vessels(): null {
                   new THREE.Vector3(
                      worldPos.x,
                      vesselModel?.position.y,
-                     -worldPos.y
+                     -worldPos.y,
                   ),
-                  lerpAlpha.current
+                  lerpAlpha.current,
                )
             }
          }
@@ -439,9 +398,6 @@ export function Vessels(): null {
       if (vesselModel.current == null) {
          loadVesselModel()
       }
-
-      // Add event listener to detect clicks on the window.
-      window.addEventListener('click', onMouseClick)
 
       displayedSceneData?.controls?.addEventListener('change', onControlsChange)
 

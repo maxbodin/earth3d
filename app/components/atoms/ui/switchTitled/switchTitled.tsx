@@ -11,18 +11,18 @@ import React from 'react'
  * @constructor
  */
 export function SwitchTitled({
-   title,
-   defaultChecked,
-   onCheck,
-   onUncheck,
-}: {
+                                title,
+                                defaultChecked,
+                                onCheck,
+                                onUncheck,
+                             }: {
    title: string
    defaultChecked: boolean
    onCheck: () => void
    onUncheck: () => void
 }) {
    const handleSwitchChange = (
-      event: React.ChangeEvent<HTMLInputElement>
+      event: React.ChangeEvent<HTMLInputElement>,
    ): void => {
       if (event.target.checked && onCheck) {
          onCheck()

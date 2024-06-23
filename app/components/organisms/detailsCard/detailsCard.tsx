@@ -1,10 +1,10 @@
 import React from 'react'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
 import { PlaneDataDisplay } from '../../atoms/dataDisplay/planeDataDisplay/planeDataDisplay'
-import { ObjectType } from '@/app/components/enums/objectType'
-import { useData } from '@/app/context/dataContext'
+import { useData } from '@/app/context_todo_improve/dataContext'
 import { AirportDataDisplay } from '../../atoms/dataDisplay/airportDataDisplay/airportDataDisplay'
 import { VesselDataDisplay } from '@/app/components/atoms/dataDisplay/vesselDataDisplay/vesselDataDisplay'
+import { ObjectType } from '@/app/enums/objectType'
 
 export function DetailsCard() {
    const {

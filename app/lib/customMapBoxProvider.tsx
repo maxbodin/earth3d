@@ -40,10 +40,10 @@ export class CustomMapBoxProvider extends MapProvider {
       return new Promise(async (resolve, reject): Promise<any> => {
          if (typeof window !== 'undefined') {
             const image: HTMLImageElement = window.document.createElement('img')
-            image.onload = function (): void {
+            image.onload = function(): void {
                resolve(image)
             }
-            image.onerror = function (): void {
+            image.onerror = function(): void {
                reject()
             }
             image.crossOrigin = 'Anonymous'

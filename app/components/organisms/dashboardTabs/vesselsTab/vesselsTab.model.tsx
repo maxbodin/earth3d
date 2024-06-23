@@ -2,13 +2,11 @@ import React, { createContext, ReactNode, useContext, useState } from 'react'
 
 interface VesselsTabContextValue {
    vesselsActivated: boolean
-   setVesselsActivated: React.Dispatch<React.SetStateAction<any>>
+   setVesselsActivated: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-// Create context.
 const VesselsTabContext = createContext<VesselsTabContextValue | null>(null)
 
-// Custom hook to access context.
 export function useVesselsTab(): VesselsTabContextValue {
    const context = useContext(VesselsTabContext)
    if (!context) {
@@ -17,7 +15,6 @@ export function useVesselsTab(): VesselsTabContextValue {
    return context
 }
 
-// Provider component.
 export function VesselsTabProvider({ children }: { children: ReactNode }) {
    const [vesselsActivated, setVesselsActivated] = useState<boolean>(false)
 

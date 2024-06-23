@@ -7,10 +7,8 @@ interface ToastContextValue {
    setSuccessToastIsDisplayed: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-// Create context.
 const ToastContext = createContext<ToastContextValue | null>(null)
 
-// Custom hook to access context.
 export function useToast(): ToastContextValue {
    const context = useContext(ToastContext)
    if (!context) {
@@ -19,7 +17,6 @@ export function useToast(): ToastContextValue {
    return context
 }
 
-// Provider component.
 export function ToastProvider({ children }: { children: ReactNode }) {
    const [dangerToastIsDisplayed, setDangerToastIsDisplayed] =
       useState<boolean>(false)

@@ -10,7 +10,7 @@ import {
    SPHERE_WIDTH_SEGMENTS,
 } from '@/app/constants/numbers'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
-import { SceneType } from '@/app/components/enums/sceneType'
+import { SceneType } from '@/app/enums/sceneType'
 import { OUTER_SPACE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { MILKY_WAY_NAME } from '@/app/constants/strings'
 import { MILKY_WAY_PNG } from '@/app/constants/paths'
@@ -20,7 +20,7 @@ export function MilkyWay(): null {
    const milkyWay = useRef<THREE.Mesh | null>(null)
    const { displayedSceneData } = useScenes()
    const milkyWayTexture: THREE.Texture = new THREE.TextureLoader().load(
-      MILKY_WAY_PNG
+      MILKY_WAY_PNG,
    )
 
    /**
@@ -41,7 +41,7 @@ export function MilkyWay(): null {
          new THREE.SphereGeometry(
             OUTER_SPACE_RADIUS,
             SPHERE_WIDTH_SEGMENTS,
-            SPHERE_HEIGHT_SEGMENTS
+            SPHERE_HEIGHT_SEGMENTS,
          ),
          new THREE.ShaderMaterial({
             vertexShader: `
@@ -77,7 +77,7 @@ export function MilkyWay(): null {
                   value: EARTH_RADIUS * PLANET_DISPLACEMENT_SCALE,
                },
             },
-         })
+         }),
       )
 
       milkyWay.current.rotation.x = THREE.MathUtils.degToRad(EARTH_ANGLE)

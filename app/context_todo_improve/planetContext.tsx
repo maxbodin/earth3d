@@ -5,10 +5,8 @@ interface PlanetContextValue {
    setPlanet: React.Dispatch<React.SetStateAction<any>>
 }
 
-// Create context.
 const PlanetContext = createContext<PlanetContextValue | null>(null)
 
-// Custom hook to access context.
 export function usePlanet(): PlanetContextValue {
    const context = useContext(PlanetContext)
    if (!context) {
@@ -17,7 +15,6 @@ export function usePlanet(): PlanetContextValue {
    return context
 }
 
-// Provider component.
 export function PlanetProvider({ children }: { children: ReactNode }) {
    const [planet, setPlanet] = useState<any>(null)
 

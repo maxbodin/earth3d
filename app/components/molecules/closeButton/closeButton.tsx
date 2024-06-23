@@ -3,9 +3,9 @@ import React from 'react'
 import { CloseIcon } from '@/public/svgs/closeIcon'
 
 export function CloseButton({
-   onClick,
-   className = '',
-}: {
+                               onClick,
+                               className = '',
+                            }: {
    onClick: () => void
    className?: string
 }) {
