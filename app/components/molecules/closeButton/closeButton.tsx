@@ -1,6 +1,6 @@
 import { Button } from '../../atoms/ui/button/button'
 import React from 'react'
-import { CloseIcon } from '@/public/svgs/closeIcon'
+import { CloseIcon } from '@/app/components/icons/closeIcon'
 
 export function CloseButton({
                                onClick,

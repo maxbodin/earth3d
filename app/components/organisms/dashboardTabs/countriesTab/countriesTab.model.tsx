@@ -21,7 +21,7 @@ export function useCountriesTab(): CountriesTabContextValue {
 }
 
 export function CountriesTabProvider({ children }: { children: ReactNode }) {
-   const [frontiersActivated, setFrontiersActivated] = useState<boolean>(true)
+   const [frontiersActivated, setFrontiersActivated] = useState<boolean>(false)
    const [namesActivated, setNamesActivated] = useState<boolean>(false)
 
    const value: CountriesTabContextValue = {

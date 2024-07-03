@@ -10,6 +10,7 @@ import { DashboardProvider } from '@/app/components/organisms/dashboard/dashboar
 import { CreditProvider } from '@/app/components/organisms/credit/credit.model'
 import { EntitiesProviders } from '@/app/components/templates/providers/entitiesProviders'
 import { SearchBarProvider } from '@/app/components/organisms/searchBar/searchBar.model'
+import { MarkersDashboardProvider } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 
 /**
  * Hell.
@@ -25,7 +26,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                   <EntitiesProviders>
                      <DataProvider>
                         <DashboardProvider>
-                           <CreditProvider>{children}</CreditProvider>
+                           <CreditProvider>
+                              <MarkersDashboardProvider>{children}</MarkersDashboardProvider>
+                           </CreditProvider>
                         </DashboardProvider>
                      </DataProvider>
                   </EntitiesProviders>

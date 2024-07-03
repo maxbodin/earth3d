@@ -30,7 +30,7 @@ export function ThreeScene() {
    const planeCamera = useRef<THREE.PerspectiveCamera | null>(null)
    const planeControls = useRef<OrbitControls | null>(null)
 
-   const { globeScene, planeScene, setDisplayedSceneData, displayedSceneData } =
+   const { globeScene, planeScene, setDisplayedSceneData } =
       useScenes()
 
    const { map, setMap, setMapProvider } = useMap()
@@ -404,6 +404,7 @@ export function ThreeScene() {
                      overflow: 'hidden',
                   }}
                />
+               {/*<Heatmap />*/}
                <PlanetProvider>
                   <Planet />
                   <ClickHandler />

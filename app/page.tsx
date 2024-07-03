@@ -14,6 +14,7 @@ import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
 import { ThreeScene } from '@/app/components/templates/threeScene/threeScene'
 import { ScenesProvider } from '@/app/components/templates/scenes/scenes.model'
 import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
+import { MarkersDashboardView } from '@/app/components/organisms/markersDashboard/markersDashboard.view'
 
 export default function Home() {
    const {
@@ -54,6 +55,7 @@ export default function Home() {
          <MapProvider>
             <DashboardView />
             <CreditView />
+            <MarkersDashboardView />
 
             <ScenesProvider>
                <Geolocation />

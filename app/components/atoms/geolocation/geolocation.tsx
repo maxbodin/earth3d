@@ -14,36 +14,44 @@ import {
    PLANE_SCENE_PUCK_MIN_SCALE,
 } from '@/app/constants/numbers'
 
-export const Geolocation = () => {
+export const Geolocation = (): null => {
    const [location, setLocation] = useState<GeolocationPosition>()
    const [error, setError] = useState<string>()
    const { displayedSceneData } = useScenes()
+
+   /**
+    *
+    * @param position
+    */
+   const successCallback = (position: GeolocationPosition): void => {
+      setLocation(position)
+   }
+
+   /**
+    *
+    * @param error
+    */
+   const errorCallback = (error: any): void => {
+      switch (error.code) {
+         case error.PERMISSION_DENIED:
+            setError('User denied the request for Geolocation.')
+            break
+         case error.POSITION_UNAVAILABLE:
+            setError('Location information is unavailable.')
+            break
+         case error.TIMEOUT:
+            setError('The request to get user location timed out.')
+            break
+         default:
+            setError('An unknown error occurred.')
+            break
+      }
+   }
 
    useEffect(() => {
       if (!navigator.geolocation) {
          setError('Geolocation is not supported by your browser.')
          return
-      }
-
-      const successCallback = (position: GeolocationPosition): void => {
-         setLocation(position)
-      }
-
-      const errorCallback = (error: any) => {
-         switch (error.code) {
-            case error.PERMISSION_DENIED:
-               setError('User denied the request for Geolocation.')
-               break
-            case error.POSITION_UNAVAILABLE:
-               setError('Location information is unavailable.')
-               break
-            case error.TIMEOUT:
-               setError('The request to get user location timed out.')
-               break
-            default:
-               setError('An unknown error occurred.')
-               break
-         }
       }
 
       navigator.geolocation.getCurrentPosition(successCallback, errorCallback)
@@ -59,7 +67,7 @@ export const Geolocation = () => {
       )
 
       // Clean up the watcher on component unmount.
-      return () => {
+      return (): void => {
          navigator.geolocation.clearWatch(watchId)
       }
    }, [])
@@ -172,8 +180,8 @@ export const Geolocation = () => {
          )
       }
 
-
-      console.log('\nGLOBE_SCENE_PUCK_MIN_SCALE: ' + GLOBE_SCENE_PUCK_MIN_SCALE + '\n\n GLOBE_SCENE_PUCK_MAX_SCALE: ' + GLOBE_SCENE_PUCK_MAX_SCALE + '\n\n puckMesh: ' + puckMesh.current.scale.x + '\n\n globePuckAdjustedScale: ' + globePuckAdjustedScale.current.toString())
+      /* // TODO WIP
+            console.log('\nGLOBE_SCENE_PUCK_MIN_SCALE: ' + GLOBE_SCENE_PUCK_MIN_SCALE + '\n\n GLOBE_SCENE_PUCK_MAX_SCALE: ' + GLOBE_SCENE_PUCK_MAX_SCALE + '\n\n puckMesh: ' + puckMesh.current.scale.x + '\n\n globePuckAdjustedScale: ' + globePuckAdjustedScale.current.toString())*/
    }
 
    return null

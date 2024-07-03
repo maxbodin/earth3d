@@ -3,4 +3,5 @@ export enum PanelType {
    DASHBOARD,
    CREDIT,
    DATA,
+   MARKERS
 }
