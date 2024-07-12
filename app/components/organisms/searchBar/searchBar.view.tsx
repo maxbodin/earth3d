@@ -52,7 +52,8 @@ export function SearchBarView() {
                <div className="flex w-full flex-wrap md:flex-nowrap gap-4">
                   <Dropdown>
                      <DropdownTrigger>
-                        <Button variant="bordered" className="h-[48px] rounded-r-none">
+                        <Button variant="bordered"
+                                className="h-[48px] rounded-r-none bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg">
                            {selectedSubject.toString()}
                         </Button>
                      </DropdownTrigger>
@@ -78,8 +79,7 @@ export function SearchBarView() {
                      isLoading={autoCompleteLoading}
                      inputProps={{
                         classNames: {
-                           input: 'ml-1 rounded-l-none',
-                           inputWrapper: 'h-[48px] rounded-l-none',
+                           inputWrapper: 'h-[48px] rounded-l-none bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg',
                         },
                      }}
                      isClearable

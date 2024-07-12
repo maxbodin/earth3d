@@ -1,23 +1,33 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import {
-   Drawer,
-   DrawerClose,
-   DrawerContent,
-   DrawerDescription,
-   DrawerFooter,
-   DrawerHeader,
-   DrawerTitle,
-} from '@/shadcn/ui/drawer'
-import { Button, getKeyValue, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from '@nextui-org/react'
+   Button,
+   Checkbox,
+   getKeyValue,
+   Input,
+   Table,
+   TableBody,
+   TableCell,
+   TableColumn,
+   TableHeader,
+   TableRow,
+   Tooltip,
+} from '@nextui-org/react'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
-import { CloseIcon } from '@nextui-org/shared-icons'
+import { CloseIcon, DeleteIcon, EyeIcon } from '@nextui-org/shared-icons'
 import { Marker } from '@/app/types/marker'
 import { MarkersDashboardController } from '@/app/components/organisms/markersDashboard/markersDashboard.controller'
+import { ColorPicker } from '@/shadcn/ui/colorPicker'
+import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
+import { Feature } from '@/app/types/orsTypes'
+import { PlusIcon } from 'lucide-react'
+import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 
-const columns: string[] = ['Name', 'Address', 'City', 'Country', 'Latitude', 'Longitude', 'Color']
+
+const columns: string[] = ['Selection', 'Name', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
 
 export function MarkersDashboardView() {
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
@@ -25,20 +35,150 @@ export function MarkersDashboardView() {
    const { isMarkersDashboardOpen, setIsMarkersDashboardOpen } =
       useMarkersDashboard()
 
-   const { rows, selectedRows, createNewMarker } = MarkersDashboardController()
-   
-   // TODO Add delete marker
-   // TODO Add fields are editable
-   // TODO Add field change, fetch other fiels data using ors
-   // TODO Add color selector
-   // TODO Add display marker on map
-   // TODO Add random color when creating new marker
-   // TODO Make country not updatable
-   // TODO Make locality not updatable
-   // TODO Make latitude, longitude and adress editable
+   const { flyToCoordinates } = CameraFlyController()
+
+   const {
+      rows,
+      selectedRows,
+      selectMarker,
+      createNewMarker,
+      updateMarker,
+      deleteMarker,
+      featureSuggestions,
+      autoCompleteLoading,
+      autoCompleteError,
+      onSelectionChange,
+      onInputChange,
+      onCoordsChange,
+   } = MarkersDashboardController()
+
+
+   const [autocompleteValue, setAutocompleteValue] = useState<string>('')
+
+   const renderCell = React.useCallback((marker: Marker, cellKey: string, cellValue: string | number, rowIndex: number) => {
+      switch (cellKey) {
+         case 'selection':
+            return (
+               <Checkbox
+                  onValueChange={(): void => selectMarker(marker)}>
+               </Checkbox>
+            )
+         case 'name':
+            return (
+               <Input
+                  type="text"
+                  size="sm"
+                  variant="bordered"
+                  placeholder="Enter the marker name"
+                  aria-label="Enter the marker name"
+                  value={cellValue.toString()}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                     marker.name = event.target.value
+                     updateMarker(rowIndex, marker)
+                  }}
+               />
+            )
+         case 'address':
+            const options: Option[] = featureSuggestions.map((feature: Feature) => ({
+               label: feature.properties.label,
+               value: feature.properties.id,
+            }))
+
+            const value: Option = ({ label: cellValue.toString(), value: cellValue.toString() })
+
+            console.log(value)
+
+            return (
+               <AutoComplete
+                  options={options}
+                  emptyMessage="No results."
+                  aria-label="Enter the marker address"
+                  placeholder="Enter the marker address"
+                  onInputChange={onInputChange}
+                  onSelectionChange={(option: Option) => onSelectionChange(option, marker)}
+                  value={value}
+                  isLoading={autoCompleteLoading}
+               />
+            )
+         case 'latitude':
+            return (
+               <Input
+                  type="number"
+                  variant="bordered"
+                  placeholder="Enter the marker latitude"
+                  size="sm"
+                  value={cellValue.toString()}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                     // Convert string input to number.
+                     const newLatitude: number = parseFloat(event.target.value)
+                     // Ensure the value is a valid number.
+                     if (!isNaN(newLatitude)) {
+                        marker.latitude = newLatitude
+                        updateMarker(rowIndex, marker)
+                        onCoordsChange(marker)
+                     }
+                  }} />
+            )
+         case 'longitude':
+            return (
+               <Input
+                  type="number"
+                  variant="bordered"
+                  placeholder="Enter the marker longitude"
+                  size="sm"
+                  value={cellValue.toString()}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                     // Convert string input to number.
+                     const newLongitude: number = parseFloat(event.target.value)
+                     // Ensure the value is a valid number.
+                     if (!isNaN(newLongitude)) {
+                        marker.longitude = newLongitude
+                        updateMarker(rowIndex, marker)
+                        onCoordsChange(marker)
+                     }
+                  }} />
+            )
+         case 'color':
+            return (
+               <ColorPicker
+                  onChange={(newColor: string): void => {
+                     marker.color = newColor
+                     updateMarker(rowIndex, marker,
+                     )
+                  }}
+                  value={cellValue.toString()}
+               />
+            )
+         case 'actions':
+            return (
+               <div className="relative flex items-center gap-2">
+                  <Tooltip content="View on map">
+                     <span className="text-lg text-default-400 cursor-pointer active:opacity-50">
+                        <EyeIcon onClick={(): void => {
+                           flyToCoordinates(
+                              marker.latitude,
+                              marker.longitude,
+                           )
+                        }} />
+                     </span>
+                  </Tooltip>
+                  <Tooltip color="danger" content="Delete marker">
+                     <span className="text-lg text-danger cursor-pointer active:opacity-50">
+                        <DeleteIcon onClick={(): void => {
+                           deleteMarker(marker)
+                        }} />
+                     </span>
+                  </Tooltip>
+               </div>
+            )
+         default:
+            return cellValue
+      }
+   }, [featureSuggestions, onInputChange, autoCompleteLoading, selectMarker, updateMarker, onSelectionChange, onCoordsChange, deleteMarker])
 
    return (
       <Drawer
+         dismissible={false}
          onOpenChange={setIsMarkersDashboardOpen}
          open={isMarkersDashboardOpen}
          onClose={(): void => {
@@ -46,57 +186,85 @@ export function MarkersDashboardView() {
             setIsSearchBarDisplayed(true)
          }}>
          <DrawerContent
-            onInteractOutside={(): void => {
+            onInteractOutside={(event): void => {
                setIsNavBarDisplayed(true)
                setIsSearchBarDisplayed(true)
-            }}>
+               event.stopPropagation()
+               event.preventDefault()
+            }}
+         >
             <div className="mx-auto w-full">
-               <DrawerHeader>
-                  <DrawerTitle>Your Makers</DrawerTitle>
-                  <DrawerDescription>Manage and create markers on the map from here.</DrawerDescription>
+               <DrawerHeader className="flex justify-between items-center">
+                  <div>
+                     <DrawerTitle>📍 Manage and create markers on Earth</DrawerTitle>
+                  </div>
+                  <DrawerClose asChild>
+                     <Button
+                        variant="bordered"
+                        isIconOnly
+                        size="sm"
+                        aria-label="Close"
+                        onClick={(): void => {
+                           setIsMarkersDashboardOpen(false)
+                        }}
+                        className="absolute top-4 right-4"
+                     >
+                        <CloseIcon />
+                     </Button>
+                  </DrawerClose>
                </DrawerHeader>
                <div className="px-8">
                   <Table
-                     isHeaderSticky={true}
+                     isHeaderSticky
                      className="overflow-auto max-h-[20vh]"
                      aria-label="Table of your markers"
-                     color="primary"
-                     selectionMode="multiple">
+                     color="primary">
                      <TableHeader>
                         {columns.map((column: string, index: number) =>
-                           <TableColumn key={index}>{column}</TableColumn>,
+                           <TableColumn key={index}
+                                        align={column === 'Actions' ? 'center' : 'start'}>{column}</TableColumn>,
                         )}
                      </TableHeader>
-                     <TableBody emptyContent={
-                        <>
-                           <h2 className="pb-4">No existing marker :(</h2>
-                           <Button onClick={createNewMarker}>Create new marker</Button>
-                        </>
+                     <TableBody
+                        className="h-2" emptyContent={
+                        <Button size="sm" onClick={createNewMarker} startContent={<PlusIcon />}>Create
+                           new
+                           marker</Button>
                      }>
-                        {rows.map((row: Marker, index: number) => (
-                           <TableRow key={index}>
-                              {Object.keys(row).map((key: any) => (
-                                 <TableCell key={key.toString()}>{getKeyValue(row, key)}</TableCell>
-                              ))}
+                        {rows.map((row: Marker, rowIndex: number) => (
+                           <TableRow key={rowIndex} className="h-4">
+                              {Object.keys(row)
+                                 .filter((key: string): boolean => key !== 'id') // Filter out the 'id' key.
+                                 .map((key: string) => (
+                                    <TableCell key={key}>
+                                       {renderCell(row, key, getKeyValue(row, key), rowIndex)}
+                                    </TableCell>
+                                 ))}
                            </TableRow>
                         ))}
                      </TableBody>
                   </Table>
-                  <div className="pt-4 flex flex-row justify-evenly">
-                     {rows.length > 0 && <Button onClick={createNewMarker}>Create new marker</Button>}
-                     <Button disabled={selectedRows.length <= 0}>Compute track with selected markers</Button>
+                  <div className="pt-4 pb-4 flex flex-row justify-evenly">
+                     {rows.length > 0 && rows.length < 5 &&
+                        <Button variant="bordered" size="sm" onClick={createNewMarker} startContent={<PlusIcon />}>Create
+                           new marker</Button>}
+                     <Button variant="bordered" size="sm" disabled={selectedRows.length <= 0}>Compute track with
+                        selected
+                        markers</Button>
                   </div>
                </div>
-
-               <DrawerFooter>
-                  <DrawerClose asChild>
-                     <Button variant="bordered" isIconOnly aria-label="Close" onClick={(): void => {
-                        setIsMarkersDashboardOpen(false)
-                     }}><CloseIcon /></Button>
-                  </DrawerClose>
-               </DrawerFooter>
             </div>
          </DrawerContent>
       </Drawer>
    )
 }
+
+// TODO IMPORTANT CREATE MY OWN SYSTEM TO HANDLE ROW SELECTION WITH CHECKBOX ON EACH ROW => IN ORDER TO SOLVE PROBLEM WITH EVENTS ON NEXT.UI ROW SELECTION
+// TODO CUSTOM ROW SELECTION => Allow to creat the track between markers with a specified order => set number in the checkbox
+// TODO View markers on map using gsap
+// TODO Add display marker on map
+// TODO ORS call when updating coords and none null
+// TODO When doing a place search, the selected place is added to the markers
+// TODO Credit drawer
+// TODO On searchbar select country, display country name
+// TODO Display place options upper

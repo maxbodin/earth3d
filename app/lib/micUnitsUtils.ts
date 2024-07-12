@@ -128,7 +128,7 @@ export class ThreeGeoUnitsUtils {
       const rotX: number = longitude * degToRad
       const rotY: number = latitude * degToRad
 
-      var cos: number = Math.cos(rotY)
+      const cos: number = Math.cos(rotY)
 
       return new Vector3(
          -Math.cos(rotX + Math.PI) * cos,

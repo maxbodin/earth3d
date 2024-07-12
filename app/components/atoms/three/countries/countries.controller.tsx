@@ -21,7 +21,7 @@ import { TEXT_FONT } from '@/app/constants/paths'
 import { clamp } from '@/app/helpers/numberHelper'
 import { SceneType } from '@/app/enums/sceneType'
 import { useCountriesTab } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
-import { ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
+import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 
 const geoJson = require('world-geojson')
 

@@ -18,7 +18,7 @@ import { VESSEL_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { VESSEL_GLB_MODEL } from '@/app/constants/paths'
 import { clamp } from '@/app/helpers/numberHelper'
 import { VESSEL_MATERIAL } from '@/app/constants/materials'
-import { ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
+import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
 
 export function VesselsController(): null {

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
-import { ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
+import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import * as THREE from 'three'
 
 import { clamp } from '@/app/helpers/numberHelper'

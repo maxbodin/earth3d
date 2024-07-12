@@ -15,7 +15,7 @@ import { CountriesProvider } from '@/app/components/atoms/three/countries/countr
 import { CountriesController } from '@/app/components/atoms/three/countries/countries.controller'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { EARTH_RADIUS } from '@/app/constants/numbers'
-import { Geolocation, ThreeGeoUnitsUtils } from '@/app/utils/micUnitsUtils'
+import { Geolocation, ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { getMapboxToken } from '@/app/server/actions/getMapboxToken'
 import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
 import { PlaneSky } from '@/app/components/atoms/three/planeSky/planeSky'

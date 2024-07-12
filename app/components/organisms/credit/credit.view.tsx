@@ -54,3 +54,7 @@ export function CreditView() {
       </>
    )
 }
+
+//TODO Add to drawer credit when made =>
+// https://github.com/nightspite/shadcn-color-picker/blob/master/src/components/ui/color-picker.tsx
+// https://cmdk.paco.me/ https://github.com/pacocoursey/cmdk

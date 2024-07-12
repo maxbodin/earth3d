@@ -2,63 +2,63 @@
  * Main response type.
  */
 export interface GeocodeResponse {
+   bbox: number[]
+   features: Feature[]
    geocoding: GeocodingInfo
    type: string
-   features: Feature[]
-   bbox: number[]
 }
 
 /**
  * Geocoding metadata information.
  */
 interface GeocodingInfo {
-   version: string
    attribution: string
-   query: QueryDetails
-   warnings: string[]
    engine: EngineInfo
+   query: QueryDetails
    timestamp: number
+   version: string
+   warnings: string[]
 }
 
 /**
  * Query details type.
  */
 interface QueryDetails {
-   text: string
-   parser: string
-   parsed_text: ParsedText
-   size: number
-   layers: string[]
-   private: boolean
    lang: LanguageInfo
+   layers: string[]
+   parsed_text: ParsedText
+   parser: string
+   private: boolean
    querySize: number
+   size: number
+   text: string
 }
 
 /**
  * Parsed text details.
  */
 interface ParsedText {
-   subject: string
    country: string
+   subject: string
 }
 
 /**
  * Language details type.
  */
 interface LanguageInfo {
-   name: string
+   defaulted: boolean
    iso6391: string
    iso6393: string
+   name: string
    via: string
-   defaulted: boolean
 }
 
 /**
  * Engine information type.
  */
 interface EngineInfo {
-   name: string
    author: string
+   name: string
    version: string
 }
 
@@ -66,55 +66,60 @@ interface EngineInfo {
  * Feature type representing each geographical point.
  */
 export interface Feature {
-   type: string
+   bbox?: number[]
    geometry: Geometry
    properties: FeatureProperties
-   bbox?: number[]
+   type: string
 }
 
 /**
  * Geometry type representing the coordinates.
  */
 interface Geometry {
-   type: string
    coordinates: number[]
+   type: string
 }
 
 /**
  * Feature properties type.
  */
 interface FeatureProperties {
-   id: string
-   gid: string
-   layer: string
-   source: string
-   source_id: string
-   name: string
    accuracy: string
-   country: string
-   country_gid: string
-   country_a: string
+   addendum?: Addendum
    continent: string
    continent_gid: string
-   label: string
-   macroregion?: string
-   macroregion_gid?: string
-   region?: string
-   region_gid?: string
-   region_a?: string
+   country: string
+   country_a: string
+   country_gid: string
    county?: string
    county_gid?: string
+   gid: string
+   id: string
+   label: string
+   layer: string
+   localadmin: string
+   localadmin_gid: string
+   locality: string
+   locality_gid: string
    macrocounty?: string
    macrocounty_gid?: string
-   addendum?: Addendum
+   macroregion?: string
+   macroregion_a: string
+   macroregion_gid?: string
+   name: string
+   region?: string,
+   region_a?: string,
+   region_gid?: string,
+   source: string,
+   source_id: string,
 }
 
 /**
  * Addendum type representing additional information.
  */
 interface Addendum {
-   geonames?: GeoNamesInfo
    concordances?: ConcordancesInfo
+   geonames?: GeoNamesInfo
 }
 
 /**

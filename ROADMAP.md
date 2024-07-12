@@ -142,3 +142,25 @@ Project global advancement
 export function getWeatherForLocationEndpoint(location: Coordinate) {
 return `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${location.lat}%2C23&lon${location.lng}%2C8`
 }
+
+/*
+TODO : WORK IN PROGRESS => Using suncalc to get various data from a given position.
+
+      displayedSceneData?.camera?.position
+
+      var SunCalc = require('suncalc')
+      // get today's sunlight times for London
+      const times = SunCalc.getTimes(new Date(), 51.5, -0.1)
+
+      console.log(times)
+      // format sunrise time from the Date object
+      const sunriseStr: string = `${times.sunrise.getHours()}:${times.sunrise.getMinutes()}`
+
+      // get position of the sun (azimuth and altitude) at today's sunrise
+      const sunrisePos = SunCalc.getPosition(times.sunrise, 51.5, -0.1)
+
+      // get sunrise azimuth in degrees
+      const sunriseAzimuth: number = (sunrisePos.azimuth * 180) / Math.PI
+
+*/
+
