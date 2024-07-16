@@ -32,7 +32,7 @@ export function SwitchTitled({
    }
 
    return (
-      <div className="p-2">
+      <div className="pb-8 px-8">
          <div className="switch-holder">
             <div className="switch-label">
                <span>{title}</span>

@@ -26,7 +26,7 @@ const ColorPicker = forwardRef<
       const [open, setOpen] = useState(false)
 
       const parsedValue: string = useMemo(() => {
-         return value || '#FFFFFF'
+         return value?.replace('0x', '#') || '#FFFFFF'
       }, [value])
 
       return (

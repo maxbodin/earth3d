@@ -1,6 +1,7 @@
 import React from 'react'
 import { useToast } from '@/app/context_todo_improve/toastsContext'
-import { CloseButton } from '@/app/components/molecules/closeButton/closeButton'
+import { Button } from '@nextui-org/react'
+import { CloseIcon } from '@nextui-org/shared-icons'
 
 export function ToastDanger({
                                message,
@@ -39,7 +40,17 @@ export function ToastDanger({
             <span className="sr-only">Error icon</span>
          </div>
          <div className="ms-3 text-sm font-normal">{message}</div>
-         {isClosable && <CloseButton onClick={handleCloseButtonClick} />}
+         {isClosable &&
+            <Button
+               variant="bordered"
+               isIconOnly
+               size="sm"
+               aria-label="Close"
+               onClick={handleCloseButtonClick}
+               className="z-50"
+            >
+               <CloseIcon />
+            </Button>}
       </div>
    )
 }

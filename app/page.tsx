@@ -1,82 +1,84 @@
-"use client";
-import React from "react";
-import { ToastDanger } from "@/app/components/molecules/toasts/toastDanger/toastDanger";
-import { ToastSuccess } from "@/app/components/molecules/toasts/toastSuccess/toastSuccess";
-import { VesselDataFetch } from "@/app/components/atoms/dataFetch/vesselDataFetch/vesselDataFetch";
-import { MapProvider } from "@/app/context_todo_improve/mapContext";
-import { CreditView } from "@/app/components/organisms/credit/credit.view";
-import { DashboardView } from "@/app/components/organisms/dashboard/dashboard.view";
-import { NavigationBar } from "@/app/components/molecules/navigationBar/navigationBar";
-import { SearchBarView } from "@/app/components/organisms/searchBar/searchBar.view";
-import { DetailsCard } from "@/app/components/organisms/detailsCard/detailsCard";
-import { ThreeScene } from "@/app/components/templates/threeScene/threeScene";
-import { ScenesProvider } from "@/app/components/templates/scenes/scenes.model";
-import { Geolocation } from "@/app/components/atoms/geolocation/geolocation";
-import { MarkersDashboardView } from "@/app/components/organisms/markersDashboard/markersDashboard.view";
-import { useToast } from "@/app/context_todo_improve/toastsContext";
+'use client'
+import React from 'react'
+import { ToastDanger } from '@/app/components/molecules/toasts/toastDanger/toastDanger'
+import { ToastSuccess } from '@/app/components/molecules/toasts/toastSuccess/toastSuccess'
+import { VesselDataFetch } from '@/app/components/atoms/dataFetch/vesselDataFetch/vesselDataFetch'
+import { MapProvider } from '@/app/context_todo_improve/mapContext'
+import { CreditView } from '@/app/components/organisms/credit/credit.view'
+import { NavigationBar } from '@/app/components/molecules/navigationBar/navigationBar'
+import { SearchBarView } from '@/app/components/organisms/searchBar/searchBar.view'
+import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
+import { ThreeScene } from '@/app/components/templates/threeScene/threeScene'
+import { ScenesProvider } from '@/app/components/templates/scenes/scenes.model'
+import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
+import { MarkersDashboardView } from '@/app/components/organisms/markersDashboard/markersDashboard.view'
+import { useToast } from '@/app/context_todo_improve/toastsContext'
+import { DataDashboardView } from '@/app/components/organisms/dataDashboard/dataDashboard.view'
+import { SettingsDashboardView } from '@/app/components/organisms/settingsDashboard/settingsDashboard.view'
 
 export default function Home() {
-  const {
-    dangerToastIsDisplayed,
-    setDangerToastIsDisplayed,
-    successToastIsDisplayed,
-    setSuccessToastIsDisplayed
-  } = useToast();
-  
-  /**
+   const {
+      dangerToastIsDisplayed,
+      setDangerToastIsDisplayed,
+      successToastIsDisplayed,
+      setSuccessToastIsDisplayed,
+   } = useToast()
 
-   const { setSelectedObjectData } = useData();
+   /**
 
-   const dataToFilter: any = null;
+    const { setSelectedObjectData } = useData();
 
-   * Callback function to handle search.
-   * @param searchTerm
+    const dataToFilter: any = null;
 
-   // TODO WIP DEL ?
-   const handleSearch = (searchTerm: string): void => {
-   // Filter data based on search term (assuming data is an array)
-   const filtered = dataToFilter.filter((state: any) =>
-   state[1].includes(searchTerm)
-   );
+    * Callback function to handle search.
+    * @param searchTerm
 
-   setSelectedObjectData(filtered.length > 0 ? { data: filtered[0] } : {});
+    // TODO WIP DEL ?
+    const handleSearch = (searchTerm: string): void => {
+    // Filter data based on search term (assuming data is an array)
+    const filtered = dataToFilter.filter((state: any) =>
+    state[1].includes(searchTerm)
+    );
 
-   if (filtered.length > 0) {
-   setSuccessToastIsDisplayed(true);
-   setDangerToastIsDisplayed(false);
-   } else {
-   setSuccessToastIsDisplayed(false);
-   setDangerToastIsDisplayed(true);
-   }
-   };
-   */
+    setSelectedObjectData(filtered.length > 0 ? { data: filtered[0] } : {});
 
-  return (
-    <>
-      <MapProvider>
-        <DashboardView />
-        <CreditView />
+    if (filtered.length > 0) {
+    setSuccessToastIsDisplayed(true);
+    setDangerToastIsDisplayed(false);
+    } else {
+    setSuccessToastIsDisplayed(false);
+    setDangerToastIsDisplayed(true);
+    }
+    };
+    */
 
-        <ScenesProvider>
-          <MarkersDashboardView />
-          <Geolocation />
-          <div className="w-full items-center justify-between font-mono text-sm lg:flex">
-            <SearchBarView />
-            <DetailsCard />
-            <NavigationBar />
-          </div>
+   return (
+      <>
+         <MapProvider>
+            <SettingsDashboardView />
+            <CreditView />
 
-          <ThreeScene />
-        </ScenesProvider>
-      </MapProvider>
+            <DataDashboardView />
+            <ScenesProvider>
+               <MarkersDashboardView />
+               <Geolocation />
+               <div className="w-full items-center justify-between font-mono text-sm lg:flex">
+                  <SearchBarView />
+                  <DetailsCard />
+                  <NavigationBar />
+               </div>
 
-      {/*         <PlaneDataFetch />
+               <ThreeScene />
+            </ScenesProvider>
+         </MapProvider>
+
+         {/*         <PlaneDataFetch />
           */}
-      <VesselDataFetch />
-      {successToastIsDisplayed && <ToastSuccess message={"Plane found."} />}
-      {dangerToastIsDisplayed && (
-        <ToastDanger message={"Plane not found."} />
-      )}
-    </>
-  );
+         <VesselDataFetch />
+         {successToastIsDisplayed && <ToastSuccess message={'Plane found.'} />}
+         {dangerToastIsDisplayed && (
+            <ToastDanger message={'Plane not found.'} />
+         )}
+      </>
+   )
 }

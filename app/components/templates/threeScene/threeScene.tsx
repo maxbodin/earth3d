@@ -20,6 +20,7 @@ import { getMapboxToken } from '@/app/server/actions/getMapboxToken'
 import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
 import { PlaneSky } from '@/app/components/atoms/three/planeSky/planeSky'
 import { ClickHandler } from '@/app/components/atoms/clickHandler/clickHandler'
+import { AirportsController } from '@/app/components/atoms/three/airports/airports.controller'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -409,6 +410,7 @@ export function ThreeScene() {
                   <Planet />
                   <ClickHandler />
                   <VesselsController />
+                  <AirportsController />
                </PlanetProvider>
 
                <OuterSpace />
@@ -420,8 +422,6 @@ export function ThreeScene() {
                </CountriesProvider>
 
                {/*
-                     <Airports /> // TODO AIRPORT ONLY POUR LA PLANE SCENE ET UTILISER LA VISIBLE ZONE DE LA PLANE SCENE
-
 // TODO FIX PLANES BEFORE UNCOMMENTING THIS
                <PlanesController
                   scene={globeScene.current}

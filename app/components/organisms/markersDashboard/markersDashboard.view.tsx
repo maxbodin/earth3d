@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
@@ -25,6 +25,7 @@ import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature } from '@/app/types/orsTypes'
 import { PlusIcon } from 'lucide-react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
+import { PUCK_COLOR } from '@/app/constants/colors'
 
 
 const columns: string[] = ['Selection', 'Name', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
@@ -38,7 +39,6 @@ export function MarkersDashboardView() {
    const { flyToCoordinates } = CameraFlyController()
 
    const {
-      rows,
       selectedRows,
       selectMarker,
       createNewMarker,
@@ -52,8 +52,7 @@ export function MarkersDashboardView() {
       onCoordsChange,
    } = MarkersDashboardController()
 
-
-   const [autocompleteValue, setAutocompleteValue] = useState<string>('')
+   const { markers } = useMarkersDashboard()
 
    const renderCell = React.useCallback((marker: Marker, cellKey: string, cellValue: string | number, rowIndex: number) => {
       switch (cellKey) {
@@ -66,12 +65,13 @@ export function MarkersDashboardView() {
          case 'name':
             return (
                <Input
+                  isDisabled={marker.isPuck}
                   type="text"
                   size="sm"
                   variant="bordered"
                   placeholder="Enter the marker name"
                   aria-label="Enter the marker name"
-                  value={cellValue.toString()}
+                  value={marker.isPuck ? 'Your position' : cellValue.toString()}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                      marker.name = event.target.value
                      updateMarker(rowIndex, marker)
@@ -88,6 +88,7 @@ export function MarkersDashboardView() {
 
             console.log(value)
 
+            // TODO IF IS PUCK, SET AUTOMATICALLY ADDRESS AND DISABLE AUTOCOMPLETE
             return (
                <AutoComplete
                   options={options}
@@ -103,6 +104,7 @@ export function MarkersDashboardView() {
          case 'latitude':
             return (
                <Input
+                  isDisabled={marker.isPuck}
                   type="number"
                   variant="bordered"
                   placeholder="Enter the marker latitude"
@@ -122,6 +124,7 @@ export function MarkersDashboardView() {
          case 'longitude':
             return (
                <Input
+                  isDisabled={marker.isPuck}
                   type="number"
                   variant="bordered"
                   placeholder="Enter the marker longitude"
@@ -146,7 +149,8 @@ export function MarkersDashboardView() {
                      updateMarker(rowIndex, marker,
                      )
                   }}
-                  value={cellValue.toString()}
+                  isDisabled={marker.isPuck}
+                  value={marker.isPuck ? PUCK_COLOR : cellValue.toString()}
                />
             )
          case 'actions':
@@ -162,13 +166,13 @@ export function MarkersDashboardView() {
                         }} />
                      </span>
                   </Tooltip>
-                  <Tooltip color="danger" content="Delete marker">
+                  {!marker.isPuck && <Tooltip color="danger" content="Delete marker">
                      <span className="text-lg text-danger cursor-pointer active:opacity-50">
                         <DeleteIcon onClick={(): void => {
                            deleteMarker(marker)
                         }} />
                      </span>
-                  </Tooltip>
+                  </Tooltip>}
                </div>
             )
          default:
@@ -216,7 +220,7 @@ export function MarkersDashboardView() {
                <div className="px-8">
                   <Table
                      isHeaderSticky
-                     className="overflow-auto max-h-[20vh]"
+                     className="overflow-auto max-h-[25vh]"
                      aria-label="Table of your markers"
                      color="primary">
                      <TableHeader>
@@ -231,10 +235,10 @@ export function MarkersDashboardView() {
                            new
                            marker</Button>
                      }>
-                        {rows.map((row: Marker, rowIndex: number) => (
+                        {markers.map((row: Marker, rowIndex: number) => (
                            <TableRow key={rowIndex} className="h-4">
                               {Object.keys(row)
-                                 .filter((key: string): boolean => key !== 'id') // Filter out the 'id' key.
+                                 .filter((key: string): boolean => key !== 'id' && key !== 'isPuck') // Filter out the 'id' key and the isPuck key.
                                  .map((key: string) => (
                                     <TableCell key={key}>
                                        {renderCell(row, key, getKeyValue(row, key), rowIndex)}
@@ -245,12 +249,11 @@ export function MarkersDashboardView() {
                      </TableBody>
                   </Table>
                   <div className="pt-4 pb-4 flex flex-row justify-evenly">
-                     {rows.length > 0 && rows.length < 5 &&
+                     {markers.length > 0 && markers.length < 5 &&
                         <Button variant="bordered" size="sm" onClick={createNewMarker} startContent={<PlusIcon />}>Create
                            new marker</Button>}
-                     <Button variant="bordered" size="sm" disabled={selectedRows.length <= 0}>Compute track with
-                        selected
-                        markers</Button>
+                     <Button variant="bordered" size="sm" isDisabled={selectedRows.length <= 1}>Compute track with
+                        selected markers</Button>
                   </div>
                </div>
             </div>
@@ -261,10 +264,8 @@ export function MarkersDashboardView() {
 
 // TODO IMPORTANT CREATE MY OWN SYSTEM TO HANDLE ROW SELECTION WITH CHECKBOX ON EACH ROW => IN ORDER TO SOLVE PROBLEM WITH EVENTS ON NEXT.UI ROW SELECTION
 // TODO CUSTOM ROW SELECTION => Allow to creat the track between markers with a specified order => set number in the checkbox
-// TODO View markers on map using gsap
-// TODO Add display marker on map
 // TODO ORS call when updating coords and none null
 // TODO When doing a place search, the selected place is added to the markers
 // TODO Credit drawer
 // TODO On searchbar select country, display country name
-// TODO Display place options upper
+// TODO Display place options in autocomplete upper

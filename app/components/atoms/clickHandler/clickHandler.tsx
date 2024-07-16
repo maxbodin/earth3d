@@ -2,11 +2,11 @@
 import { useEffect } from 'react'
 import * as THREE from 'three'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
-import { useData } from '@/app/context_todo_improve/dataContext'
 import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
 import { useAirports } from '@/app/components/atoms/three/airports/airports.model'
 import { ObjectType } from '@/app/enums/objectType'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 
 export function ClickHandler(): null {
 
@@ -14,7 +14,7 @@ export function ClickHandler(): null {
    const mouse: THREE.Vector2 = new THREE.Vector2()
 
    const { displayedSceneData } = useScenes()
-   const { setSelectedObjectType, setSelectedObjectData } = useData()
+   const { setSelectedObjectType, setSelectedObjectData } = useSelection()
    const { displayedVesselsGroup } = useVessels()
    const { displayedAirportsGroup } = useAirports()
    const { displayedPlanesGroup } = usePlanes()
@@ -48,7 +48,7 @@ export function ClickHandler(): null {
       if (!displayedAirportsGroup) return
 
       const intersects = raycaster.intersectObjects(
-         displayedAirportsGroup!.children,
+         Array.from(displayedAirportsGroup),
       )
 
       if (intersects.length > 0) {

@@ -10,4 +10,5 @@ export interface Marker {
    longitude: number,
    color: string
    actions: string
+   isPuck: boolean
 }

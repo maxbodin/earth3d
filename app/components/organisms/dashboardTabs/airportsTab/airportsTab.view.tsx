@@ -8,7 +8,7 @@ export function AirportsTabView() {
    const { activateAirports, deactivateAirports } = AirportsTabController()
 
    return (
-      <div className="p-4">
+      <div className="flex flex-col">
          <SwitchTitled
             title={'Activate airports on Map'}
             defaultChecked={airportsActivated}

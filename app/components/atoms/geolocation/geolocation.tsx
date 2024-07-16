@@ -13,11 +13,17 @@ import {
    PLANE_SCENE_PUCK_MAX_SCALE,
    PLANE_SCENE_PUCK_MIN_SCALE,
 } from '@/app/constants/numbers'
+import { MarkersDashboardController } from '@/app/components/organisms/markersDashboard/markersDashboard.controller'
+import { PUCK_COLOR } from '@/app/constants/colors'
 
 export const Geolocation = (): null => {
    const [location, setLocation] = useState<GeolocationPosition>()
    const [error, setError] = useState<string>()
    const { displayedSceneData } = useScenes()
+
+   const {
+      updatePuckMarker,
+   } = MarkersDashboardController()
 
    /**
     *
@@ -72,25 +78,21 @@ export const Geolocation = (): null => {
       }
    }, [])
 
-   /**
-    * // TODO WHEN GETTING USER POSITION =>
-    * // TODO SET A CUBE AT USER POSITION
-    * // TODO USE GSAP TO ZOOM AND FLY TO ON USER POSITION
-    */
    useEffect(() => {
       if (location) {
          const { latitude, longitude } = location.coords
          updatePuckPosition(latitude, longitude)
       }
 
+      // Event listener on controls change.
       displayedSceneData?.controls?.addEventListener('change', onControlsChange)
-      return cleanup
 
-   }, [location])
+      return cleanup
+   }, [location, displayedSceneData])
 
    const puckMesh = useRef<THREE.Mesh>(new THREE.Mesh(
       new THREE.CylinderGeometry(1, 1, 5, 4),
-      new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(parseInt(PUCK_COLOR.replace('#', '0x'), 16)) }),
    ))
 
    /**
@@ -98,13 +100,13 @@ export const Geolocation = (): null => {
     * @param latitude
     * @param longitude
     */
-   const updatePuckPosition = (latitude: number, longitude: number) => {
+   const updatePuckPosition = (latitude: number, longitude: number): void => {
       if (displayedSceneData.type == SceneType.SPHERICAL) {
          // Get the position on the planet.
-         const puckPosition = latLongToVector3(latitude, longitude)
+         const puckPosition: THREE.Vector3 = latLongToVector3(latitude, longitude)
 
          // Calculate the normal at the puck's position (normalized position vector).
-         const normal = puckPosition.clone().normalize()
+         const normal: THREE.Vector3 = puckPosition.clone().normalize()
 
          // Move the puck so its base is on the surface of the sphere.
          puckMesh.current.position.copy(
@@ -129,6 +131,10 @@ export const Geolocation = (): null => {
       if (!displayedSceneData.scene.children.includes(puckMesh.current)) {
          displayedSceneData.scene.add(puckMesh.current)
       }
+
+      // Update puck marker in the markersDashboard.
+      // Allow to compute track with user position.
+      updatePuckMarker(latitude, longitude)
    }
 
    /**
@@ -145,7 +151,9 @@ export const Geolocation = (): null => {
    const planePuckAdjustedScale = useRef<number>(PLANE_SCENE_PUCK_MAX_SCALE)
    const globePuckAdjustedScale = useRef<number>(GLOBE_SCENE_PUCK_MAX_SCALE)
 
-   // TODO FIX ON CONTROLS CHANGE TO HAVE THE PUCK SCALE WITH ZOOM
+   /**
+    * On controls change, we update the scale of the puck.
+    */
    const onControlsChange = (): void => {
       if (puckMesh == null || displayedSceneData == null) {
          return
@@ -163,25 +171,23 @@ export const Geolocation = (): null => {
 
          puckMesh.current.scale.set(
             globePuckAdjustedScale.current,
-            globePuckAdjustedScale.current,
+            globePuckAdjustedScale.current * 2,
             globePuckAdjustedScale.current,
          )
       } else if (displayedSceneData.type == SceneType.PLANE) {
          planePuckAdjustedScale.current = clamp(
-            cameraDistanceToPlanetCenter.current / 1e3,
+            cameraDistanceToPlanetCenter.current / 1e2,
             PLANE_SCENE_PUCK_MIN_SCALE,
             PLANE_SCENE_PUCK_MAX_SCALE,
          )
 
+         // Y is multiplied by 10 in order to have a better visibility of the puck.
          puckMesh.current.scale.set(
             planePuckAdjustedScale.current,
-            planePuckAdjustedScale.current,
+            planePuckAdjustedScale.current * 10,
             planePuckAdjustedScale.current,
          )
       }
-
-      /* // TODO WIP
-            console.log('\nGLOBE_SCENE_PUCK_MIN_SCALE: ' + GLOBE_SCENE_PUCK_MIN_SCALE + '\n\n GLOBE_SCENE_PUCK_MAX_SCALE: ' + GLOBE_SCENE_PUCK_MAX_SCALE + '\n\n puckMesh: ' + puckMesh.current.scale.x + '\n\n globePuckAdjustedScale: ' + globePuckAdjustedScale.current.toString())*/
    }
 
    return null

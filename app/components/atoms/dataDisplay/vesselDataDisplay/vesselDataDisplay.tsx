@@ -1,9 +1,9 @@
 import React from 'react'
-import { useData } from '@/app/context_todo_improve/dataContext'
 import { N_A_VALUE } from '@/app/constants/strings'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 
 export function VesselDataDisplay(): React.JSX.Element {
-   const { selectedObjectData } = useData()
+   const { selectedObjectData } = useSelection()
 
    const message = selectedObjectData?.message
 

@@ -1,22 +1,24 @@
+'use client'
 import React from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
-import { useCredit } from '@/app/components/organisms/credit/credit.model'
+
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
 import { CloseIcon } from '@nextui-org/shared-icons'
-import { Alert, AlertDescription, AlertTitle } from '@/shadcn/ui/alert'
-import Link from 'next/link'
+import { useDataDashboard } from '@/app/components/organisms/dataDashboard/dataDashboard.model'
 
-export function CreditView() {
+
+export function DataDashboardView() {
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
-   const { isCreditOpen, setIsCreditOpen } = useCredit()
+   const { isDataDashboardOpen, setIsDataDashboardOpen } =
+      useDataDashboard()
 
    return (
       <Drawer
          dismissible={false}
-         onOpenChange={setIsCreditOpen}
-         open={isCreditOpen}
+         onOpenChange={setIsDataDashboardOpen}
+         open={isDataDashboardOpen}
          onClose={(): void => {
             setIsNavBarDisplayed(true)
             setIsSearchBarDisplayed(true)
@@ -32,7 +34,7 @@ export function CreditView() {
             <div className="mx-auto w-full">
                <DrawerHeader className="flex justify-between items-center">
                   <div>
-                     <DrawerTitle>✨ Credit</DrawerTitle>
+                     <DrawerTitle>📊 Analyze Earth data</DrawerTitle>
                   </div>
                   <DrawerClose asChild>
                      <Button
@@ -41,7 +43,7 @@ export function CreditView() {
                         size="sm"
                         aria-label="Close"
                         onClick={(): void => {
-                           setIsCreditOpen(false)
+                           setIsDataDashboardOpen(false)
                         }}
                         className="absolute top-4 right-4"
                      >
@@ -49,22 +51,7 @@ export function CreditView() {
                      </Button>
                   </DrawerClose>
                </DrawerHeader>
-               <div className="px-8 overflow-auto max-h-[45vh] min-h-[45vh] space-y-4 border-gray-700">
-                  <Alert>
-                     <AlertTitle>Autocomplete</AlertTitle>
-                     <AlertDescription className="flex flex-col space-y-2">
-                        <Link href="https://cmdk.paco.me/">CMDK</Link>
-                        <Link href="https://github.com/pacocoursey/cmdk">CMDK GitHub</Link>
-                     </AlertDescription>
-                  </Alert>
-                  <Alert>
-                     <AlertTitle>Color Picker</AlertTitle>
-                     <AlertDescription>
-                        <Link
-                           href="https://github.com/nightspite/shadcn-color-picker/blob/master/src/components/ui/color-picker.tsx">Color
-                           Picker GitHub</Link>
-                     </AlertDescription>
-                  </Alert>
+               <div className="px-8 overflow-auto max-h-[45vh] min-h-[45vh]">
                </div>
             </div>
          </DrawerContent>

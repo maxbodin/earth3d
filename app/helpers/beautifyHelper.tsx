@@ -1,3 +1,7 @@
+/**
+ * Get the displayed emoji for a continent string.
+ * @param continent
+ */
 export const getContinentEmoji = (continent: string): string => {
    switch (continent) {
       case 'EU':
@@ -17,6 +21,10 @@ export const getContinentEmoji = (continent: string): string => {
    }
 }
 
+/**
+ * Get the displayed string for a continent string.
+ * @param continent
+ */
 export const getContinentString = (continent: string): string => {
    switch (continent) {
       case 'EU':
@@ -38,6 +46,10 @@ export const getContinentString = (continent: string): string => {
    }
 }
 
+/**
+ * Get the displayed string for an airport type.
+ * @param type
+ */
 export const getTypeString = (type: string): string => {
    switch (type) {
       case 'small_airport':

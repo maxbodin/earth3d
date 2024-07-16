@@ -6,9 +6,9 @@ import debounce from 'lodash/debounce'
 import { autocomplete, reverse } from '@/app/server/services/openRouteService'
 import { Option } from '@/shadcn/ui/autocomplete'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
+import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 
 export function MarkersDashboardController() {
-   const [rows, setRows] = useState<Marker[]>([])
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
    const [featureSuggestions, setFeatureSuggestions] = useState<Feature[]>([])
 
@@ -22,9 +22,10 @@ export function MarkersDashboardController() {
       return `marker_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
    }
 
+   const { markers, setMarkers } = useMarkersDashboard()
 
    const createNewMarker = (): void => {
-      setRows([...rows, {
+      setMarkers([...markers, {
          id: generateUniqueId(),
          selection: 'selection',
          name: '',
@@ -33,8 +34,49 @@ export function MarkersDashboardController() {
          longitude: 0,
          color: getRandomVibrantColor(),
          actions: 'actions',
+         isPuck: false,
       }])
+
+
+      // TODO Create marker on map.
    }
+
+   /**
+    * Update or create puck marker.
+    *
+    * @param latitude
+    * @param longitude
+    */
+   const updatePuckMarker = (latitude: number, longitude: number): void => {
+      // Find the index of the existing puck marker.
+      const puckIndex: number = markers.findIndex(marker => marker.isPuck)
+
+      console.log(markers)
+      // If it exists, update its latitude and longitude.
+      if (puckIndex !== -1) {
+         const updatedRows = [...markers]
+         updatedRows[puckIndex] = {
+            ...updatedRows[puckIndex],
+            latitude,
+            longitude,
+         }
+         setMarkers(updatedRows)
+      } else {
+         // If no puck marker exists, create a new one.
+         setMarkers([...markers, {
+            id: generateUniqueId(),
+            selection: 'selection',
+            name: 'Your position',
+            address: '',
+            latitude,
+            longitude,
+            color: getRandomVibrantColor(),
+            actions: 'actions',
+            isPuck: true,
+         }])
+      }
+   }
+
 
    const selectMarker = (marker: Marker): void => {
       setSelectedRows(prevRows => {
@@ -44,11 +86,14 @@ export function MarkersDashboardController() {
    }
 
    const updateMarker = (index: number, newMaker: Marker): void => {
-      setRows(prevRows => {
-         const updatedRows = [...prevRows]
+      setMarkers(markers => {
+         const updatedRows = [...markers]
          updatedRows[index] = newMaker
          return updatedRows
       })
+
+
+      // TODO Update marker on map.
    }
 
    /**
@@ -56,9 +101,9 @@ export function MarkersDashboardController() {
     * @param marker
     */
    const deleteMarker = (marker: Marker): void => {
-      setRows(prevRows => {
+      setMarkers(markers => {
          // Filter out the marker that matches the one to be removed.
-         return prevRows.filter(existingMarker => existingMarker.id !== marker.id)
+         return markers.filter(existingMarker => existingMarker.id !== marker.id)
       })
    }
 
@@ -125,6 +170,7 @@ export function MarkersDashboardController() {
             marker.longitude = selectedSuggestion.geometry.coordinates[0]
 
             // TODO console.log(marker);
+            // TODO FIX ADDRESS NOT UPDATED
          } catch (err) {
             marker.latitude = 0
             marker.longitude = 0
@@ -151,8 +197,6 @@ export function MarkersDashboardController() {
          marker.latitude = selectedSuggestion.geometry.coordinates[1]
          marker.longitude = selectedSuggestion.geometry.coordinates[0]
 
-         // TODO Create marker on map.
-
          // Fly to new marker.
          flyToCoordinates(
             marker.latitude,
@@ -164,11 +208,10 @@ export function MarkersDashboardController() {
    }
 
    return {
-      rows,
-      setRows,
       selectedRows,
       selectMarker,
       createNewMarker,
+      updatePuckMarker,
       updateMarker,
       deleteMarker,
       featureSuggestions,

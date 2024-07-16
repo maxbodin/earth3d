@@ -1,5 +1,4 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react'
-import { ObjectType } from '@/app/enums/objectType'
 
 interface DataContextValue {
    planesData: any
@@ -8,10 +7,6 @@ interface DataContextValue {
    setPlaneTrackData: React.Dispatch<React.SetStateAction<any>>
    vesselsData: any
    setVesselsData: React.Dispatch<React.SetStateAction<any>>
-   selectedObjectData: any
-   setSelectedObjectData: React.Dispatch<React.SetStateAction<any>>
-   selectedObjectType: ObjectType
-   setSelectedObjectType: React.Dispatch<React.SetStateAction<any>>
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -28,8 +23,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
    const [planesData, setPlanesData] = useState<any>([])
    const [planeTrackData, setPlaneTrackData] = useState<any>([])
    const [vesselsData, setVesselsData] = useState<any>([])
-   const [selectedObjectData, setSelectedObjectData] = useState([])
-   const [selectedObjectType, setSelectedObjectType] = useState(ObjectType.NULL)
 
    const value: DataContextValue = {
       planesData,
@@ -38,10 +31,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setPlaneTrackData,
       vesselsData,
       setVesselsData,
-      selectedObjectData,
-      setSelectedObjectData,
-      selectedObjectType,
-      setSelectedObjectType,
    }
 
    return <DataContext.Provider value={value}>{children}</DataContext.Provider>

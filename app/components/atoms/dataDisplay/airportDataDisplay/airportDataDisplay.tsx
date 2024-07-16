@@ -2,46 +2,45 @@ import React from 'react'
 import { Link } from '@/app/components/atoms/ui/link/link'
 import { getContinentEmoji, getContinentString, getTypeString } from '@/app/helpers/beautifyHelper'
 import { N_A_VALUE } from '@/app/constants/strings'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 
 const lookup = require('country-data').lookup
 
-export function AirportDataDisplay({
-                                      selectedAirportData,
-                                   }: {
-   selectedAirportData: Record<string, any>
-}): React.JSX.Element {
-   const data = selectedAirportData?.data
+export function AirportDataDisplay(): React.JSX.Element {
+   const { selectedObjectData } = useSelection()
 
-   if (data == null)
+   const attributes = selectedObjectData?.data?.attributes
+
+   if (attributes == null)
       return (
          <>
             <h1>Failed to get data.</h1>
          </>
       )
 
-   const name = data.name || N_A_VALUE
-   const type = data.type || N_A_VALUE
-   const continent = data.continent || N_A_VALUE
-   const description = data.description || N_A_VALUE
-   const latitude_deg = data.latitude_deg?.toFixed(3) || N_A_VALUE
-   const longitude_deg = data.longitude_deg?.toFixed(3) || N_A_VALUE
-   const elevation_ft = data.elevation_ft || N_A_VALUE
-   const closed = data.closed || N_A_VALUE
-   const frequency_mhz = data.frequency_mhz || N_A_VALUE
-   const gps_code = data.gps_code || N_A_VALUE
-   const home_link = data.home_link || N_A_VALUE
-   const iata_code = data.iata_code || N_A_VALUE
-   const ident = data.ident || N_A_VALUE
-   const iso_country = data.iso_country || N_A_VALUE
-   const iso_region = data.iso_region || N_A_VALUE
-   const length_ft = data.length_ft || N_A_VALUE
-   const lighted = data.lighted || N_A_VALUE
-   const local_code = data.local_code || N_A_VALUE
-   const municipality = data.municipality || N_A_VALUE
-   const scheduled_service = data.scheduled_service || N_A_VALUE
-   const surface = data.surface || N_A_VALUE
-   const width_ft = data.width_ft || N_A_VALUE
-   const wikipedia_link = data.wikipedia_link || N_A_VALUE
+   const name = attributes.name || N_A_VALUE
+   const type = attributes.type || N_A_VALUE
+   const continent = attributes.continent || N_A_VALUE
+   const description = attributes.description || N_A_VALUE
+   const latitude_deg = attributes.latitude_deg?.toFixed(3) || N_A_VALUE
+   const longitude_deg = attributes.longitude_deg?.toFixed(3) || N_A_VALUE
+   const elevation_ft = attributes.elevation_ft || N_A_VALUE
+   const closed = attributes.closed || N_A_VALUE
+   const frequency_mhz = attributes.frequency_mhz || N_A_VALUE
+   const gps_code = attributes.gps_code || N_A_VALUE
+   const home_link = attributes.home_link || N_A_VALUE
+   const iata_code = attributes.iata_code || N_A_VALUE
+   const ident = attributes.ident || N_A_VALUE
+   const iso_country = attributes.iso_country || N_A_VALUE
+   const iso_region = attributes.iso_region || N_A_VALUE
+   const length_ft = attributes.length_ft || N_A_VALUE
+   const lighted = attributes.lighted || N_A_VALUE
+   const local_code = attributes.local_code || N_A_VALUE
+   const municipality = attributes.municipality || N_A_VALUE
+   const scheduled_service = attributes.scheduled_service || N_A_VALUE
+   const surface = attributes.surface || N_A_VALUE
+   const width_ft = attributes.width_ft || N_A_VALUE
+   const wikipedia_link = attributes.wikipedia_link || N_A_VALUE
 
    return (
       <div>

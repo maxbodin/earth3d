@@ -4,42 +4,13 @@ Project global advancement
 
 ## To Dos
 
-> Sorted by categories (not by priority) + may contains duplicate
-> If you have ideas of upgrades, feel free to reach to me
+> If you have ideas of upgrades, feel free to reach to me.
 
 > If you want to contribute pick a task below (one that has not a username next to it)
 > Example: "- [ ] Add feature (WIP Username)" => don't pick it
 > Example: "- [ ] Add feature" => have fun :)
 
 > TODO alias WIP alias Work In Progress
-
-### Global
-
-- [ ] Explain global structure in README.md
-
-### UI
-
-- [ ] Make panel scrollable
-
-### UX
-
-- [ ] Reduce damping
-
-### Map
-
-- [ ] Add Documentation panel for map
-- [ ] Add Data panel for map
-- [ ] Add Credit panel for map
-
-### Airports
-
-- [ ] Allow user to display airports on map (We use a static json file containing all the airports data)
-- [ ] Displaying airports on zoom only
-- [ ] Opening details of an airport by clicking on it
-- [ ] User is able to search an airport using different data
-- [ ] Add Documentation panel for airports
-- [ ] Add Data panel for airports
-- [ ] Add Credit panel for airports
 
 ### PlanesController
 
@@ -54,9 +25,6 @@ Project global advancement
   on prend 10 minute à interpoller, puis 15 minutes en boucle, à chaque fois on call tous les avions comme ça on les
   déplace tous. On save la data dans un provider: oldData, newData
 - [ ] Add fallback for planeDataDisplay values
-- [ ] Add Documentation panel for planes
-- [ ] Add Data panel for planes
-- [ ] Add Credit panel for planes
 - [ ] Allow user to visualize planes data from yesterday to now on map
 
 ### VesselsController
@@ -67,12 +35,6 @@ Project global advancement
 - [ ] Allow user to search a vessel using many parameters (MMSI, CALLSIGN, IMO, ETA, ...)
 - [ ] Make vessels move on map and not only be static
 - [ ] Allow user to visualize vessels on map (Plane and Globe) (We use AIS data from aisstream.io)
-
-### Outer space
-
-- [ ] Add Documentation panel for outer space
-- [ ] Add Data panel for outer space
-- [ ] Add Credit panel for outer space
 
 ### Various upgrades for later
 
@@ -164,3 +126,12 @@ TODO : WORK IN PROGRESS => Using suncalc to get various data from a given positi
 
 */
 
+- Ajouter le dézoom de la planète terre avec transition vers une scène supplémentaire pour voir le système solaire
+  complet. Lors du zoom on repart sur la planète Terre.
+- Reduce damping when moving planet.
+- Make drawer in credit panel and in the drawer add a selection drawer for parts (Planet, Vessels, ...), using the
+  selection display credits.
+- Make details panel scrollable
+- Add Credit data for outer space especially for textures.
+- User is able to search an airport using different data
+- Explain global structure in README.md

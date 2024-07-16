@@ -40,9 +40,9 @@ export function Tabs({
    }
 
    return (
-      <div className="body z-40">
+      <div className="tabs-body z-40">
          <div
-            className="tabs bg-white/20 bg-opacity-40 border-4 border-solid border-white/20 backdrop-blur-md drop-shadow-lg ring-1 ring-black/5">
+            className="tabs bg-white/20 bg-opacity-40 border-4 border-solid border-white/20 backdrop-blur-md drop-shadow-lg">
             {renderTabs()}
          </div>
       </div>

@@ -19,21 +19,19 @@ export function OuterSpaceTabView() {
    } = useOuterSpaceTab()
 
    return (
-      <div className="p-4">
+      <div className="flex flex-col">
          <SwitchTitled
             title={'Activate Constellation bounds'}
             defaultChecked={constellationBoundsActivated}
             onCheck={activateConstellationBounds}
             onUncheck={deactivateConstellationBounds}
          />
-
          <SwitchTitled
             title={'Activate Constellation figures'}
             defaultChecked={constellationFiguresActivated}
             onCheck={activateConstellationFigures}
             onUncheck={deactivateConstellationFigures}
          />
-
          <SwitchTitled
             title={'Activate the bright star (Hipparcos and Tycho)'}
             defaultChecked={hypticActivated}
