@@ -1,27 +1,23 @@
-.body {
+.tabs-body {
     --radius: 8px;
     --border: 4px;
-    --height: 48px;
+    --height: 10rem;
+    --width: 15rem;
     --speed: 0.25s;
     display: grid;
     place-items: center;
     -ms-flex-line-pack: center;
-    align-content: center;
-    font-family: "SF Pro Text", "SF Pro Icons", "AOS Icons", "Helvetica Neue", Helvetica, Arial, sans-serif, system-ui;
+    align-content: start;
 }
 
 .tabs {
-    height: var(--height);
+    width: var(--height);
+    height: var(--width);
     display: grid;
-    grid-auto-flow: column;
-    /*background: hsl(0 0% 0%);
-    border: var(--border) solid hsl(0 0% 0%);*/
+    grid-auto-flow: row;
     border-radius: var(--radius);
     grid-auto-columns: 1fr;
     position: relative;
-}
-
-.tabs {
     --ease: linear(
             0,
             0.1641 3.52%,
@@ -107,7 +103,7 @@
     padding: 0 clamp(10px, 10px + 10px, 20px);
     cursor: pointer;
     text-align: center;
-    height: 100%;
+    width: 100%;
     display: grid;
     border-radius: calc(var(--radius) - var(--border));
     place-items: center;
@@ -132,20 +128,20 @@
 .tabs::after {
     pointer-events: none;
     content: "";
-    width: calc(100% / var(--count));
-    height: 100%;
+    height: calc(100% / var(--count));
+    width: 100%;
     background: hsl(0 0% 100%);
     position: absolute;
     border-radius: calc(var(--radius) - var(--border));
     mix-blend-mode: difference;
-    translate: calc(var(--active, 0) * 100%) 0;
+    translate: 0 calc(var(--active, 0) * 100%);
     -webkit-transition: translate, outline-color;
     transition: translate, outline-color;
     -webkit-transition-duration: var(--speed);
     transition-duration: var(--speed);
     -webkit-transition-timing-function: var(--ease, ease);
     transition-timing-function: var(--ease, ease);
-    outline: 2px solid transparent;
+    outline: 1px solid transparent;
 }
 
 .tabs:has(:focus-visible)::after {

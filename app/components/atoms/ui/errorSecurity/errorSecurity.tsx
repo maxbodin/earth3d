@@ -4,18 +4,18 @@ import { ToastDanger } from '@/app/components/molecules/toasts/toastDanger/toast
 import { MIN_WINDOW_WIDTH } from '@/app/constants/numbers'
 import {
    NO_ERROR_MESSAGE,
-   SAFARI_ERROR_MESSAGE,
+   SAFARI_OR_CHROME_ERROR_MESSAGE,
    WAITING_TO_DETECT_ERROR_MESSAGE,
    WINDOW_WIDTH_ERROR_MESSAGE,
 } from '@/app/constants/strings'
 
 export function ErrorSecurity({
-   children,
-}: Readonly<{
+                                 children,
+                              }: Readonly<{
    children: React.ReactNode
 }>) {
    const [errorMessage, setErrorMessage] = useState(
-      WAITING_TO_DETECT_ERROR_MESSAGE
+      WAITING_TO_DETECT_ERROR_MESSAGE,
    )
 
    /**
@@ -30,12 +30,12 @@ export function ErrorSecurity({
    }
 
    useEffect(() => {
-      const isSafari: boolean = /^((?!chrome|android).)*safari/i.test(
-         navigator.userAgent
+      const isSafariOrChrome: boolean = /(safari|chrome|android|crios)/i.test(
+         navigator.userAgent,
       )
 
-      if (isSafari) {
-         setErrorMessage(SAFARI_ERROR_MESSAGE)
+      if (isSafariOrChrome) {
+         setErrorMessage(SAFARI_OR_CHROME_ERROR_MESSAGE)
          return
       }
 

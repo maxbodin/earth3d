@@ -8,7 +8,7 @@ import {
    SPHERE_WIDTH_SEGMENTS,
 } from '@/app/constants/numbers'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
-import { SceneType } from '@/app/components/enums/sceneType'
+import { SceneType } from '@/app/enums/sceneType'
 import { useOuterSpaceTab } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
 import { OUTER_SPACE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { HYPTIC_TEXTURE_PNG } from '@/app/constants/paths'
@@ -18,7 +18,7 @@ import { removeObject3D } from '@/app/helpers/threeHelper'
 export function Hyptic(): null {
    const hyptic = useRef<THREE.Mesh | null>(null)
    const hypticTexture: THREE.Texture = new THREE.TextureLoader().load(
-      HYPTIC_TEXTURE_PNG
+      HYPTIC_TEXTURE_PNG,
    )
    const { displayedSceneData } = useScenes()
    const { hypticActivated } = useOuterSpaceTab()
@@ -43,7 +43,7 @@ export function Hyptic(): null {
          new THREE.SphereGeometry(
             OUTER_SPACE_RADIUS,
             SPHERE_WIDTH_SEGMENTS,
-            SPHERE_HEIGHT_SEGMENTS
+            SPHERE_HEIGHT_SEGMENTS,
          ),
          new THREE.MeshBasicMaterial({
             map: hypticTexture,
@@ -55,7 +55,7 @@ export function Hyptic(): null {
             lightMapIntensity: 100,
             reflectivity: 100,
             opacity: 0.4,
-         })
+         }),
       )
 
       hyptic.current.rotation.x = THREE.MathUtils.degToRad(EARTH_ANGLE)

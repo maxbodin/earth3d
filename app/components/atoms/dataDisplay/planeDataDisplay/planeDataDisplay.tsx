@@ -1,13 +1,22 @@
 import React from 'react'
 import { N_A_VALUE } from '@/app/constants/strings'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 
 const lookup = require('country-data').lookup
 
-export function PlaneDataDisplay({
-   selectedPlaneData,
-}: {
-   selectedPlaneData: Record<string, any>
-}) {
+export function PlaneDataDisplay(): React.JSX.Element {
+   const { selectedObjectData } = useSelection()
+
+   const selectedPlaneData = selectedObjectData
+
+   if (selectedPlaneData == null) {
+      return (
+         <>
+            <h1>Failed to get data.</h1>
+         </>
+      )
+   }
+
    const callsign = selectedPlaneData?.data?.[1] || N_A_VALUE
    const originCountry = selectedPlaneData?.data?.[2] || N_A_VALUE
    const timePosition = selectedPlaneData?.data?.[3] || N_A_VALUE

@@ -8,7 +8,7 @@ export function VesselsTabView() {
    const { vesselsActivated } = useVesselsTab()
 
    return (
-      <div className="p-4">
+      <div className="flex flex-col">
          <SwitchTitled
             title={'Activate Vessels'}
             defaultChecked={vesselsActivated}

@@ -4,8 +4,7 @@ Project global advancement
 
 ## To Dos
 
-> Sorted by categories (not by priority) + may contains duplicate
-> If you have ideas of upgrades, feel free to reach to me
+> If you have ideas of upgrades, feel free to reach to me.
 
 > If you want to contribute pick a task below (one that has not a username next to it)
 > Example: "- [ ] Add feature (WIP Username)" => don't pick it
@@ -13,37 +12,12 @@ Project global advancement
 
 > TODO alias WIP alias Work In Progress
 
-### Global
-
-- [ ] Explain global structure in README.md
-
-### Ui
-
-- [ ] Make panel scrollable
-
-### Map
-
-- [ ] Skybox in plane scene
-- [ ] Add Documentation panel for map
-- [ ] Add Data panel for map
-- [ ] Add Credit panel for map
-
-### Airports
-
-- [ ] Allow user to display airports on map (We use a static json file containing all the airports data)
-- [ ] Displaying airports on zoom only
-- [ ] Opening details of an airport by clicking on it
-- [ ] User is able to search an airport using different data
-- [ ] Add Documentation panel for airports
-- [ ] Add Data panel for airports
-- [ ] Add Credit panel for airports
-
-### Planes
+### PlanesController
 
 - [ ] Allow user to visualize planes in live on map
 - [ ] Opening details of a plane by clicking on it
-- [ ] Automatic reloading of aircraft after duration (interpolation for moves with multiple cooldown categories)
-- [ ] User is able to search a specific plane using different data (CALLSIGN, onGround?, ..)
+- [ ] Automatic reloading of aircraft after duration (interpolation for moves with multiple cool-down categories)
+- [ ] User is able to search a specific plane using different data (CALLSIGN, onGround?, ...)
 - [ ] User is able to filter planes using different data (Nationality, ...)
 - [ ] By selecting a plane user can display the itinerary of the plane (Use meshline)
 - [ ] Explore the following idea for planes: Pour le mouvement des items on call dès le chargement de la page puis 1
@@ -51,24 +25,16 @@ Project global advancement
   on prend 10 minute à interpoller, puis 15 minutes en boucle, à chaque fois on call tous les avions comme ça on les
   déplace tous. On save la data dans un provider: oldData, newData
 - [ ] Add fallback for planeDataDisplay values
-- [ ] Add Documentation panel for planes
-- [ ] Add Data panel for planes
-- [ ] Add Credit panel for planes
 - [ ] Allow user to visualize planes data from yesterday to now on map
 
-### Vessels
+### VesselsController
 
 - [ ] Add Documentation panel for vessels
 - [ ] Add Data panel for vessels
 - [ ] Add Credit panel for vessels
 - [ ] Allow user to search a vessel using many parameters (MMSI, CALLSIGN, IMO, ETA, ...)
 - [ ] Make vessels move on map and not only be static
-
-### Outer space
-
-- [ ] Add Documentation panel for outer space
-- [ ] Add Data panel for outer space
-- [ ] Add Credit panel for outer space
+- [ ] Allow user to visualize vessels on map (Plane and Globe) (We use AIS data from aisstream.io)
 
 ### Various upgrades for later
 
@@ -126,35 +92,46 @@ Project global advancement
   be saved in the markers displayed on the map when selected. Allow user to activate or deactivate the displaying of its
   custom data (switch). Display a terminal window like with errors under the custom data block.
 
-## Done
-
-### Global
-
-- [x] Project global structure
-
-### Planet
-
-- [x] Planet made with Three.js
-- [x] Relief on ground using displacement map
-- [x] User can zoom on the planet with no loss of image quality (We achieved this using geo-three lib and MapBox)
-
-### Vessels
-
-- [x] Allow user to visualize vessels on map (Plane and Globe) (We use AIS data from aisstream.io)
-
-### Ui
-
-- [x] Being able to close the details panel
-
 ### Countries
 
-- [x] Countries frontiers can be displayed on globe scene
-- [x] Countries frontiers can be displayed on plane scene using meshlines
-- [x] Countries names can be displayed at the center of the countries
-- [x] User can activate or deactivate countries names
-- [x] User can activate or deactivate countries frontiers
 - [ ] User can select a country by double-clicking on the name
 - [ ] When selecting a country user can visualize data on the country
 - [ ] Flag emoji is visible in each country name
-- [] Countries frontiers can be displayed on plane scene using prebaked texture, only use meshline for selected
+- [ ] Countries frontiers can be displayed on plane scene using prebaked texture, only use meshline for selected
   country ?
+
+// TODO WIP:
+export function getWeatherForLocationEndpoint(location: Coordinate) {
+return `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${location.lat}%2C23&lon${location.lng}%2C8`
+}
+
+/*
+TODO : WORK IN PROGRESS => Using suncalc to get various data from a given position.
+
+      displayedSceneData?.camera?.position
+
+      var SunCalc = require('suncalc')
+      // get today's sunlight times for London
+      const times = SunCalc.getTimes(new Date(), 51.5, -0.1)
+
+      console.log(times)
+      // format sunrise time from the Date object
+      const sunriseStr: string = `${times.sunrise.getHours()}:${times.sunrise.getMinutes()}`
+
+      // get position of the sun (azimuth and altitude) at today's sunrise
+      const sunrisePos = SunCalc.getPosition(times.sunrise, 51.5, -0.1)
+
+      // get sunrise azimuth in degrees
+      const sunriseAzimuth: number = (sunrisePos.azimuth * 180) / Math.PI
+
+*/
+
+- Ajouter le dézoom de la planète terre avec transition vers une scène supplémentaire pour voir le système solaire
+  complet. Lors du zoom on repart sur la planète Terre.
+- Reduce damping when moving planet.
+- Make drawer in credit panel and in the drawer add a selection drawer for parts (Planet, Vessels, ...), using the
+  selection display credits.
+- Make details panel scrollable
+- Add Credit data for outer space especially for textures.
+- User is able to search an airport using different data
+- Explain global structure in README.md

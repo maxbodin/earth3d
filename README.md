@@ -10,12 +10,10 @@
 
 > [Three.js](https://threejs.org)
 
-> Data used for airports is coming is from:
-[ArcGIS Hub](https://hub.arcgis.com/datasets/esri-de-content::world-airports/explore?)
-
+> Data used for airports is coming is
+> from [ArcGIS Hub](https://hub.arcgis.com/datasets/esri-de-content::world-airports/explore?)
 > Tiles making on the planet is inspired by geo-three [Geo-Three](https://github.com/tentone/geo-three)
-
-> Meshline https://github.com/pmndrs/meshline
+> Mesh line https://github.com/pmndrs/meshline
 > World GEO JSON https://github.com/georgique/world-geojson/tree/develop
 > Countries lat long https://github.com/eesur/country-codes-lat-long/blob/master/country-codes-lat-long-alpha3.json
 
@@ -56,6 +54,7 @@ bun dev
 - Create .env.local file with:
     - SECRET_PUBLIC_MAPBOX_TOKEN='Your secret public mapbox token'
     - AISSTREAM_TOKEN='Your aisstream token'
+    - ORS_API_KEY='Your open route service api key'
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

@@ -2,32 +2,27 @@ import React, { createContext, ReactNode, useContext, useState } from 'react'
 
 interface OuterSpaceTabContextValue {
    constellationBoundsActivated: boolean
-   setConstellationBoundsActivated: React.Dispatch<React.SetStateAction<any>>
-
+   setConstellationBoundsActivated: React.Dispatch<React.SetStateAction<boolean>>
    constellationFiguresActivated: boolean
-   setConstellationFiguresActivated: React.Dispatch<React.SetStateAction<any>>
-
+   setConstellationFiguresActivated: React.Dispatch<React.SetStateAction<boolean>>
    hypticActivated: boolean
-   setHypticActivated: React.Dispatch<React.SetStateAction<any>>
+   setHypticActivated: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-// Create context.
 const OuterSpaceTabContext = createContext<OuterSpaceTabContextValue | null>(
-   null
+   null,
 )
 
-// Custom hook to access context.
 export function useOuterSpaceTab(): OuterSpaceTabContextValue {
    const context = useContext(OuterSpaceTabContext)
    if (!context) {
       throw new Error(
-         'useOuterSpaceTab must be used within a OuterSpaceTabProvider'
+         'useOuterSpaceTab must be used within a OuterSpaceTabProvider',
       )
    }
    return context
 }
 
-// Provider component.
 export function OuterSpaceTabProvider({ children }: { children: ReactNode }) {
    const [constellationBoundsActivated, setConstellationBoundsActivated] =
       useState<boolean>(false)

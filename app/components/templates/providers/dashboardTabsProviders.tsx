@@ -5,6 +5,7 @@ import { OuterSpaceTabProvider } from '@/app/components/organisms/dashboardTabs/
 import { MapTabProvider } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.model'
 import { VesselsTabProvider } from '@/app/components/organisms/dashboardTabs/vesselsTab/vesselsTab.model'
 import { CountriesTabProvider } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
+import { AirportsTabProvider } from '@/app/components/organisms/dashboardTabs/airportsTab/airportsTab.model'
 
 /**
  * Hell. x2
@@ -12,15 +13,17 @@ import { CountriesTabProvider } from '@/app/components/organisms/dashboardTabs/c
  * @constructor
  */
 export function DashboardTabsProviders({
-   children,
-}: {
+                                          children,
+                                       }: {
    children: React.ReactNode
 }) {
    return (
       <MapTabProvider>
          <OuterSpaceTabProvider>
             <VesselsTabProvider>
-               <CountriesTabProvider>{children}</CountriesTabProvider>
+               <CountriesTabProvider>
+                  <AirportsTabProvider>{children}</AirportsTabProvider>
+               </CountriesTabProvider>
             </VesselsTabProvider>
          </OuterSpaceTabProvider>
       </MapTabProvider>

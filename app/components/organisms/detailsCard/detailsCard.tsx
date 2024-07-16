@@ -1,10 +1,10 @@
 import React from 'react'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
 import { PlaneDataDisplay } from '../../atoms/dataDisplay/planeDataDisplay/planeDataDisplay'
-import { ObjectType } from '@/app/components/enums/objectType'
-import { useData } from '@/app/context/dataContext'
 import { AirportDataDisplay } from '../../atoms/dataDisplay/airportDataDisplay/airportDataDisplay'
 import { VesselDataDisplay } from '@/app/components/atoms/dataDisplay/vesselDataDisplay/vesselDataDisplay'
+import { ObjectType } from '@/app/enums/objectType'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 
 export function DetailsCard() {
    const {
@@ -12,7 +12,7 @@ export function DetailsCard() {
       setSelectedObjectType,
       selectedObjectData,
       setSelectedObjectData,
-   } = useData()
+   } = useSelection()
 
    return (
       <>
@@ -27,13 +27,9 @@ export function DetailsCard() {
                   centered={false}
                   content={
                      selectedObjectType === ObjectType.AIRPORT ? (
-                        <AirportDataDisplay
-                           selectedAirportData={selectedObjectData}
-                        />
+                        <AirportDataDisplay />
                      ) : selectedObjectType === ObjectType.PLANE ? (
-                        <PlaneDataDisplay
-                           selectedPlaneData={selectedObjectData}
-                        />
+                        <PlaneDataDisplay />
                      ) : selectedObjectType === ObjectType.VESSEL ? (
                         <VesselDataDisplay />
                      ) : (

@@ -22,3 +22,21 @@ body {
         text-wrap: balance;
     }
 }
+
+[cmdk-input-wrapper], [cmdk-input] {
+    font-size: var(--nextui-font-size-small);
+    line-height: var(--nextui-line-height-small);
+    min-height: 2rem;
+    height: 2rem;
+    --tw-border-opacity: 1;
+    border-color: hsl(var(--nextui-default-200) / var(--nextui-default-200-opacity, var(--tw-border-opacity)));
+    border-width: var(--nextui-border-width-medium);
+    border-radius: var(--nextui-radius-small);
+}
+
+[cmdk-list] {
+    max-height: 100px;
+    transition: height 100ms ease;
+    scroll-padding-block-start: 8px;
+    scroll-padding-block-end: 8px;
+}

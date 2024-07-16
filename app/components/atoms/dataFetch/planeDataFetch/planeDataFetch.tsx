@@ -1,9 +1,7 @@
 import { useEffect } from 'react'
-import {
-   fetchPlanesData,
-   fetchPlaneTrackData,
-} from '@/app/server/services/planeDataService'
-import { useData } from '@/app/context/dataContext'
+import { fetchPlanesData, fetchPlaneTrackData } from '@/app/server/services/planeDataService'
+import { useData } from '@/app/context_todo_improve/dataContext'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 
 export function PlaneDataFetch(): null {
    const { setPlanesData } = useData()
@@ -22,8 +20,9 @@ export function PlaneDataFetch(): null {
 }
 
 export const onPlaneSelected = (data: Record<string, any>): void => {
-   const { setPlaneTrackData, setSelectedObjectData } = useData()
-
+   const { setPlaneTrackData } = useData()
+   const { setSelectedObjectData } = useSelection()
+   
    setSelectedObjectData(data)
 
    fetchPlaneTrackData(data.data[0])

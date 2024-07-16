@@ -13,7 +13,7 @@ export function CountriesTabView() {
    } = CountriesTabController()
 
    return (
-      <div className="p-4">
+      <div className="flex flex-col">
          <SwitchTitled
             title={'Activate countries frontiers on Map'}
             defaultChecked={frontiersActivated}

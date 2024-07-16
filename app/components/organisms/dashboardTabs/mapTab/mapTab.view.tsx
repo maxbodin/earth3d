@@ -21,7 +21,7 @@ export function MapTabView() {
    } = MapTabController()
 
    return (
-      <div className="p-4">
+      <div className="flex flex-col w-full">
          <SwitchTitled
             title={'Activate Satellite style on Map'}
             defaultChecked={satelliteMapStyleActivated}

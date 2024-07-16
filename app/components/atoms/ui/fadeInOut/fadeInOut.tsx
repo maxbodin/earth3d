@@ -3,10 +3,10 @@ import '../../../../commonStyles/fadeIn.css'
 import '../../../../commonStyles/fadeOut.css'
 
 export function FadeInOut({
-   isVisible,
-   preFadeOutCallback,
-   children,
-}: {
+                             isVisible,
+                             preFadeOutCallback,
+                             children,
+                          }: {
    isVisible: boolean
    preFadeOutCallback?: () => void
    children: ReactNode

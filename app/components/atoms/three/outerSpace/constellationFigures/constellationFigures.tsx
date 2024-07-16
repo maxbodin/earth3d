@@ -8,7 +8,7 @@ import {
    SPHERE_WIDTH_SEGMENTS,
 } from '@/app/constants/numbers'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
-import { SceneType } from '@/app/components/enums/sceneType'
+import { SceneType } from '@/app/enums/sceneType'
 import { OUTER_SPACE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { useOuterSpaceTab } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
 import { CONSTELLATION_FIGURES_TEXTURE_PNG } from '@/app/constants/paths'
@@ -42,14 +42,14 @@ export function ConstellationFigures(): null {
          new THREE.SphereGeometry(
             OUTER_SPACE_RADIUS,
             SPHERE_WIDTH_SEGMENTS,
-            SPHERE_HEIGHT_SEGMENTS
+            SPHERE_HEIGHT_SEGMENTS,
          ),
          new THREE.MeshBasicMaterial({
             map: constellationFiguresTexture,
             side: THREE.BackSide,
             opacity: 1,
             transparent: true,
-         })
+         }),
       )
 
       constellationFigures.current.rotation.x =
