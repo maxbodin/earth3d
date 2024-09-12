@@ -20,8 +20,10 @@ import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TEXT_FONT } from '@/app/constants/paths'
 import { clamp } from '@/app/helpers/numberHelper'
 import { SceneType } from '@/app/enums/sceneType'
-import { useCountriesTab } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
+import {
+   useCountriesTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
 
 const geoJson = require('world-geojson')
 
@@ -213,8 +215,6 @@ export function CountriesController(): null {
       namesGroup.current.children.forEach(
          (
             value: THREE.Object3D<THREE.Object3DEventMap>,
-            index: number,
-            array: THREE.Object3D<THREE.Object3DEventMap>[],
          ): void => {
             value.lookAt(displayedSceneData.camera.position)
          },

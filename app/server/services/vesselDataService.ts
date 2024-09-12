@@ -126,6 +126,7 @@ export const stopConnection = (): void => {
 }
 
 export const startConnection = (): void => {
+   logInfo('Starting connection')
    socket = new WebSocket('wss://stream.aisstream.io/v0/stream')
 
    setSocketListeners()
@@ -149,43 +150,57 @@ export const setSocketListeners = (): void => {
       socket?.send(JSON.stringify(subscriptionMessage))
    }
 
-   socket.onmessage = async (event): Promise<void> => {
-      const aisMessage = JSON.parse(event.data)
-      const mmsi = aisMessage?.MetaData?.MMSI
+   socket.onmessage = async (event: MessageEvent): Promise<void> => {
+      try {
+         const data = await event.data.text()
+         const aisMessage = JSON.parse(data)
 
-      if (mmsi) {
-         let message: any = null
+         const mmsi = aisMessage?.MetaData?.MMSI
 
-         // TODO: Implement support for StandardSearchAndRescueAircraftReport,
-         // TODO: Implement support forLongRangeAisBroadcastMessage
-         if (aisMessage.MessageType == POSITION_REPORT_STRING) {
-            message = handlePositionReportMessage(aisMessage)
-         } else if (aisMessage.MessageType == SHIP_STATIC_DATA_STRING) {
-            message = handleShipStaticDataMessage(aisMessage)
-         } else {
-            message = handleOtherMessages(aisMessage)
-         }
+         if (mmsi) {
+            let message: any = null
 
-         const existingMessage = messagesMap.get(mmsi)
-
-         if (existingMessage) {
-            for (let field in message) {
-               if (
-                  message.hasOwnProperty(field) &&
-                  existingMessage[field] != message[field]
-               ) {
-                  existingMessage[field] = message[field]
-               }
+            // TODO: Implement support for StandardSearchAndRescueAircraftReport,
+            // TODO: Implement support forLongRangeAisBroadcastMessage
+            if (aisMessage.MessageType == POSITION_REPORT_STRING) {
+               message = handlePositionReportMessage(aisMessage)
+            } else if (aisMessage.MessageType == SHIP_STATIC_DATA_STRING) {
+               message = handleShipStaticDataMessage(aisMessage)
+            } else {
+               message = handleOtherMessages(aisMessage)
             }
-            messagesMap.set(mmsi, existingMessage)
-         } else {
-            messagesMap.set(mmsi, message)
-         }
 
-         if (!messageBuffer.includes(mmsi)) {
-            messageBuffer.push(mmsi)
+            const existingMessage = messagesMap.get(mmsi)
+
+            if (existingMessage) {
+               for (let field in message) {
+                  if (
+                     message.hasOwnProperty(field) &&
+                     existingMessage[field] != message[field]
+                  ) {
+                     existingMessage[field] = message[field]
+                  }
+               }
+               messagesMap.set(mmsi, existingMessage)
+            } else {
+               messagesMap.set(mmsi, message)
+            }
+
+            if (!messageBuffer.includes(mmsi)) {
+               messageBuffer.push(mmsi)
+            }
          }
+      } catch (error) {
+         logError('Error parsing WebSocket message', error)
       }
+   }
+
+   socket.onerror = function(error: Event): void {
+      logError('WebSocket error:', error)
+   }
+
+   socket.onclose = function(_: CloseEvent): void {
+      logInfo('WebSocket connection closed')
    }
 }
 

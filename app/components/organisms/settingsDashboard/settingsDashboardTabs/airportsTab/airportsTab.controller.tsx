@@ -1,4 +1,7 @@
-import { useAirportsTab } from '@/app/components/organisms/dashboardTabs/airportsTab/airportsTab.model'
+import {
+   useAirportsTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/airportsTab/airportsTab.model'
+
 
 export function AirportsTabController() {
    const { setAirportsActivated } = useAirportsTab()

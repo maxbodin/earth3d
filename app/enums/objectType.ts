@@ -3,4 +3,5 @@ export enum ObjectType {
    AIRPORT,
    PLANE,
    VESSEL,
+   PLACE
 }

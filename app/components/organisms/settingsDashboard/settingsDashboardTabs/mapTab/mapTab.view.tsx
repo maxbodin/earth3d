@@ -1,6 +1,8 @@
 import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
-import { useMapTab } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.model'
-import { MapTabController } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.controller'
+import { useMapTab } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
+import {
+   MapTabController,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.controller'
 
 export function MapTabView() {
    const {

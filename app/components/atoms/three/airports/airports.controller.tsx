@@ -20,7 +20,7 @@ import { debounce } from 'lodash'
 
 export function AirportsController(): null {
    const { displayedSceneData } = useScenes()
-   const { displayedAirportsGroup, setDisplayedAirportsGroup } = useAirports()
+   const { displayedAirportsGroup } = useAirports()
 
    const visibleAirports = useRef<any[]>([])
 
@@ -28,7 +28,7 @@ export function AirportsController(): null {
     * Process airports to display only visible airports.
     */
    const processAirports = (): void => {
-      // Clear previous planes.
+      // Clear previous airports.
       displayedAirportsGroup.forEach((airportMesh: THREE.Mesh): void => {
          removeObject3D(airportMesh, displayedSceneData.scene)
       })
@@ -131,7 +131,7 @@ export function AirportsController(): null {
    /**
     * Update airports when camera move.
     */
-   const handleCameraMove = (): void => {
+   const onControlsChange = (): void => {
       cameraDistanceToPlanetCenter.current =
          displayedSceneData.controls.getDistance()
 
@@ -145,19 +145,19 @@ export function AirportsController(): null {
    }
 
    /**
-    * Debounce the handleCameraMove function to limit how often it can be called.
+    * Debounce the onControlsChange function to limit how often it can be called.
     */
-   const debouncedHandleCameraMove = debounce(handleCameraMove, 2)
+   const debouncedOnControlsChange = debounce(onControlsChange, 2)
 
    /**
     * Remove event listener.
     */
    const cleanup = (): void => {
-      displayedSceneData?.controls?.removeEventListener('change', debouncedHandleCameraMove)
+      displayedSceneData?.controls?.removeEventListener('change', debouncedOnControlsChange)
    }
 
    useEffect(() => {
-      displayedSceneData?.controls?.addEventListener('change', debouncedHandleCameraMove)
+      displayedSceneData?.controls?.addEventListener('change', debouncedOnControlsChange)
 
       // Clean up the event listener.
       return cleanup

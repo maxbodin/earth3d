@@ -9,11 +9,13 @@ import {
 } from '@/app/constants/numbers'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
-import { useOuterSpaceTab } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
 import { OUTER_SPACE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { HYPTIC_TEXTURE_PNG } from '@/app/constants/paths'
 import { HYPTIC_NAME } from '@/app/constants/strings'
 import { removeObject3D } from '@/app/helpers/threeHelper'
+import {
+   useOuterSpaceTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
 
 export function Hyptic(): null {
    const hyptic = useRef<THREE.Mesh | null>(null)

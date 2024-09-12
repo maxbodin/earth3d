@@ -1,4 +1,6 @@
-import { useOuterSpaceTab } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
+import {
+   useOuterSpaceTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
 
 export function OuterSpaceTabController() {
    const {

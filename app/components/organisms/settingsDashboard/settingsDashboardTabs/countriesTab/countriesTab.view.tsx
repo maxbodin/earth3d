@@ -1,6 +1,10 @@
 import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
-import { CountriesTabController } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.controller'
-import { useCountriesTab } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
+import {
+   useCountriesTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
+import {
+   CountriesTabController,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.controller'
 
 export function CountriesTabView() {
    const { frontiersActivated, namesActivated } = useCountriesTab()
@@ -13,7 +17,7 @@ export function CountriesTabView() {
    } = CountriesTabController()
 
    return (
-      <div className="flex flex-col">
+      <div className="flex flex-col w-full">
          <SwitchTitled
             title={'Activate countries frontiers on Map'}
             defaultChecked={frontiersActivated}

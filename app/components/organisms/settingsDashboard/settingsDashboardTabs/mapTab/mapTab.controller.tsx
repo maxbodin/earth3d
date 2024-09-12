@@ -1,5 +1,7 @@
 'use client'
-import { useMapTab } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.model'
+
+
+import { useMapTab } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
 import { useMap } from '@/app/context_todo_improve/mapContext'
 
 export function MapTabController() {

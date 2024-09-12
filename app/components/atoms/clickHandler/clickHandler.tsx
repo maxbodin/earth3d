@@ -26,7 +26,7 @@ export function ClickHandler(): null {
       if (!displayedVesselsGroup) return
 
       const intersectsVessels = raycaster.intersectObjects(
-         displayedVesselsGroup!.children,
+         Array.from(displayedVesselsGroup),
       )
 
       if (intersectsVessels.length > 0) {

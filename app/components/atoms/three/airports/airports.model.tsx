@@ -2,6 +2,7 @@ import React, { createContext, ReactNode, useContext, useState } from 'react'
 import * as THREE from 'three'
 
 interface AirportsContextValue {
+   // Mainly use for click handling on airport.
    displayedAirportsGroup: Set<THREE.Mesh>;
    setDisplayedAirportsGroup: React.Dispatch<React.SetStateAction<Set<THREE.Mesh>>>
 }

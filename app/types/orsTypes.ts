@@ -83,7 +83,7 @@ interface Geometry {
 /**
  * Feature properties type.
  */
-interface FeatureProperties {
+export interface FeatureProperties {
    accuracy: string
    addendum?: Addendum
    continent: string
@@ -92,6 +92,7 @@ interface FeatureProperties {
    country_a: string
    country_gid: string
    county?: string
+   county_a?: string
    county_gid?: string
    gid: string
    id: string

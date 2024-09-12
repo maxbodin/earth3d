@@ -1,7 +1,7 @@
 'use server'
 const openSkyNetworkApiBaseUrl: string = 'https://api.opensky-network.org/api'
 
-// TODO: Make similar system as for vessels.
+// TODO : Fix it.
 export const fetchPlanesData = async (): Promise<any> => {
    try {
       const response: Response = await fetch(

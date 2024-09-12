@@ -1,6 +1,10 @@
+import {
+   OuterSpaceTabController,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/controller'
+import {
+   useOuterSpaceTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
 import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
-import { OuterSpaceTabController } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/controller'
-import { useOuterSpaceTab } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
 
 export function OuterSpaceTabView() {
    const {
@@ -19,7 +23,7 @@ export function OuterSpaceTabView() {
    } = useOuterSpaceTab()
 
    return (
-      <div className="flex flex-col">
+      <div className="flex flex-col w-full">
          <SwitchTitled
             title={'Activate Constellation bounds'}
             defaultChecked={constellationBoundsActivated}

@@ -10,10 +10,12 @@ import {
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { OUTER_SPACE_RENDER_ORDER } from '@/app/constants/renderOrder'
-import { useOuterSpaceTab } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
 import { CONSTELLATION_FIGURES_TEXTURE_PNG } from '@/app/constants/paths'
 import { CONSTELLATION_FIGURES_NAME } from '@/app/constants/strings'
 import { removeObject3D } from '@/app/helpers/threeHelper'
+import {
+   useOuterSpaceTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
 
 export function ConstellationFigures(): null {
    const constellationFigures = useRef<THREE.Mesh | null>(null)

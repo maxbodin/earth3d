@@ -1,4 +1,6 @@
-import { useCountriesTab } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
+import {
+   useCountriesTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
 
 export function CountriesTabController() {
    const { setNamesActivated, setFrontiersActivated } = useCountriesTab()

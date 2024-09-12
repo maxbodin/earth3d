@@ -26,6 +26,7 @@
     "cmdk": "^1.0.0",
     "country-data": "^0.0.31",
     "dotenv": "^16.4.5",
+    "flickr-sdk": "^7.0.0-beta.7",
     "framer-motion": "^11.1.7",
     "geo-three": "^0.1.14",
     "gsap": "^3.12.5",

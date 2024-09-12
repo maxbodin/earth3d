@@ -25,11 +25,10 @@ export const EARTH_ORIGIN: number = EARTH_PERIMETER / 2.0
 
 export const GLOBE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1.1
 export const PLANE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1e5
-export const PLANE_SCENE_VESSEL_MIN_SCALE: number = 10
+export const PLANE_SCENE_VESSEL_MIN_SCALE: number = 5
 export const PLANE_SCENE_VESSEL_MAX_SCALE: number = 400
 export const GLOBE_SCENE_VESSEL_MIN_SCALE: number = 4e2
 export const GLOBE_SCENE_VESSEL_MAX_SCALE: number = 5e3
-export const MAX_DISPLAYED_VESSELS: number = 1e6
 export const MIN_WINDOW_WIDTH: number = 830
 export const OUTER_SPACE_RADIUS: number = EARTH_RADIUS * 1e18
 export const EARTH_ANGLE: number = -60
@@ -41,6 +40,11 @@ export const AIRPORT_SCALE: number = 10000
 export const PLANE_SCALE: number = 0.001
 
 /**
+ * Nombre maximal de navires affichés.
+ */
+export const MAX_DISPLAYED_VESSELS: number = 5e3
+
+/**
  * Distance minimale pour l'affichage des navires sur le planisphère.
  */
 export const PLANE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA: number = 1e6
@@ -49,7 +53,7 @@ export const PLANE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA: number = 1e6
  * Distance minimale pour l'affichage des navires sur le globe.
  */
 export const GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA: number =
-   EARTH_RADIUS * 1.2
+   EARTH_RADIUS * 0.5
 
 /**
  * Distance minimale pour l'affichage des aéroports sur le planisphère.
