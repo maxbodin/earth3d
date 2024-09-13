@@ -1,8 +1,9 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react'
+import * as THREE from 'three'
 
 interface PlanetContextValue {
-   planet: any
-   setPlanet: React.Dispatch<React.SetStateAction<any>>
+   planet: THREE.Mesh | null
+   setPlanet: React.Dispatch<React.SetStateAction<THREE.Mesh | null>>
 }
 
 const PlanetContext = createContext<PlanetContextValue | null>(null)
@@ -16,14 +17,16 @@ export function usePlanet(): PlanetContextValue {
 }
 
 export function PlanetProvider({ children }: { children: ReactNode }) {
-   const [planet, setPlanet] = useState<any>(null)
+   const [planet, setPlanet] = useState<THREE.Mesh | null>(null)
 
    const value: PlanetContextValue = {
-      planet,
-      setPlanet,
+      planet: planet,
+      setPlanet: setPlanet,
    }
 
    return (
-      <PlanetContext.Provider value={value}>{children}</PlanetContext.Provider>
+      <PlanetContext.Provider value={value}>
+         {children}
+      </PlanetContext.Provider>
    )
 }
