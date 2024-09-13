@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut/fadeInOut'
 import './styles.css'
@@ -12,13 +12,14 @@ import { DataIcon } from '@/app/components/icons/dataIcon'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { useDataDashboard } from '@/app/components/organisms/dataDashboard/dataDashboard.model'
 import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
-import { GithubIcon, ShuffleIcon } from 'lucide-react'
+import { GithubIcon, HandIcon, MousePointer2Icon, ShuffleIcon } from 'lucide-react'
 import Link from 'next/link'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { GeocodeResponse } from '@/app/types/orsTypes'
 import { reverse } from '@/app/server/services/openRouteService'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { ObjectType } from '@/app/enums/objectType'
+import { CursorModeType } from '@/app/enums/modeType'
 
 export function NavigationBar() {
    const {
@@ -35,7 +36,7 @@ export function NavigationBar() {
    const { setIsDataDashboardOpen } = useDataDashboard()
 
    const { flyToCoordinates } = CameraFlyController()
-   const { setSelectedObjectType, setSelectedObjectData } = useSelection()
+   const { setSelectedObjectType, setSelectedObjectData, cursorMode, setCursorMode } = useSelection()
 
    const openMarkers = (): void => {
       setIsNavBarDisplayed(false)
@@ -83,6 +84,32 @@ export function NavigationBar() {
       }
    }
 
+   useEffect((): void => {
+      // When cursor mode is updated we update the cursor.
+      updateCursor()
+   }, [cursorMode])
+
+   /**
+    *
+    */
+   const updateCursor = (): void => {
+      if (cursorMode == CursorModeType.HAND) {
+         // Apply hand cursor.
+         document.body.style.cursor = 'pointer'
+
+      } else {
+         // Apply arrow cursor.
+         document.body.style.cursor = 'default'
+      }
+   }
+
+   /**
+    *
+    */
+   const reverseCursorMode = (): void => {
+      setCursorMode(cursorMode == CursorModeType.HAND ? CursorModeType.POINTER : CursorModeType.HAND)
+   }
+
    return (
       <>
          <FadeInOut
@@ -112,6 +139,12 @@ export function NavigationBar() {
                className="flex flex-row navbaricons absolute right-10 p-4 transform bottom-10 z-40">
                <ButtonGroup variant="bordered"
                             className="rounded-2xl bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg">
+                  <Tooltip content="Switch Mode">
+                     <Button size="lg" isIconOnly variant="bordered" aria-label="Switch Mode"
+                             onClick={reverseCursorMode}>
+                        {cursorMode == CursorModeType.POINTER ? <MousePointer2Icon /> : <HandIcon />}
+                     </Button>
+                  </Tooltip>
                   <Tooltip content="Open Markers">
                      <Button size="lg" isIconOnly variant="bordered" aria-label="Open Markers"
                              onClick={openMarkers}>

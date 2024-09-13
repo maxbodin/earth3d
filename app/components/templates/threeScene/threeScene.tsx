@@ -3,8 +3,7 @@ import * as THREE from 'three'
 import React, { useEffect, useRef } from 'react'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js'
-import { PlanetProvider } from '@/app/context_todo_improve/planetContext'
-import { Planet } from '@/app/components/atoms/three/planet/planet'
+import { PlanetController } from '@/app/components/atoms/three/planet/planet.controller'
 import { Atmosphere } from '@/app/components/atoms/three/atmosphere/atmosphere'
 import { SceneType } from '@/app/enums/sceneType'
 import { useMap } from '@/app/context_todo_improve/mapContext'
@@ -21,6 +20,7 @@ import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
 import { PlaneSky } from '@/app/components/atoms/three/planeSky/planeSky'
 import { ClickHandler } from '@/app/components/atoms/clickHandler/clickHandler'
 import { AirportsController } from '@/app/components/atoms/three/airports/airports.controller'
+import { PlanetProvider } from '@/app/components/atoms/three/planet/planet.model'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -407,7 +407,7 @@ export function ThreeScene() {
                />
                {/*<Heatmap />*/}
                <PlanetProvider>
-                  <Planet />
+                  <PlanetController />
                   <ClickHandler />
                   <VesselsController />
                   <AirportsController />

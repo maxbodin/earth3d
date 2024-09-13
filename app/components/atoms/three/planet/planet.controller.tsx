@@ -8,14 +8,14 @@ import {
    SPHERE_HEIGHT_SEGMENTS,
    SPHERE_WIDTH_SEGMENTS,
 } from '@/app/constants/numbers'
-import { usePlanet } from '@/app/context_todo_improve/planetContext'
 import { PLANET_NAME } from '@/app/constants/strings'
 import { DISPLACEMENT_MAP_TEXTURE_JPG, MAP_TEXTURE_JPG } from '@/app/constants/paths'
 import { EARTH_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
+import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
 
-export function Planet(): null {
+export function PlanetController(): null {
    const { displayedSceneData } = useScenes()
    const { setPlanet } = usePlanet()
 
@@ -158,7 +158,7 @@ return (): void => {
    }, [displayedSceneData])
 
 
-   /******* WORK IN PROGRESS *******
+   /******* WORK IN PROGRESS TODO *******
 
 
 

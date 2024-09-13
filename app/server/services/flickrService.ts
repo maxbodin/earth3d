@@ -40,7 +40,7 @@ export const fetchGeoPhotos = async (latitude: number, longitude: number): Promi
       //license: '4',
       radius: '32',
       radius_units: 'km',
-      extras: 'description,license,date_upload,date_taken,owner_name,geo,tags',
+      extras: 'description,license,date_upload,date_taken,owner_name,geo,tags', // TODO : Use extra in carousel.
    })
 
    return photos.photo.map((photo: Photo) => getFlickrImageURL(photo, 'q'))
