@@ -137,15 +137,12 @@ TODO : WORK IN PROGRESS => Using suncalc to get various data from a given positi
 
 // TODO : Allow user to open mosaic modal to display all the photos, with their data displayed on hover and
 pagination. + better res.
-// TODO : Allow user to click on any place/point on the earth to get data on the place and pictures. => Icon pour
-switcher du mode Hand au mode Select
-// en mode main : on bouge juste la carte, en mode select, lors du click on affiche les données de l'endroit du click.
-// TODO : Get data with
+// TODO : Get more data on place using :
 // https://nominatim.openstreetmap.org/lookup?osm_ids=W25284202&format=json&extratags=1
 // https://nominatim.openstreetmap.org/search?q=imt%20atlantique&format=json&addressdetails=1&limit=1&polygon_svg=1
 // https://nominatim.org/release-docs/latest/api/Search/
 // TODO : Allow user to move a circle with selected radius on the map (spawning shapes => crud on transparent shapes
 that can be spawned and move on earth).
-// TODO : Search if i can integrate a street view window in the modal. Make drawers for each data panel in the main
+// TODO : Search if I can integrate a street view window in the modal. Make drawers for each data panel in the main
 panel. https://www.coordonnees-gps.fr/street-view/@48.360687,-4.571638,h116,p-38,z1
 // https://docs.mapbox.com/api/maps/static-images/

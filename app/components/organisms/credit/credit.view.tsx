@@ -65,6 +65,16 @@ export function CreditView() {
                            Picker GitHub</Link>
                      </AlertDescription>
                   </Alert>
+                  <Alert>
+                     <AlertTitle>Flickr API</AlertTitle>
+                     <AlertDescription>
+                        <Link
+                           href="https://www.flickr.com/services/api/">Flickr API</Link>
+                        <br />
+                        <Link
+                           href="https://www.flickr.com/services/api/flickr.photos.search.html">Flickr.photos.search</Link>
+                     </AlertDescription>
+                  </Alert>
                </div>
             </div>
          </DrawerContent>
