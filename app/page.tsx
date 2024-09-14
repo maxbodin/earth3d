@@ -3,7 +3,7 @@ import React from 'react'
 import { ToastDanger } from '@/app/components/molecules/toasts/toastDanger/toastDanger'
 import { ToastSuccess } from '@/app/components/molecules/toasts/toastSuccess/toastSuccess'
 import { VesselDataFetch } from '@/app/components/atoms/dataFetch/vesselDataFetch/vesselDataFetch'
-import { MapProvider } from '@/app/context_todo_improve/mapContext'
+import { PlaneMapProvider } from '@/app/components/atoms/three/planeMapContext'
 import { CreditView } from '@/app/components/organisms/credit/credit.view'
 import { NavigationBar } from '@/app/components/molecules/navigationBar/navigationBar'
 import { SearchBarView } from '@/app/components/organisms/searchBar/searchBar.view'
@@ -54,7 +54,7 @@ export default function Home() {
 
    return (
       <>
-         <MapProvider>
+         <PlaneMapProvider>
             <SettingsDashboardView />
             <CreditView />
 
@@ -70,7 +70,7 @@ export default function Home() {
 
                <ThreeScene />
             </ScenesProvider>
-         </MapProvider>
+         </PlaneMapProvider>
 
          {/*         <PlaneDataFetch />
           */}

@@ -1,8 +1,6 @@
 'use client'
-
-
 import { useMapTab } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
-import { useMap } from '@/app/context_todo_improve/mapContext'
+import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
 
 export function MapTabController() {
    const {
@@ -11,7 +9,7 @@ export function MapTabController() {
       setBlackLabelMapStyleActivated,
       setActivateTrafficMapStyleActivated,
    } = useMapTab()
-   const { mapProvider } = useMap()
+   const { mapProvider } = usePlaneMap()
 
    function activateBlackLabelMapStyle(): void {
       deactivateAllMapStyles()

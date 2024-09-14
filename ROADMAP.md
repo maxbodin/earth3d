@@ -27,15 +27,6 @@ Project global advancement
 - [ ] Add fallback for planeDataDisplay values
 - [ ] Allow user to visualize planes data from yesterday to now on map
 
-### VesselsController
-
-- [ ] Add Documentation panel for vessels
-- [ ] Add Data panel for vessels
-- [ ] Add Credit panel for vessels
-- [ ] Allow user to search a vessel using many parameters (MMSI, CALLSIGN, IMO, ETA, ...)
-- [ ] Make vessels move on map and not only be static
-- [ ] Allow user to visualize vessels on map (Plane and Globe) (We use AIS data from aisstream.io)
-
 ### Various upgrades for later
 
 - [ ] Allow user to visualize weather on map
@@ -129,9 +120,32 @@ TODO : WORK IN PROGRESS => Using suncalc to get various data from a given positi
 - Ajouter le dézoom de la planète terre avec transition vers une scène supplémentaire pour voir le système solaire
   complet. Lors du zoom on repart sur la planète Terre.
 - Reduce damping when moving planet.
-- Make drawer in credit panel and in the drawer add a selection drawer for parts (Planet, Vessels, ...), using the
+- Make drawer in credit panel and in the drawer add a selection drawer for parts (PlanetController, Vessels, ...), using
+  the
   selection display credits.
 - Make details panel scrollable
 - Add Credit data for outer space especially for textures.
 - User is able to search an airport using different data
 - Explain global structure in README.md
+- Add Documentation panel for vessels
+- Make vessels move on map and not only be static
+- Allow user to search a vessel using many parameters (MMSI, CALLSIGN, IMO, ETA, ...)
+- ORS Add compute track for markers
+- On object view, add button to add object as marker
+- On marker drawer add button to compute distance between two markers (use haversine formula)
+- Finish implementation of map tab view (two fields to add)
+
+// TODO : Allow user to open mosaic modal to display all the photos, with their data displayed on hover and
+pagination. + better res.
+// TODO : Allow user to click on any place/point on the earth to get data on the place and pictures. => Icon pour
+switcher du mode Hand au mode Select
+// en mode main : on bouge juste la carte, en mode select, lors du click on affiche les données de l'endroit du click.
+// TODO : Get data with
+// https://nominatim.openstreetmap.org/lookup?osm_ids=W25284202&format=json&extratags=1
+// https://nominatim.openstreetmap.org/search?q=imt%20atlantique&format=json&addressdetails=1&limit=1&polygon_svg=1
+// https://nominatim.org/release-docs/latest/api/Search/
+// TODO : Allow user to move a circle with selected radius on the map (spawning shapes => crud on transparent shapes
+that can be spawned and move on earth).
+// TODO : Search if i can integrate a street view window in the modal. Make drawers for each data panel in the main
+panel. https://www.coordonnees-gps.fr/street-view/@48.360687,-4.571638,h116,p-38,z1
+// https://docs.mapbox.com/api/maps/static-images/

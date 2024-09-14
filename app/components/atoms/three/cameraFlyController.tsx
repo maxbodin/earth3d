@@ -36,51 +36,76 @@ export function CameraFlyController() {
    const flyToCoordinates = (latitude: number, longitude: number): void => {
       let targetPosition: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
 
-      if (displayedSceneData.type == SceneType.SPHERICAL) {
-         targetPosition = latLongToVector3(
-            latitude as number,
-            longitude as number,
-         )
-      } else if (displayedSceneData.type == SceneType.PLANE) {
-         const worldPos: THREE.Vector2 = ThreeGeoUnitsUtils.datumsToSpherical(
-            latitude as number,
-            longitude as number,
-         )
-         targetPosition = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
-      }
-
       // Get current spherical coordinates of the camera relative to the target.
       const target: THREE.Vector3 = displayedSceneData.controls.target
       const currentPosition: THREE.Vector3 = new THREE.Vector3()
       currentPosition.copy(displayedSceneData.camera.position).sub(target)
 
-      const sphericalCurrent: THREE.Spherical = new THREE.Spherical().setFromVector3(
-         currentPosition,
-      )
-      const sphericalTarget: THREE.Spherical = new THREE.Spherical().setFromVector3(
-         targetPosition.clone().sub(target),
-      )
+      if (displayedSceneData.type == SceneType.SPHERICAL) {
+         targetPosition = latLongToVector3(
+            latitude as number,
+            longitude as number,
+         )
 
-      // Set a target zoom.
-      const targetZoom: number = EARTH_RADIUS * 1.2
+         const sphericalCurrent: THREE.Spherical = new THREE.Spherical().setFromVector3(
+            currentPosition,
+         )
 
-      // Use GSAP to animate the spherical coordinates.
-      gsap.to(sphericalCurrent, {
-         duration: 2,
-         theta: sphericalTarget.theta,
-         phi: sphericalTarget.phi,
-         radius: targetZoom,
-         onUpdate: (): void => {
-            // Update camera position based on new spherical coordinates.
-            const newPosition: THREE.Vector3 = new THREE.Vector3()
-               .setFromSpherical(sphericalCurrent)
-               .add(target)
-            displayedSceneData.camera.position.copy(newPosition)
-            displayedSceneData.camera.lookAt(target)
-            displayedSceneData.controls.update()
-         },
-         ease: 'power2.inOut',
-      })
+         const sphericalTarget: THREE.Spherical = new THREE.Spherical().setFromVector3(
+            targetPosition.clone().sub(target),
+         )
+
+         // Set a target zoom.
+         const targetZoom: number = EARTH_RADIUS * 1.2
+
+         // Use GSAP to animate the spherical coordinates.
+         gsap.to(sphericalCurrent, {
+            duration: 2,
+            theta: sphericalTarget.theta,
+            phi: sphericalTarget.phi,
+            radius: targetZoom,
+            onUpdate: (): void => {
+               // Update camera position based on new spherical coordinates.
+               const newPosition: THREE.Vector3 = new THREE.Vector3()
+                  .setFromSpherical(sphericalCurrent)
+                  .add(target)
+               displayedSceneData.camera.position.copy(newPosition)
+               displayedSceneData.camera.lookAt(target)
+               displayedSceneData.controls.update()
+            },
+            ease: 'power2.inOut',
+         })
+
+      } else if (displayedSceneData.type == SceneType.PLANE) {
+         const worldPos: THREE.Vector2 = ThreeGeoUnitsUtils.datumsToSpherical(
+            latitude as number,
+            longitude as number,
+         )
+         
+         // GSAP animation to zoom the camera.
+         gsap.to(displayedSceneData.controls.target, {
+            duration: 2,
+            x: worldPos.x,
+            y: 0,
+            z: -worldPos.y,
+            ease: 'power2.inOut',
+            onComplete: (): void => {
+               displayedSceneData.controls.update()
+            },
+         })
+
+         // GSAP animation to move the camera.
+         gsap.to(displayedSceneData.camera.position, {
+            duration: 2,
+            x: worldPos.x,
+            y: displayedSceneData.controls.getDistance() * 0.2,
+            z: -worldPos.y,
+            ease: 'power2.inOut',
+            onComplete: (): void => {
+               displayedSceneData.controls.update()
+            },
+         })
+      }
    }
 
 

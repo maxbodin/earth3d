@@ -173,11 +173,11 @@ export function PlaceDataDisplay(): React.JSX.Element {
          {latitude && longitude && <Button
             variant="bordered"
             size="sm"
-            aria-label="Focus view on vessel"
+            aria-label="Focus view on place."
             className="z-50 bg-black bg-opacity-50"
             endContent={<EyeIcon />}
             onClick={(): void => {
-               flyToCoordinates(longitude, latitude)
+               flyToCoordinates(latitude, longitude)
             }}>
             Focus view on place
          </Button>}

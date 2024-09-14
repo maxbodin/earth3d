@@ -6,7 +6,7 @@ import { MapControls } from 'three/examples/jsm/controls/MapControls.js'
 import { PlanetController } from '@/app/components/atoms/three/planet/planet.controller'
 import { Atmosphere } from '@/app/components/atoms/three/atmosphere/atmosphere'
 import { SceneType } from '@/app/enums/sceneType'
-import { useMap } from '@/app/context_todo_improve/mapContext'
+import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
 import { OuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace'
 import { GLOBE_SCENE_NAME, PLANE_SCENE_NAME } from '@/app/constants/strings'
 import { VesselsController } from '@/app/components/atoms/three/vessels/vessels.controller'
@@ -34,7 +34,7 @@ export function ThreeScene() {
    const { globeScene, planeScene, setDisplayedSceneData } =
       useScenes()
 
-   const { map, setMap, setMapProvider } = useMap()
+   const { planeMap, setPlaneMap, setMapProvider } = usePlaneMap()
 
    /**
     * Function to set up renderer, scene, and camera.
@@ -188,15 +188,6 @@ export function ThreeScene() {
                      planetPos.longitude,
                   )
 
-               /* TODO DELETE, THIS IS TEST TO PLACE MODEL AT LAT LON ON PLANE.
-               const test = new THREE.Mesh(
-                  new THREE.SphereGeometry(1e4, 16, 16),
-                  new THREE.MeshBasicMaterial({ color: '#ff0000' })
-               )
-
-               test.position.set(worldCoords.x, 0, -worldCoords.y)
-               planeScene.scene?.add(test)*/
-
                planeScene.controls.target.set(worldCoords.x, 0, -worldCoords.y)
                planeScene.camera.position.set(
                   worldCoords.x,
@@ -269,19 +260,6 @@ export function ThreeScene() {
 
             // Change to spherical earth model
             activeSceneType.current = SceneType.SPHERICAL
-
-            /* TODO DELETE, THIS IS TEST TO PLACE MODEL AT LAT LON POS ON SPHERE.
-            const testCoords = UnitsUtils.datumsToVector(48.866667, 2.333333)
-            console.log(testCoords)
-            const test = new THREE.Mesh(
-               new THREE.SphereGeometry(1e5, 16, 16),
-               new THREE.MeshBasicMaterial({ color: '#0000ff' })
-            )
-            test.position
-               .set(testCoords.x, testCoords.y, testCoords.z)
-               .multiplyScalar(EARTH_RADIUS)
-            sphereScene.scene?.add(test)
-            */
          }
       }
    }
@@ -362,7 +340,7 @@ export function ThreeScene() {
       // Set up renderer, scene, and camera.
       setupRenderer()
 
-      if (typeof window !== 'undefined' && map == null) {
+      if (typeof window !== 'undefined' && planeMap == null) {
          // Import the CustomMapBoxProvider and initialize the map view.
          importCustomMapBoxProvider()
             .then((mapBoxProvider: CustomMapBoxProvider): void => {
@@ -372,7 +350,7 @@ export function ThreeScene() {
                   const map = new MapView(MapView.PLANAR, mapBoxProvider)
                   planeScene.add(map)
                   map.updateMatrixWorld(true)
-                  setMap(map)
+                  setPlaneMap(map)
                })
             })
             .catch((error): void => {

@@ -13,6 +13,8 @@ import { GeocodeResponse } from '@/app/types/orsTypes'
 import { reverse } from '@/app/server/services/openRouteService'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { CursorModeType } from '@/app/enums/modeType'
+import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
+import { SceneType } from '@/app/enums/sceneType'
 
 export function ClickHandler(): null {
 
@@ -26,6 +28,7 @@ export function ClickHandler(): null {
    const { displayedPlanesGroup } = usePlanes()
    const { planet } = usePlanet()
    const { flyToCoordinates } = CameraFlyController()
+   const { planeMap } = usePlaneMap()
 
    /**
     * Handle click on planet.
@@ -33,31 +36,44 @@ export function ClickHandler(): null {
    const clickOnPlanet = async (): Promise<void> => {
       if (!planet || cursorMode == CursorModeType.HAND) return
 
-      const intersectPlanet = raycaster.intersectObject(
-         planet,
-      )
+      let geolocation: Geolocation | null = null
 
-      // TODO: Implement for flat map too.
-      if (intersectPlanet.length > 0) {
-         const selectedPlanet: THREE.Intersection<THREE.Object3D<THREE.Object3DEventMap>> = intersectPlanet[0]
-         const geolocation: Geolocation = ThreeGeoUnitsUtils.vectorToDatums(selectedPlanet.point)
+      if (displayedSceneData.type == SceneType.SPHERICAL) {
+         const intersectPlanet = raycaster.intersectObject(
+            planet,
+         )
 
-         try {
-            // Call server-side function.
-            const data: GeocodeResponse = await reverse(geolocation.longitude, geolocation.latitude)
+         if (intersectPlanet.length > 0) {
+            const selectedPlanet: THREE.Intersection<THREE.Object3D<THREE.Object3DEventMap>> = intersectPlanet[0]
+            geolocation = ThreeGeoUnitsUtils.vectorToDatums(selectedPlanet.point)
 
-            // Display place data.
-            setSelectedObjectData(data.features[0])
-            setSelectedObjectType(ObjectType.PLACE)
-
-            flyToCoordinates(
-               geolocation.latitude,
-               geolocation.longitude,
-            )
-
-         } catch (err) {
-            // TODO : Signaler l'erreur.
          }
+      } else if (displayedSceneData.type == SceneType.PLANE) {
+         const intersectPlaneMap = raycaster.intersectObject(
+            planeMap,
+         )
+
+         const selectedPlaneMap: THREE.Intersection<THREE.Object3D<THREE.Object3DEventMap>> = intersectPlaneMap[0]
+         geolocation = ThreeGeoUnitsUtils.sphericalToDatums(selectedPlaneMap.point.x, -selectedPlaneMap.point.z)
+      }
+
+      if (!geolocation) return
+
+      try {
+         // Call server-side function.
+         const data: GeocodeResponse = await reverse(geolocation.longitude, geolocation.latitude)
+
+         // Display place data.
+         setSelectedObjectData(data.features[0])
+         setSelectedObjectType(ObjectType.PLACE)
+
+         flyToCoordinates(
+            geolocation.latitude,
+            geolocation.longitude,
+         )
+
+      } catch (err) {
+         // TODO : Signaler l'erreur.
       }
    }
 

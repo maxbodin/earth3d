@@ -139,7 +139,8 @@ export function NavigationBar() {
                className="flex flex-row navbaricons absolute right-10 p-4 transform bottom-10 z-40">
                <ButtonGroup variant="bordered"
                             className="rounded-2xl bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg">
-                  <Tooltip content="Switch Mode">
+                  <Tooltip
+                     content={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}>
                      <Button size="lg" isIconOnly variant="bordered" aria-label="Switch Mode"
                              onClick={reverseCursorMode}>
                         {cursorMode == CursorModeType.POINTER ? <MousePointer2Icon /> : <HandIcon />}
