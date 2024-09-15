@@ -1,6 +1,7 @@
 import React from 'react'
 import './styles.css'
 
+// TODO: Remove and replace with CleanTabs.
 /**
  * Inspired by https://uiverse.io/Admin12121/cold-bobcat-20
  * @param tabTitles

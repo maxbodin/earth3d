@@ -4,6 +4,10 @@ import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboa
 export function SettingsDashboardController() {
    const { setActiveSettingsDashboardTab } = useSettingsDashboard()
 
+   /**
+    * // TODO: Refactor as this looks like sh$t.
+    * @param tabName
+    */
    function onTabSelection(tabName: string): void {
       switch (tabName) {
          case TAB_TITLES[0]:

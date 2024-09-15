@@ -12,7 +12,15 @@ import { DataIcon } from '@/app/components/icons/dataIcon'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { useDataDashboard } from '@/app/components/organisms/dataDashboard/dataDashboard.model'
 import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
-import { GithubIcon, HandIcon, MousePointer2Icon, ShuffleIcon } from 'lucide-react'
+import {
+   AArrowDownIcon,
+   AArrowUpIcon,
+   EarthIcon,
+   GithubIcon,
+   HandIcon,
+   MousePointer2Icon,
+   ShuffleIcon,
+} from 'lucide-react'
 import Link from 'next/link'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { GeocodeResponse } from '@/app/types/orsTypes'
@@ -20,6 +28,9 @@ import { reverse } from '@/app/server/services/openRouteService'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { ObjectType } from '@/app/enums/objectType'
 import { CursorModeType } from '@/app/enums/modeType'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
+import { SceneType } from '@/app/enums/sceneType'
+import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 
 export function NavigationBar() {
    const {
@@ -35,8 +46,11 @@ export function NavigationBar() {
    const { setIsMarkersDashboardOpen } = useMarkersDashboard()
    const { setIsDataDashboardOpen } = useDataDashboard()
 
+   const { displayedSceneData } = useScenes()
    const { flyToCoordinates } = CameraFlyController()
    const { setSelectedObjectType, setSelectedObjectData, cursorMode, setCursorMode } = useSelection()
+
+   const { trueSize, setTrueSize } = useSolarSystem()
 
    const openMarkers = (): void => {
       setIsNavBarDisplayed(false)
@@ -86,13 +100,13 @@ export function NavigationBar() {
 
    useEffect((): void => {
       // When cursor mode is updated we update the cursor.
-      updateCursor()
+      updateCursorStyle()
    }, [cursorMode])
 
    /**
     *
     */
-   const updateCursor = (): void => {
+   const updateCursorStyle = (): void => {
       if (cursorMode == CursorModeType.HAND) {
          // Apply hand cursor.
          document.body.style.cursor = 'pointer'
@@ -108,6 +122,15 @@ export function NavigationBar() {
     */
    const reverseCursorMode = (): void => {
       setCursorMode(cursorMode == CursorModeType.HAND ? CursorModeType.POINTER : CursorModeType.HAND)
+   }
+
+   /**
+    *
+    */
+   const reverseSolarSystemTrueSize = (): void => {
+      setTrueSize((prevState: boolean) => {
+         return !prevState
+      })
    }
 
    return (
@@ -139,19 +162,39 @@ export function NavigationBar() {
                className="flex flex-row navbaricons absolute right-10 p-4 transform bottom-10 z-40">
                <ButtonGroup variant="bordered"
                             className="rounded-2xl bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg">
+
+                  {displayedSceneData && displayedSceneData.type == SceneType.SOLAR_SYSTEM && <><Tooltip
+                     content={trueSize ? 'Switch to Visualization Size' : 'Switch to True Size'}>
+                     <Button size="lg" isIconOnly variant="bordered"
+                             aria-label={trueSize ? 'Switch to Visualization Size' : 'Switch to True Size'}
+                             onClick={reverseSolarSystemTrueSize}>
+                        {trueSize ? <AArrowDownIcon /> : <AArrowUpIcon />}
+                     </Button>
+                  </Tooltip>
+                     <Tooltip
+                        content="Get back to Earth.">
+                        <Button size="lg" isIconOnly variant="bordered"
+                                aria-label="Get back to Earth."
+                                onClick={() => {// TODO : Implement get back to earth scene instantly.
+                                }}>
+                           <EarthIcon />
+                        </Button>
+                     </Tooltip> </>}
                   <Tooltip
                      content={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}>
-                     <Button size="lg" isIconOnly variant="bordered" aria-label="Switch Mode"
+                     <Button size="lg" isIconOnly variant="bordered"
+                             aria-label={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}
                              onClick={reverseCursorMode}>
                         {cursorMode == CursorModeType.POINTER ? <MousePointer2Icon /> : <HandIcon />}
                      </Button>
                   </Tooltip>
-                  <Tooltip content="Open Markers">
-                     <Button size="lg" isIconOnly variant="bordered" aria-label="Open Markers"
-                             onClick={openMarkers}>
-                        <PinIcon />
-                     </Button>
-                  </Tooltip>
+                  {displayedSceneData && displayedSceneData.type != SceneType.SOLAR_SYSTEM &&
+                     <Tooltip content="Open Markers">
+                        <Button size="lg" isIconOnly variant="bordered" aria-label="Open Markers"
+                                onClick={openMarkers}>
+                           <PinIcon />
+                        </Button>
+                     </Tooltip>}
                   <Tooltip content="Open Settings">
                      <Button size="lg" isIconOnly variant="bordered" aria-label="Open Settings" onClick={openDashboard}>
                         <DashboardIcon />
@@ -167,12 +210,13 @@ export function NavigationBar() {
                         <CreditIcon />
                      </Button>
                   </Tooltip>
-                  <Tooltip content="Random Place">
-                     <Button size="lg" isIconOnly variant="bordered" aria-label="Random Place"
-                             onClick={getRandomPlace}>
-                        <ShuffleIcon />
-                     </Button>
-                  </Tooltip>
+                  {displayedSceneData && displayedSceneData.type != SceneType.SOLAR_SYSTEM &&
+                     <Tooltip content="Random Place">
+                        <Button size="lg" isIconOnly variant="bordered" aria-label="Random Place"
+                                onClick={getRandomPlace}>
+                           <ShuffleIcon />
+                        </Button>
+                     </Tooltip>}
                </ButtonGroup>
                <div className="pl-4">
                   <Tooltip content="GitHub Project">

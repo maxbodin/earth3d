@@ -15,6 +15,8 @@ import { Feature } from '@/app/types/orsTypes'
 import { Country } from '@/app/types/countryType'
 import { SearchBarController } from '@/app/components/organisms/searchBar/searchBar.controller'
 import { useUi } from '@/app/context_todo_improve/UIContext'
+import { SceneType } from '@/app/enums/sceneType'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 
 export function SearchBarView() {
    const {
@@ -34,6 +36,7 @@ export function SearchBarView() {
    } = SearchBarController()
 
    const { isSearchBarDisplayed } = useUi()
+   const { displayedSceneData } = useScenes()
 
    /**
     * Use effect to clean up debounce on unmount.
@@ -47,7 +50,8 @@ export function SearchBarView() {
 
    return (
       <>
-         <FadeInOut isVisible={isSearchBarDisplayed}>
+         <FadeInOut isVisible={isSearchBarDisplayed && displayedSceneData &&
+            displayedSceneData.type != SceneType.SOLAR_SYSTEM}>
             <div className="absolute top-16 transform left-16 z-40 min-w-[32rem] mx-auto">
                <div className="flex w-full flex-wrap md:flex-nowrap gap-4">
                   <Dropdown>

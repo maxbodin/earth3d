@@ -3,12 +3,15 @@ import * as THREE from 'three'
 import { SceneType } from '@/app/enums/sceneType'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { EARTH_RADIUS } from '@/app/constants/numbers'
+import { EARTH_RADIUS, SUN_RADIUS } from '@/app/constants/numbers'
 import { gsap } from 'gsap'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
+import { Astre } from '@/app/types/astre'
+import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 
 export function CameraFlyController() {
    const { displayedSceneData } = useScenes()
+   const { trueSize } = useSolarSystem()
 
    /**
     * Used to fly the camera to a given country position.
@@ -81,7 +84,7 @@ export function CameraFlyController() {
             latitude as number,
             longitude as number,
          )
-         
+
          // GSAP animation to zoom the camera.
          gsap.to(displayedSceneData.controls.target, {
             duration: 2,
@@ -108,9 +111,50 @@ export function CameraFlyController() {
       }
    }
 
+   /**
+    *
+    * @param astre
+    */
+   const flyToAstre = (astre: Astre): void => {
+      if (!displayedSceneData || displayedSceneData.type != SceneType.SOLAR_SYSTEM) return
+
+      if (astre) {
+         const astreMesh = astre.astreMesh
+         if (astreMesh) {
+
+            // GSAP animation to zoom the camera.
+            gsap.to(displayedSceneData.controls.target, {
+               duration: 2,
+               x: astreMesh.position.x,
+               y: astreMesh.position.y,
+               z: astreMesh.position.z,
+               ease: 'power2.inOut',
+               onComplete: (): void => {
+                  displayedSceneData.controls.update()
+               },
+            })
+
+            // Used to fly to astre but at the exact position of the astre.
+            const distanceFromAstre: number = (trueSize ? SUN_RADIUS : astre.radius) * 2.0
+
+            // GSAP animation to move the camera.
+            gsap.to(displayedSceneData.camera.position, {
+               duration: 2,
+               x: astreMesh.position.x - distanceFromAstre,
+               y: astreMesh.position.y - distanceFromAstre,
+               z: astreMesh.position.z - distanceFromAstre,
+               ease: 'power2.inOut',
+               onComplete: (): void => {
+                  displayedSceneData.controls.update()
+               },
+            })
+         }
+      }
+   }
 
    return {
       flyToCoordinates,
       flyToCountryPos,
+      flyToAstre,
    }
 }

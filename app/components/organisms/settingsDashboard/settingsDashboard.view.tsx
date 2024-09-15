@@ -49,8 +49,6 @@ export function SettingsDashboardView() {
             return <OuterSpaceTabView />
          case TabType.COUNTRIES:
             return <CountriesTabView />
-         default:
-            return <>biduelle</>
       }
    }, [activeSettingsDashboardTab])
 

@@ -6,7 +6,7 @@ export const EARTH_RADIUS: number = 6371008
 /**
  *
  */
-export const SUN_RADIUS: number = 6.957e8
+export const SUN_RADIUS: number = 696_340_000
 
 /**
  * Earth radius in semi-major axis A as defined in WGS84.

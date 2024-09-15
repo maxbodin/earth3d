@@ -15,6 +15,9 @@ import { MarkersDashboardView } from '@/app/components/organisms/markersDashboar
 import { useToast } from '@/app/context_todo_improve/toastsContext'
 import { DataDashboardView } from '@/app/components/organisms/dataDashboard/dataDashboard.view'
 import { SettingsDashboardView } from '@/app/components/organisms/settingsDashboard/settingsDashboard.view'
+import { SolarSystemProvider } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
+import { AstresListView } from '@/app/components/organisms/astresList/astresList.view'
+import { AstresListProvider } from '@/app/components/organisms/astresList/astresList.model'
 
 export default function Home() {
    const {
@@ -57,19 +60,22 @@ export default function Home() {
          <PlaneMapProvider>
             <SettingsDashboardView />
             <CreditView />
-
             <DataDashboardView />
-            <ScenesProvider>
-               <MarkersDashboardView />
-               <Geolocation />
-               <div className="w-full items-center justify-between font-mono text-sm lg:flex">
-                  <SearchBarView />
-                  <DetailsCard />
-                  <NavigationBar />
-               </div>
-
-               <ThreeScene />
-            </ScenesProvider>
+            <SolarSystemProvider>
+               <ScenesProvider>
+                  <AstresListProvider>
+                     <AstresListView />
+                  </AstresListProvider>
+                  <MarkersDashboardView />
+                  <Geolocation />
+                  <div className="w-full items-center justify-between font-mono text-sm lg:flex">
+                     <SearchBarView />
+                     <DetailsCard />
+                     <NavigationBar />
+                  </div>
+                  <ThreeScene />
+               </ScenesProvider>
+            </SolarSystemProvider>
          </PlaneMapProvider>
 
          {/*         <PlaneDataFetch />
