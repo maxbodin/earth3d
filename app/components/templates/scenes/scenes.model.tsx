@@ -9,6 +9,8 @@ interface ScenesContextValue {
    setGlobeScene: React.Dispatch<React.SetStateAction<THREE.Scene>>
    planeScene: THREE.Scene
    setPlaneScene: React.Dispatch<React.SetStateAction<THREE.Scene>>
+   solarSystemScene: THREE.Scene
+   setSolarSystemScene: React.Dispatch<React.SetStateAction<THREE.Scene>>
    displayedSceneData: {
       type: SceneType
       camera: THREE.PerspectiveCamera
@@ -36,9 +38,12 @@ export function useScenes(): ScenesContextValue {
 export function ScenesProvider({ children }: { children: ReactNode }) {
    const [globeScene, setGlobeScene] = useState<THREE.Scene>(new THREE.Scene())
    const [planeScene, setPlaneScene] = useState<THREE.Scene>(new THREE.Scene())
+   const [solarSystemScene, setSolarSystemScene] = useState<THREE.Scene>(new THREE.Scene())
    const [displayedSceneData, setDisplayedSceneData] = useState<any>(null)
 
    const value: ScenesContextValue = {
+      solarSystemScene: solarSystemScene,
+      setSolarSystemScene: setSolarSystemScene,
       globeScene: globeScene,
       setGlobeScene: setGlobeScene,
       planeScene: planeScene,

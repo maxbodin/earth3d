@@ -117,10 +117,12 @@ TODO : WORK IN PROGRESS => Using suncalc to get various data from a given positi
 
 */
 
-- Ajouter le dézoom de la planète terre avec transition vers une scène supplémentaire pour voir le système solaire
-  complet. Lors du zoom on repart sur la planète Terre.
+**WIP - Ajouter le dézoom de la planète terre avec transition vers une scène supplémentaire pour voir le système solaire
+complet. Lors du zoom on repart sur la planète Terre.**
+
 - Reduce damping when moving planet.
-- Make drawer in credit panel and in the drawer add a selection drawer for parts (PlanetController, Vessels, ...), using
+- Make drawer in credit panel and in the drawer add a selection drawer for parts (SolarSystemController, Vessels, ...),
+  using
   the
   selection display credits.
 - Make details panel scrollable

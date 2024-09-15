@@ -4,6 +4,11 @@
 export const EARTH_RADIUS: number = 6371008
 
 /**
+ *
+ */
+export const SUN_RADIUS: number = 6.957e8
+
+/**
  * Earth radius in semi-major axis A as defined in WGS84.
  */
 export const EARTH_RADIUS_A = 6378137.0
@@ -22,6 +27,46 @@ export const EARTH_PERIMETER: number = 2 * Math.PI * EARTH_RADIUS
  * Earth demi equator perimeter in meters.
  */
 export const EARTH_ORIGIN: number = EARTH_PERIMETER / 2.0
+
+/**
+ *
+ */
+export const SPHERE_TO_PLANE_TOGGLE_DISTANCE: number = 1e6
+
+
+/**
+ *
+ */
+export const SPHERE_TO_PLANE_TRANSITION_TOGGLE_DISTANCE: number = 1e6 * 0.8
+
+
+/**
+ * Max distance possible from spherical earth.
+ */
+export const MAX_SPHERICAL_DISTANCE: number = EARTH_RADIUS + 2e7
+
+
+/**
+ * Min distance possible from spherical earth.
+ */
+export const MIN_SPHERICAL_DISTANCE: number = EARTH_RADIUS + 3e4
+
+/**
+ *
+ */
+export const SOLAR_SYSTEM_TOGGLE_DISTANCE: number = MAX_SPHERICAL_DISTANCE - 2e2
+
+/**
+ * Max distance possible from solar system.
+ */
+export const MAX_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS * 1e2
+
+
+/**
+ * Min distance possible from solar system.
+ */
+export const MIN_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS * 1.2
+
 
 export const GLOBE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1.1
 export const PLANE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1e5

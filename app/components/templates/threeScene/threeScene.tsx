@@ -8,12 +8,20 @@ import { Atmosphere } from '@/app/components/atoms/three/atmosphere/atmosphere'
 import { SceneType } from '@/app/enums/sceneType'
 import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
 import { OuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace'
-import { GLOBE_SCENE_NAME, PLANE_SCENE_NAME } from '@/app/constants/strings'
+import { GLOBE_SCENE_NAME, PLANE_SCENE_NAME, SOLAR_SYSTEM_SCENE_NAME } from '@/app/constants/strings'
 import { VesselsController } from '@/app/components/atoms/three/vessels/vessels.controller'
 import { CountriesProvider } from '@/app/components/atoms/three/countries/countries.model'
 import { CountriesController } from '@/app/components/atoms/three/countries/countries.controller'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
-import { EARTH_RADIUS } from '@/app/constants/numbers'
+import {
+   EARTH_RADIUS,
+   MAX_SOLAR_SYSTEM_DISTANCE,
+   MAX_SPHERICAL_DISTANCE,
+   MIN_SOLAR_SYSTEM_DISTANCE,
+   MIN_SPHERICAL_DISTANCE,
+   SOLAR_SYSTEM_TOGGLE_DISTANCE,
+   SPHERE_TO_PLANE_TOGGLE_DISTANCE,
+} from '@/app/constants/numbers'
 import { Geolocation, ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { getMapboxToken } from '@/app/server/actions/getMapboxToken'
 import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
@@ -21,20 +29,34 @@ import { PlaneSky } from '@/app/components/atoms/three/planeSky/planeSky'
 import { ClickHandler } from '@/app/components/atoms/clickHandler/clickHandler'
 import { AirportsController } from '@/app/components/atoms/three/airports/airports.controller'
 import { PlanetProvider } from '@/app/components/atoms/three/planet/planet.model'
+import { SolarSystemController } from '@/app/components/atoms/three/solarSystem/solarSystem.controller'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
    const renderer = useRef<THREE.WebGLRenderer | null>(null)
    const scenes = useRef<any[]>([])
+
    const globeCamera = useRef<THREE.PerspectiveCamera | null>(null)
    const globeControls = useRef<OrbitControls | null>(null)
+
    const planeCamera = useRef<THREE.PerspectiveCamera | null>(null)
    const planeControls = useRef<OrbitControls | null>(null)
 
-   const { globeScene, planeScene, setDisplayedSceneData } =
+
+   const solarSystemCamera = useRef<THREE.PerspectiveCamera | null>(null)
+   const solarSystemControls = useRef<OrbitControls | null>(null)
+
+   const { globeScene, planeScene, solarSystemScene, setDisplayedSceneData } =
       useScenes()
 
    const { planeMap, setPlaneMap, setMapProvider } = usePlaneMap()
+
+   const raycaster: THREE.Raycaster = new THREE.Raycaster()
+
+   const activeSceneType = useRef<SceneType>(SceneType.SPHERICAL)
+
+   const distanceToPlaneSurface = useRef<number | null>(null)
+   const distanceToSphereSurface = useRef<number | null>(null)
 
    /**
     * Function to set up renderer, scene, and camera.
@@ -63,12 +85,13 @@ export function ThreeScene() {
       mountRef.current.appendChild(renderer.current.domElement)
 
       // List of scenes.
-      scenes.current = [createGlobeScene(), createPlaneScene()]
+      scenes.current = [createGlobeScene(), createPlaneScene(), createSolarSystemScene()]
    }
 
    /**
     * Create scene for spherical earth.
     */
+   // TODO : Add return type.
    function createGlobeScene(): any {
       // Initialize scene.
       globeScene.name = GLOBE_SCENE_NAME
@@ -91,8 +114,8 @@ export function ThreeScene() {
       globeControls.current!.zoomSpeed = 1
       globeControls.current!.enablePan = false
       globeControls.current!.autoRotate = false
-      globeControls.current!.minDistance = EARTH_RADIUS + 3e4
-      globeControls.current!.maxDistance = EARTH_RADIUS + 2e7
+      globeControls.current!.minDistance = MIN_SPHERICAL_DISTANCE
+      globeControls.current!.maxDistance = MAX_SPHERICAL_DISTANCE
       globeControls.current!.mouseButtons = {
          LEFT: THREE.MOUSE.ROTATE,
          MIDDLE: THREE.MOUSE.DOLLY,
@@ -116,6 +139,7 @@ export function ThreeScene() {
    /**
     * Create scene for planar map.
     */
+   // TODO : Add return type.
    function createPlaneScene(): any {
       // Initialize scene.
       planeScene.name = PLANE_SCENE_NAME
@@ -151,122 +175,246 @@ export function ThreeScene() {
       }
    }
 
-   const raycaster = new THREE.Raycaster()
-   const handleLOD = (currentScene: any) => {
-      const toggleDistance: number = 1e6
 
-      if (activeSceneType.current === SceneType.SPHERICAL) {
-         // Get distance to the surface of earth.
-         const distance: number =
-            currentScene.controls.getDistance() - EARTH_RADIUS
+   /**
+    * Create solar system scene.
+    */
+   // TODO : Add return type.
+   function createSolarSystemScene(): any {
+      // Initialize scene.
+      solarSystemScene.name = SOLAR_SYSTEM_SCENE_NAME
 
-         if (distance < toggleDistance) {
-            // Set raycaster to the camera center.
-            const pointer: THREE.Vector2 = new THREE.Vector2(0.0, 0.0)
-            raycaster.setFromCamera(pointer, currentScene.camera)
+      // Initialize camera.
+      solarSystemCamera.current = new THREE.PerspectiveCamera(
+         75,
+         window.innerWidth / window.innerHeight,
+         0.001,
+         1e18,
+      )
 
-            // Raycast from center of the camera to the sphere surface
-            const intersects = raycaster.intersectObjects(
-               currentScene.scene.children,
-            )
+      solarSystemControls.current = new MapControls(
+         solarSystemCamera.current,
+         renderer.current!.domElement,
+      )
+      solarSystemControls.current!.enableDamping = true
+      solarSystemControls.current!.dampingFactor = 0.05
+      solarSystemControls.current!.zoomSpeed = 1
+      solarSystemControls.current!.rotateSpeed = .1
+      solarSystemControls.current!.enablePan = false
+      solarSystemControls.current!.autoRotate = false
+      solarSystemControls.current!.minDistance = MIN_SOLAR_SYSTEM_DISTANCE
+      solarSystemControls.current!.maxDistance = MAX_SOLAR_SYSTEM_DISTANCE
+      solarSystemControls.current!.mouseButtons = {
+         LEFT: THREE.MOUSE.ROTATE,
+         MIDDLE: THREE.MOUSE.DOLLY,
+         RIGHT: THREE.MOUSE.PAN,
+      }
+      solarSystemControls.current!.minPolarAngle = 0
+      solarSystemControls.current!.maxPolarAngle = Math.PI
+      solarSystemControls.current!.update()
 
-            if (intersects.length > 0) {
-               const point: THREE.Vector3 = intersects[0].point
+      // Set initial camera position
+      solarSystemCamera.current.position.set(10e9, 8e9, EARTH_RADIUS + 1e11)
 
-               // Get coordinates from sphere surface
-               const planetPos: Geolocation =
-                  ThreeGeoUnitsUtils.vectorToDatums(point)
-
-               const planeScene = scenes.current[SceneType.PLANE]
-               planeScene.scene.visible = true
-               scenes.current[SceneType.SPHERICAL].scene.visible = false
-
-               // Calculate plane coordinates.
-               const worldCoords: THREE.Vector2 =
-                  ThreeGeoUnitsUtils.datumsToSpherical(
-                     planetPos.latitude,
-                     planetPos.longitude,
-                  )
-
-               planeScene.controls.target.set(worldCoords.x, 0, -worldCoords.y)
-               planeScene.camera.position.set(
-                  worldCoords.x,
-                  distance,
-                  -worldCoords.y,
-               )
-
-               console.log(
-                  'Geo-Three: Switched scene from sphere to plane.',
-                  point,
-                  planetPos,
-                  worldCoords,
-               )
-
-               // Change scene to "plane" earth
-               activeSceneType.current = SceneType.PLANE
-            }
-         }
-      } else if (activeSceneType.current === SceneType.PLANE) {
-         const distance = currentScene.controls.getDistance()
-
-         currentScene.controls.minPolarAngle = 0
-         currentScene.controls.maxPolarAngle = Math.PI / 3
-
-         currentScene.controls.minAzimuthAngle = -Math.PI
-         currentScene.controls.maxAzimuthAngle = Math.PI
-
-         const ratio = 0.8
-         if (distance > toggleDistance * ratio) {
-            // Transition progress (0 to 1)
-            const progress: number =
-               (toggleDistance - distance) / (toggleDistance * (1 - ratio))
-
-            // Limit polar angle
-            currentScene.controls.maxPolarAngle = (progress * Math.PI) / 2
-
-            // Limit range of azimuth rotation
-            currentScene.controls.minAzimuthAngle = progress * -Math.PI
-            currentScene.controls.maxAzimuthAngle = progress * Math.PI
-         }
-
-         if (distance > toggleDistance) {
-            // Datum coordinates
-            const target = currentScene.controls.target
-            const coords: Geolocation = ThreeGeoUnitsUtils.sphericalToDatums(
-               target.x,
-               -target.z,
-            )
-
-            // Get sphere surface point from coordinates
-            const dir: THREE.Vector3 = ThreeGeoUnitsUtils.datumsToVector(
-               coords.latitude,
-               coords.longitude,
-            )
-
-            const sphereScene = scenes.current[SceneType.SPHERICAL]
-            sphereScene.scene.visible = true
-            scenes.current[SceneType.PLANE].scene.visible = false
-
-            // Set camera position
-            dir.multiplyScalar(EARTH_RADIUS + distance)
-            sphereScene.camera.position.copy(dir)
-
-            console.log(
-               'Geo-Three: Switched scene from plane to sphere.',
-               currentScene.controls,
-               coords,
-               dir,
-            )
-
-            // Change to spherical earth model
-            activeSceneType.current = SceneType.SPHERICAL
-         }
+      return {
+         type: SceneType.SOLAR_SYSTEM,
+         camera: solarSystemCamera.current,
+         controls: solarSystemControls.current,
+         scene: solarSystemScene,
       }
    }
 
-   const activeSceneType = useRef<SceneType>(SceneType.SPHERICAL)
 
-   const animate: () => void = (): void => {
+   const handleLOD = (currentScene: any): void => {
+
+      distanceToSphereSurface.current = currentScene.controls.getDistance()
+
+      if (distanceToSphereSurface.current)
+         // Get distance to the surface of earth.
+         distanceToPlaneSurface.current =
+            distanceToSphereSurface.current - EARTH_RADIUS
+
+
+      // Switch to plane map when close enough to Earth's surface.
+      if (activeSceneType.current === SceneType.SPHERICAL
+         && distanceToPlaneSurface.current
+         && distanceToPlaneSurface.current < SPHERE_TO_PLANE_TOGGLE_DISTANCE) {
+         switchToPlaneMap(currentScene)
+
+         // Switch back to spherical Earth view when moving away from the plane.
+      } else if (activeSceneType.current === SceneType.PLANE
+         && distanceToSphereSurface.current
+         && distanceToSphereSurface.current > SPHERE_TO_PLANE_TOGGLE_DISTANCE) {
+         switchToSpherical(currentScene)
+
+         // Switch to solar system view when far enough from the sphere (Earth).
+      } else if (activeSceneType.current === SceneType.SPHERICAL
+         && distanceToSphereSurface.current
+         && distanceToSphereSurface.current > SOLAR_SYSTEM_TOGGLE_DISTANCE) {
+
+         switchToSolarSystem(currentScene)
+
+         // Switch back to spherical earth view when near enough from the sphere (Earth).
+      } else if (activeSceneType.current === SceneType.SOLAR_SYSTEM) {
+         // TODO switchToSpherical(currentScene)
+      }
+   }
+
+   /**
+    *
+    * @param currentScene
+    */
+   const switchToSpherical = (currentScene: any): void => {
+
+      /*
+           TODO : Check if neceessary.
+           currentScene.controls.minPolarAngle = 0
+            currentScene.controls.maxPolarAngle = Math.PI / 3
+
+            currentScene.controls.minAzimuthAngle = -Math.PI
+            currentScene.controls.maxAzimuthAngle = Math.PI
+
+            if (distance > SPHERE_TO_PLANE_TRANSITION_TOGGLE_DISTANCE) {
+               // Transition progress (0 to 1)
+               const progress: number =
+                  (SPHERE_TO_PLANE_TOGGLE_DISTANCE - distance) / (SPHERE_TO_PLANE_TOGGLE_DISTANCE * 0.2)
+
+               // Limit polar angle
+               currentScene.controls.maxPolarAngle = (progress * Math.PI) / 2
+
+               // Limit range of azimuth rotation
+               currentScene.controls.minAzimuthAngle = progress * -Math.PI
+               currentScene.controls.maxAzimuthAngle = progress * Math.PI
+            }*/
+
+      // Datum coordinates
+      const target = currentScene.controls.target
+      const coords: Geolocation = ThreeGeoUnitsUtils.sphericalToDatums(
+         target.x,
+         -target.z,
+      )
+
+      // Get sphere surface point from coordinates
+      const dir: THREE.Vector3 = ThreeGeoUnitsUtils.datumsToVector(
+         coords.latitude,
+         coords.longitude,
+      )
+
+      const sphereScene = scenes.current[SceneType.SPHERICAL]
+      sphereScene.scene.visible = true
+      scenes.current[SceneType.PLANE].scene.visible = false
+      scenes.current[SceneType.SOLAR_SYSTEM].scene.visible = false
+
+      // Set camera position
+      dir.multiplyScalar(EARTH_RADIUS + (distanceToSphereSurface.current ?? 0))
+      sphereScene.camera.position.copy(dir)
+
+      console.log(
+         'Geo-Three: Switched scene from plane to sphere.',
+         currentScene.controls,
+         coords,
+         dir,
+      )
+
+      // Change to spherical earth model
+      activeSceneType.current = SceneType.SPHERICAL
+   }
+
+   /**
+    *
+    * @param currentScene
+    */
+   const switchToPlaneMap = (currentScene: any): void => {
+      // Set raycaster to the camera center.
+      const pointer: THREE.Vector2 = new THREE.Vector2(0.0, 0.0)
+      raycaster.setFromCamera(pointer, currentScene.camera)
+
+      // Raycast from center of the camera to the sphere surface
+      const intersects = raycaster.intersectObjects(
+         currentScene.scene.children,
+      )
+
+      if (intersects.length > 0) {
+         const point: THREE.Vector3 = intersects[0].point
+
+         // Get coordinates from sphere surface
+         const planetPos: Geolocation =
+            ThreeGeoUnitsUtils.vectorToDatums(point)
+
+         const planeScene = scenes.current[SceneType.PLANE]
+         planeScene.scene.visible = true
+         scenes.current[SceneType.SPHERICAL].scene.visible = false
+         scenes.current[SceneType.SOLAR_SYSTEM].scene.visible = false
+
+         // Calculate plane coordinates.
+         const worldCoords: THREE.Vector2 =
+            ThreeGeoUnitsUtils.datumsToSpherical(
+               planetPos.latitude,
+               planetPos.longitude,
+            )
+
+         planeScene.controls.target.set(worldCoords.x, 0, -worldCoords.y)
+         planeScene.camera.position.set(
+            worldCoords.x,
+            distanceToPlaneSurface.current,
+            -worldCoords.y,
+         )
+
+         console.log(
+            'Geo-Three: Switched scene from sphere to plane.',
+            point,
+            planetPos,
+            worldCoords,
+         )
+
+         // Change scene to "plane" earth
+         activeSceneType.current = SceneType.PLANE
+      }
+   }
+
+   /**
+    *
+    * @param currentScene
+    */
+   const switchToSolarSystem = (currentScene: any): void => {
+      // Datum coordinates.
+      const target = currentScene.controls.target
+      const coords: Geolocation = ThreeGeoUnitsUtils.sphericalToDatums(
+         target.x,
+         -target.z,
+      )
+
+      // Get sphere surface point from coordinates
+      const dir: THREE.Vector3 = ThreeGeoUnitsUtils.datumsToVector(
+         coords.latitude,
+         coords.longitude,
+      )
+
+      const solarSystemScene = scenes.current[SceneType.SOLAR_SYSTEM]
+      solarSystemScene.scene.visible = true
+      scenes.current[SceneType.SPHERICAL].scene.visible = false
+      scenes.current[SceneType.PLANE].scene.visible = false
+
+      // Set camera position
+      dir.multiplyScalar(EARTH_RADIUS + (distanceToSphereSurface.current ?? 0))
+      solarSystemScene.camera.position.copy(dir)
+
+      console.log(
+         'Geo-Three: Switched scene from sphere to solar system.',
+         currentScene.controls,
+         coords,
+         dir,
+      )
+
+      // Change to spherical earth model
+      activeSceneType.current = SceneType.SOLAR_SYSTEM
+   }
+
+
+   /**
+    *
+    */
+   const animate = (): void => {
       if (renderer.current == null || scenes.current == null) return
 
       requestAnimationFrame(animate)
@@ -304,7 +452,7 @@ export function ThreeScene() {
    /**
     * Function to clean up on component unmount.
     */
-   const cleanup: () => void = (): void => {
+   const cleanup = (): void => {
       window.removeEventListener('resize', handleResize)
       if (renderer.current && renderer.current.domElement.parentNode) {
          renderer.current.domElement.parentNode.removeChild(
@@ -313,7 +461,9 @@ export function ThreeScene() {
       }
    }
 
-   // Async function to dynamically import CustomMapBoxProvider class
+   /**
+    * Async function to dynamically import CustomMapBoxProvider class
+    */
    const importCustomMapBoxProvider = async () => {
       // Dynamically import the CustomMapBoxProvider class.
       const { CustomMapBoxProvider } = await import(
@@ -385,6 +535,7 @@ export function ThreeScene() {
                />
                {/*<Heatmap />*/}
                <PlanetProvider>
+                  <SolarSystemController />
                   <PlanetController />
                   <ClickHandler />
                   <VesselsController />

@@ -34,6 +34,7 @@ export const fetchGeoPhotos = async (latitude: number, longitude: number): Promi
       //text: 'cat',
       //sort: 'interestingness-desc',
       per_page: '100',
+      safe_search: '2',
       media: 'photos',
       lat: latitude.toString(),
       lon: longitude.toString(),

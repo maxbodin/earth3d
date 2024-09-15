@@ -36,6 +36,7 @@ export function PlanetController(): null {
          srtmTexture == null ||
          mapTexture == null ||
          displayedSceneData.type == SceneType.PLANE
+         || displayedSceneData.type == SceneType.SOLAR_SYSTEM
       )
          return
 
