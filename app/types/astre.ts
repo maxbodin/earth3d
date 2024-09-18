@@ -9,4 +9,5 @@ export interface Astre {
    mass?: number,                         // Mass in kg.
    astreMesh: THREE.Mesh,
    body: Astronomy.Body
+   texture: THREE.Texture
 }

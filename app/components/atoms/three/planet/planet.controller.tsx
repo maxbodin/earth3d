@@ -9,7 +9,7 @@ import {
    SPHERE_WIDTH_SEGMENTS,
 } from '@/app/constants/numbers'
 import { PLANET_NAME } from '@/app/constants/strings'
-import { DISPLACEMENT_MAP_TEXTURE_JPG, MAP_TEXTURE_JPG } from '@/app/constants/paths'
+import { DISPLACEMENT_MAP_TEXTURE_JPG, EARTH_TEXTURE_JPG } from '@/app/constants/paths'
 import { EARTH_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
@@ -21,18 +21,20 @@ export function PlanetController(): null {
 
    // Preload the map texture.
    const mapTexture: THREE.Texture = new THREE.TextureLoader().load(
-      MAP_TEXTURE_JPG,
+      EARTH_TEXTURE_JPG,
    )
+
    // Preload the displacement map texture.
    const srtmTexture: THREE.Texture = new THREE.TextureLoader().load(
       DISPLACEMENT_MAP_TEXTURE_JPG,
    )
 
-   // Function to create the planet sphere mesh.
+   /**
+    * Function to create the planet sphere mesh.
+    */
    const createPlanet = (): void => {
       if (
-         displayedSceneData == null ||
-         displayedSceneData.scene == null ||
+         displayedSceneData?.scene == null ||
          srtmTexture == null ||
          mapTexture == null ||
          displayedSceneData.type == SceneType.PLANE
@@ -108,51 +110,7 @@ export function PlanetController(): null {
 
 
       // TODO WIP drawAreaOnSphere(displayedSceneData?.scene, areaCoordinates, EARTH_RADIUS)
-
    }
-
-   /* TODO CLEAN UP CODE
-  const distance = useRef(EARTH_RADIUS * 2)
-   const isWatchingAirport = useRef(false)
-const onDistanceChange = (): void => {
-if (controls == null || scene == null) return
-
-// removeObject3D(planet, scene)
-
-const currentDistance: number = controls.getDistance()
-
-if (currentDistance.toFixed(2) != distance.current.toFixed(2)) {
-if (currentDistance > ZOOM_THRESHOLD) {
-if (isWatchingAirport.current) {
-planet.material.uniforms.scale.value =
-EARTH_RADIUS * PLANET_DISPLACEMENT_SCALE
-}
-isWatchingAirport.current = false
-} else if (currentDistance <= ZOOM_THRESHOLD) {
-if (!isWatchingAirport.current) {
-planet.material.uniforms.scale.value = 0
-}
-isWatchingAirport.current = true
-}
-}
-
-distance.current = currentDistance
-}*/
-
-   /*useEffect(() => {
-// Initialize distance.
-if (displayedSceneData.controls) {
-//distance.current = controls.getDistance()
-createPlanet()
-// Attach listener.
-//controls.addEventListener('change', onDistanceChange)
-}
-
-// Clean up.
-return (): void => {
-//controls?.removeEventListener('change', onDistanceChange)
-}
-}, [displayedSceneData])*/
 
    useEffect((): void => {
       createPlanet()

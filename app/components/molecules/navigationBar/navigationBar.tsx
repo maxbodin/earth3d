@@ -138,6 +138,7 @@ export function NavigationBar() {
          <FadeInOut
             isVisible={isNavBarDisplayed}
             preFadeOutCallback={(): void => {
+               // TODO : Refactor in dedicated function.
                setIsSearchBarDisplayed(false)
 
                switch (openedPanelType) {
@@ -168,7 +169,7 @@ export function NavigationBar() {
                      <Button size="lg" isIconOnly variant="bordered"
                              aria-label={trueSize ? 'Switch to Visualization Size' : 'Switch to True Size'}
                              onClick={reverseSolarSystemTrueSize}>
-                        {trueSize ? <AArrowDownIcon /> : <AArrowUpIcon />}
+                        {trueSize ? <AArrowUpIcon /> : <AArrowDownIcon />}
                      </Button>
                   </Tooltip>
                      <Tooltip
@@ -180,21 +181,23 @@ export function NavigationBar() {
                            <EarthIcon />
                         </Button>
                      </Tooltip> </>}
-                  <Tooltip
-                     content={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}>
-                     <Button size="lg" isIconOnly variant="bordered"
-                             aria-label={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}
-                             onClick={reverseCursorMode}>
-                        {cursorMode == CursorModeType.POINTER ? <MousePointer2Icon /> : <HandIcon />}
-                     </Button>
-                  </Tooltip>
                   {displayedSceneData && displayedSceneData.type != SceneType.SOLAR_SYSTEM &&
-                     <Tooltip content="Open Markers">
-                        <Button size="lg" isIconOnly variant="bordered" aria-label="Open Markers"
-                                onClick={openMarkers}>
-                           <PinIcon />
-                        </Button>
-                     </Tooltip>}
+                     <>
+                        <Tooltip
+                           content={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}>
+                           <Button size="lg" isIconOnly variant="bordered"
+                                   aria-label={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}
+                                   onClick={reverseCursorMode}>
+                              {cursorMode == CursorModeType.POINTER ? <MousePointer2Icon /> : <HandIcon />}
+                           </Button>
+                        </Tooltip>
+                        <Tooltip content="Open Markers">
+                           <Button size="lg" isIconOnly variant="bordered" aria-label="Open Markers"
+                                   onClick={openMarkers}>
+                              <PinIcon />
+                           </Button>
+                        </Tooltip>
+                     </>}
                   <Tooltip content="Open Settings">
                      <Button size="lg" isIconOnly variant="bordered" aria-label="Open Settings" onClick={openDashboard}>
                         <DashboardIcon />

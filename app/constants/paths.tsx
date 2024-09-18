@@ -19,7 +19,18 @@ export const MILKY_WAY_PNG: string =
 /**
  * JPG.
  */
-export const MAP_TEXTURE_JPG: string = '/textures/jpg/map.jpg'
+export const EARTH_TEXTURE_JPG: string = '/textures/jpg/8k_earth.jpg'
+export const JUPITER_TEXTURE_JPG: string = '/textures/jpg/2k_jupiter.jpg'
+export const MARS_TEXTURE_JPG: string = '/textures/jpg/2k_mars.jpg'
+export const MERCURY_TEXTURE_JPG: string = '/textures/jpg/2k_mercury.jpg'
+export const MOON_TEXTURE_JPG: string = '/textures/jpg/2k_moon.jpg'
+export const NEPTUNE_TEXTURE_JPG: string = '/textures/jpg/2k_neptune.jpg'
+export const SATURN_TEXTURE_JPG: string = '/textures/jpg/2k_saturn.jpg'
+export const SUN_TEXTURE_JPG: string = '/textures/jpg/2k_sun.jpg'
+export const URANUS_TEXTURE_JPG: string = '/textures/jpg/2k_uranus.jpg'
+export const VENUS_SURFACE_TEXTURE_JPG: string = '/textures/jpg/2k_venus_surface.jpg'
+export const PLUTO_SURFACE_TEXTURE_JPG: string = '/textures/jpg/2k_pluto.jpg'
+
 export const DISPLACEMENT_MAP_TEXTURE_JPG: string =
    '/textures/jpg/srtm_ramp2.world.5400x2700.jpg'
 

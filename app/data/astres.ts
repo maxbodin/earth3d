@@ -1,6 +1,20 @@
 import { Body } from 'astronomy-engine'
-import { SUN_RADIUS } from '@/app/constants/numbers'
+import { EARTH_RADIUS, SUN_RADIUS } from '@/app/constants/numbers'
 import { Astre } from '@/app/types/astre'
+import * as THREE from 'three'
+import {
+   EARTH_TEXTURE_JPG,
+   JUPITER_TEXTURE_JPG,
+   MARS_TEXTURE_JPG,
+   MERCURY_TEXTURE_JPG,
+   MOON_TEXTURE_JPG,
+   NEPTUNE_TEXTURE_JPG,
+   PLUTO_SURFACE_TEXTURE_JPG,
+   SATURN_TEXTURE_JPG,
+   SUN_TEXTURE_JPG,
+   URANUS_TEXTURE_JPG,
+   VENUS_SURFACE_TEXTURE_JPG,
+} from '@/app/constants/paths'
 
 export const astres: Astre[] = [
    {
@@ -11,6 +25,9 @@ export const astres: Astre[] = [
       mass: 1.989e30,
       astreMesh: null as any,
       body: Body.Sun,
+      texture: new THREE.TextureLoader().load(
+         SUN_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Mercury',
@@ -20,6 +37,9 @@ export const astres: Astre[] = [
       mass: 3.3011e23, // kg
       astreMesh: null as any,
       body: Body.Mercury,
+      texture: new THREE.TextureLoader().load(
+         MERCURY_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Venus',
@@ -29,15 +49,21 @@ export const astres: Astre[] = [
       mass: 4.8675e24,
       astreMesh: null as any,
       body: Body.Venus,
+      texture: new THREE.TextureLoader().load(
+         VENUS_SURFACE_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Earth',
-      radius: 6_371_000,
+      radius: EARTH_RADIUS,
       color: 0x00aaff,
       surfacePressure: 101_325, // 1 bar or 101.3 kPa.
       mass: 5.9724e24,
       astreMesh: null as any,
       body: Body.Earth,
+      texture: new THREE.TextureLoader().load(
+         EARTH_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Moon',
@@ -47,6 +73,9 @@ export const astres: Astre[] = [
       mass: 7.342e22, // kg
       astreMesh: null as any,
       body: Body.Moon,
+      texture: new THREE.TextureLoader().load(
+         MOON_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Mars',
@@ -56,6 +85,9 @@ export const astres: Astre[] = [
       mass: 6.4171e23,
       astreMesh: null as any,
       body: Body.Mars,
+      texture: new THREE.TextureLoader().load(
+         MARS_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Jupiter',
@@ -65,6 +97,9 @@ export const astres: Astre[] = [
       mass: 1.8982e27,
       astreMesh: null as any,
       body: Body.Jupiter,
+      texture: new THREE.TextureLoader().load(
+         JUPITER_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Saturn',
@@ -74,6 +109,9 @@ export const astres: Astre[] = [
       mass: 5.6834e26,
       astreMesh: null as any,
       body: Body.Saturn,
+      texture: new THREE.TextureLoader().load(
+         SATURN_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Uranus',
@@ -83,6 +121,9 @@ export const astres: Astre[] = [
       mass: 8.6810e25,
       astreMesh: null as any,
       body: Body.Uranus,
+      texture: new THREE.TextureLoader().load(
+         URANUS_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Neptune',
@@ -92,6 +133,9 @@ export const astres: Astre[] = [
       mass: 1.02413e26,
       astreMesh: null as any,
       body: Body.Neptune,
+      texture: new THREE.TextureLoader().load(
+         NEPTUNE_TEXTURE_JPG,
+      ),
    },
    {
       name: 'Pluto',
@@ -101,5 +145,8 @@ export const astres: Astre[] = [
       mass: 1.309e22, // kg
       astreMesh: null as any,
       body: Body.Pluto,
+      texture: new THREE.TextureLoader().load(
+         PLUTO_SURFACE_TEXTURE_JPG,
+      ),
    },
 ]

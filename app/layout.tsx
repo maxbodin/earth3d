@@ -26,7 +26,7 @@ export default function RootLayout({
    return (
       <html lang="en" className="dark">
       <body className={`overflow-hidden ${inter.className}`}>
-      <NextUIProvider>
+      <NextUIProvider locale="en-GB">
          <DynamicProviders>
             <ErrorSecurity>{children}</ErrorSecurity>
          </DynamicProviders>

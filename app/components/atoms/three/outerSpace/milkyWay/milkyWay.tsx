@@ -44,6 +44,11 @@ export function MilkyWay(): null {
             SPHERE_HEIGHT_SEGMENTS,
          ),
          new THREE.ShaderMaterial({
+            blending: THREE.AdditiveBlending,
+            side: THREE.BackSide,
+            depthWrite: true,
+            depthTest: true,
+            transparent: false,
             vertexShader: `
                uniform float scale;
                varying vec2 vertexUV;
@@ -66,9 +71,6 @@ export function MilkyWay(): null {
                void main(){
                   gl_FragColor = vec4(texture2D(globeTexture, vertexUV).xyz, 0.5);
                }`,
-            blending: THREE.AdditiveBlending,
-            side: THREE.BackSide,
-            transparent: false,
             uniforms: {
                globeTexture: {
                   value: milkyWayTexture,

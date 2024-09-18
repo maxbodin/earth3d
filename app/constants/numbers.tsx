@@ -33,18 +33,25 @@ export const EARTH_ORIGIN: number = EARTH_PERIMETER / 2.0
  */
 export const SPHERE_TO_PLANE_TOGGLE_DISTANCE: number = 1e6
 
+/**
+ * Max astres names scale factor.
+ */
+export const SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE: number = 3
+
+/**
+ * Min astres names scale factor.
+ */
+export const SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MIN_SCALE: number = 0.001
 
 /**
  *
  */
 export const SPHERE_TO_PLANE_TRANSITION_TOGGLE_DISTANCE: number = 1e6 * 0.8
 
-
 /**
  * Max distance possible from spherical earth.
  */
 export const MAX_SPHERICAL_DISTANCE: number = EARTH_RADIUS + 2e7
-
 
 /**
  * Min distance possible from spherical earth.
@@ -61,11 +68,10 @@ export const SOLAR_SYSTEM_TOGGLE_DISTANCE: number = MAX_SPHERICAL_DISTANCE - 2e2
  */
 export const MAX_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS * 1e2
 
-
 /**
  * Min distance possible from solar system.
  */
-export const MIN_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS * 1.2
+export const MIN_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS + 1e5
 
 
 export const GLOBE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1.1

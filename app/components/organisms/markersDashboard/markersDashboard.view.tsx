@@ -86,7 +86,7 @@ export function MarkersDashboardView() {
 
             const value: Option = ({ label: cellValue.toString(), value: cellValue.toString() })
 
-            console.log(value)
+            // TODO console.log(value)
 
             // TODO IF IS PUCK, SET AUTOMATICALLY ADDRESS AND DISABLE AUTOCOMPLETE
             return (

@@ -5,16 +5,25 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import * as THREE from 'three'
 import { SceneType } from '@/app/enums/sceneType'
 import { astres } from '@/app/data/astres'
-import * as Astronomy from 'astronomy-engine'
+import { Body } from 'astronomy-engine'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
-import { SUN_RADIUS } from '@/app/constants/numbers'
+import {
+   SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE,
+   SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MIN_SCALE,
+   SUN_RADIUS,
+} from '@/app/constants/numbers'
 import { TEXT_FONT } from '@/app/constants/paths'
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 import { Astre } from '@/app/types/astre'
+import { clamp } from '@/app/helpers/numberHelper'
+import { useAstresList } from '@/app/components/organisms/astresList/astresList.model'
+import { SolarSystemHelper } from '@/app/components/atoms/three/solarSystem/solarSystem.helper'
 
 export function SolarSystemController(): null {
    const { displayedSceneData } = useScenes()
+   const { selectedAstre, selectedDate } = useAstresList()
+   const { getPlanetPosition, dateValueToDate } = SolarSystemHelper()
 
    const namesGroup = useRef<THREE.Group>(new THREE.Group())
    const astresMeshesGroup = useRef<THREE.Group>(new THREE.Group())
@@ -32,8 +41,7 @@ export function SolarSystemController(): null {
     */
    const createSolarSystemMeshes = (): void => {
       if (
-         displayedSceneData == null ||
-         displayedSceneData.scene == null ||
+         displayedSceneData?.scene == null ||
          displayedSceneData.type == SceneType.PLANE
          || displayedSceneData.type == SceneType.SPHERICAL
       )
@@ -41,9 +49,66 @@ export function SolarSystemController(): null {
 
       astresMeshesGroup.current.clear()
 
-      astres.forEach((astre): void => {
-         const astreRadius: number = trueSize ? SUN_RADIUS : astre.radius
-         const astreMesh = new THREE.Mesh(new THREE.SphereGeometry(astreRadius, 32, 32), new THREE.MeshBasicMaterial({ color: astre.color }))
+      astres.forEach((astre: Astre): void => {
+
+         // Hide Moon if not in true size.
+         if (trueSize && astre.body == Body.Moon) {
+            return
+         }
+
+         const astreRadius: number = trueSize ? astre.radius : SUN_RADIUS
+
+         const astreMesh: THREE.Mesh<any
+            /*            THREE.SphereGeometry,
+                        THREE.ShaderMaterial,
+                        THREE.Object3DEventMap*/
+         > = new THREE.Mesh(
+            new THREE.SphereGeometry(
+               astreRadius,
+               32,
+               32,
+            ),
+            new THREE.MeshBasicMaterial({
+               map: astre.texture,
+            })
+            // TODO : Fix it.
+            /*new THREE.ShaderMaterial({
+               side: THREE.FrontSide,
+               depthWrite: false,
+               depthTest: false,
+               transparent: false,
+               vertexShader: `
+                    varying vec2 vertexUV;
+                    varying vec3 vertexNormal;
+                    
+                    void main() {
+                        vertexUV = uv;
+                        vertexNormal = normalize(normalMatrix * normal);
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0 );
+                    }
+                `,
+               fragmentShader: `
+               uniform sampler2D globeTexture;
+               varying vec2 vertexUV;
+               varying vec3 vertexNormal;
+               
+               void main(){
+                  //float intensity = 0.1 - dot(vertexNormal, vec3(0.0, 0.0, 0.0));
+                  //vec3 atmosphere = vec3(0.3, 0.6, 1.0) * pow(intensity, 1.8);
+                  
+                  gl_FragColor = texture2D(globeTexture, vertexUV); // vec4(atmosphere + texture2D(globeTexture, vertexUV).xyz, 1.0);
+               }`,
+               uniforms: {
+                  globeTexture: {
+                     value: astre.texture,
+                  },
+                  atmosphereColor: {
+                     value: astre.color,
+                  },
+               },
+            })*/)
+
+         //const astreMesh = new THREE.Mesh(new THREE.SphereGeometry(astreRadius, 32, 32), new THREE.MeshBasicMaterial({ color: astre.color }))
          astreMesh.name = astre.name
          astre.astreMesh = astreMesh
 
@@ -54,26 +119,43 @@ export function SolarSystemController(): null {
    }
 
    /**
-    * Helper function to get planet position in 3D (heliocentric coordinates).
-    * @param planetBody
-    * @param date
+    * Function to animate trajectories between two dates.
+    * @param startDate
+    * @param endDate
+    * @param duration
     */
-   const getPlanetPosition = (planetBody: Astronomy.Body, date: Date) => {
-      const time = new Astronomy.AstroTime(date)
-      const vector = Astronomy.HelioVector(planetBody, time)
-      return new THREE.Vector3(vector.x, vector.y, vector.z)
-   }
+      // TODO : Use and maybe fix so that it gets positions for each day between the two dates.
+   const animatePlanetTrajectories = (startDate: Date, endDate: Date, duration: number): void => {
+         // Clear any ongoing animations.
+         gsap.killTweensOf(astres)
 
+         // Loop through each planet and animate its trajectory
+         astres.forEach((astre: Astre): void => {
+            const startPosition = getPlanetPosition(astre.body, startDate).multiplyScalar(1e10)
+            const endPosition = getPlanetPosition(astre.body, endDate).multiplyScalar(1e10)
+
+            if (astre.astreMesh) {
+               // Use GSAP to animate the position from start to end
+               gsap.to(astre.astreMesh.position, {
+                  x: endPosition.x,
+                  y: endPosition.y,
+                  z: endPosition.z,
+                  duration: duration,
+                  ease: 'power1.inOut',
+                  onUpdate: (): void => {
+                     // Optionally: Update any labels, names, or other 3D elements
+                  },
+               })
+            }
+         })
+      }
 
    /**
     *
     */
    const setSolarSystemPositions = (): void => {
-      // Get current date for real-time positioning.
-      const currentDate: Date = new Date()
-
       astres.forEach((astre: Astre): void => {
-         const position = getPlanetPosition(astre.body, currentDate).multiplyScalar(1e10)
+         const position = getPlanetPosition(astre.body, dateValueToDate(selectedDate)).multiplyScalar(1e10)
          if (astre.astreMesh) {
             astre.astreMesh.position.set(
                position.x,
@@ -106,7 +188,8 @@ export function SolarSystemController(): null {
 
       namesGroup.current.clear()
 
-      astres.forEach((astre): void => {
+      astres.forEach((astre: Astre): void => {
+         if (!astre.astreMesh) return
 
          const textGeo: TextGeometry = new TextGeometry(astre.name, {
             font: font.current!,
@@ -123,9 +206,9 @@ export function SolarSystemController(): null {
          textGeo.computeBoundingBox()
          textGeo.name = `${astre.name} Geometry`
 
-         const astreRadius: number = trueSize ? SUN_RADIUS : astre.radius
-         const position = astre.astreMesh.position
-         const textMesh = new THREE.Mesh(textGeo, materials)
+         const astreRadius: number = trueSize ? astre.radius : SUN_RADIUS
+         const position: THREE.Vector3 = astre.astreMesh.position
+         const textMesh: THREE.Mesh<TextGeometry, THREE.MeshBasicMaterial[], THREE.Object3DEventMap> = new THREE.Mesh(textGeo, materials)
          textMesh.position.set(position.x, position.y + astreRadius * 2, position.z)
          textMesh.name = `${astre.name} Mesh`
 
@@ -135,14 +218,61 @@ export function SolarSystemController(): null {
       displayedSceneData.scene.add(namesGroup.current)
    }
 
-   useEffect((): void => {
+   /**
+    * Cleanup : remove events listeners.
+    */
+   const cleanup = (): void => {
+      displayedSceneData?.controls?.removeEventListener(
+         'change',
+         handleNamesLOD,
+      )
+   }
 
+   useEffect(() => {
       createSolarSystemMeshes()
       setSolarSystemPositions()
       createSolarSystemNames()
       animate()
 
-   }, [displayedSceneData, font.current, trueSize])
+      displayedSceneData?.controls?.addEventListener('change', handleNamesLOD)
+
+      return cleanup
+   }, [displayedSceneData, font.current, trueSize, selectedDate])
+
+
+   const astresNamesAdjustedScale = useRef<number>(SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE)
+
+   /**
+    * Function to handle resizing names accordingly with zoom.
+    */
+   const handleNamesLOD = (): void => {
+      if (namesGroup.current == null || displayedSceneData == null) {
+         return
+      }
+
+      astresNamesAdjustedScale.current = clamp(
+         displayedSceneData.controls.getDistance() / 1e10,
+         SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MIN_SCALE,
+         SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE,
+      )
+
+      namesGroup.current.children.forEach((name): void => {
+         name.scale.set(
+            astresNamesAdjustedScale.current,
+            astresNamesAdjustedScale.current,
+            astresNamesAdjustedScale.current,
+         )
+      })
+   }
+
+
+   /**
+    * Update min distance from selected astre using selected astre radius.
+    */
+   useEffect((): void => {
+      if (displayedSceneData?.controls)
+         displayedSceneData.controls.minDistance = (trueSize ? selectedAstre.radius : SUN_RADIUS) * 2
+   }, [selectedAstre, trueSize])
 
 
    /**
@@ -168,18 +298,13 @@ export function SolarSystemController(): null {
 
 
 // TODO : When in solar system mode :
-//// Add a planet list selection, user can select a planet.
 ////////// When a planet is selected :
-////////////// GSAP fly to planet
 ////////////// Open modal with data on planet.
-////////////// Display texture on planet instead of color.
-//// Allow user to select a date to display solar system position.
+////////////// Display atmosphere on planet that uses astres color.
 //// Allow user to timelapse planets position.
-//// Allow user to select if view is centered on earth or sun.
 //////// If centered on earth, when zooming => get back to earth view.
-//////// In nav bar : button to get back to earth view.
+//////// In nav bar : button to get back to Earth scene instantly.
 //////// Allow user to display ellipses of astres trajectories.
 //////// Refactor font loading and usage in dedicated provider.
-//////// Fix moon visualization.
-// https://ui.shadcn.com/docs/components/calendar https://ui.shadcn.com/docs/components/date-picker
-/// LOD for astres names
+//////// Fix moon in visualization size.
+// Hide ui when opening credit drawer for example.

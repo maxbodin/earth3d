@@ -75,6 +75,16 @@ export function CreditView() {
                            href="https://www.flickr.com/services/api/flickr.photos.search.html">Flickr.photos.search</Link>
                      </AlertDescription>
                   </Alert>
+                  <Alert>
+                     <AlertTitle>Astres Textures</AlertTitle>
+                     <AlertDescription>
+                        <Link
+                           href="https://www.solarsystemscope.com/textures/">Textures</Link>
+                        <br />
+                        <Link
+                           href="https://planetpixelemporium.com/pluto.html">Pluto Texture</Link>
+                     </AlertDescription>
+                  </Alert>
                </div>
             </div>
          </DrawerContent>

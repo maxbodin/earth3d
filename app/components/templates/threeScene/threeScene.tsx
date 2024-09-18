@@ -1,6 +1,6 @@
 'use client'
 import * as THREE from 'three'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js'
 import { PlanetController } from '@/app/components/atoms/three/planet/planet.controller'
@@ -30,6 +30,8 @@ import { ClickHandler } from '@/app/components/atoms/clickHandler/clickHandler'
 import { AirportsController } from '@/app/components/atoms/three/airports/airports.controller'
 import { PlanetProvider } from '@/app/components/atoms/three/planet/planet.model'
 import { SolarSystemController } from '@/app/components/atoms/three/solarSystem/solarSystem.controller'
+import { useAstresList } from '@/app/components/organisms/astresList/astresList.model'
+import { Body } from 'astronomy-engine'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -56,7 +58,9 @@ export function ThreeScene() {
    const activeSceneType = useRef<SceneType>(SceneType.SPHERICAL)
 
    const distanceToPlaneSurface = useRef<number | null>(null)
-   const distanceToSphereSurface = useRef<number | null>(null)
+   const [distanceToSphereSurface, setDistanceToSphereSurface] = useState<number>(0)
+
+   const { selectedAstre } = useAstresList()
 
    /**
     * Function to set up renderer, scene, and camera.
@@ -225,38 +229,36 @@ export function ThreeScene() {
    }
 
 
+   /**
+    *
+    * @param currentScene
+    */
    const handleLOD = (currentScene: any): void => {
-
-      distanceToSphereSurface.current = currentScene.controls.getDistance()
-
-      if (distanceToSphereSurface.current)
-         // Get distance to the surface of earth.
-         distanceToPlaneSurface.current =
-            distanceToSphereSurface.current - EARTH_RADIUS
-
+      // Get distance to the surface of earth.
+      distanceToPlaneSurface.current =
+         distanceToSphereSurface - EARTH_RADIUS
 
       // Switch to plane map when close enough to Earth's surface.
       if (activeSceneType.current === SceneType.SPHERICAL
-         && distanceToPlaneSurface.current
          && distanceToPlaneSurface.current < SPHERE_TO_PLANE_TOGGLE_DISTANCE) {
          switchToPlaneMap(currentScene)
 
          // Switch back to spherical Earth view when moving away from the plane.
       } else if (activeSceneType.current === SceneType.PLANE
-         && distanceToSphereSurface.current
-         && distanceToSphereSurface.current > SPHERE_TO_PLANE_TOGGLE_DISTANCE) {
+         && distanceToSphereSurface > SPHERE_TO_PLANE_TOGGLE_DISTANCE) {
          switchToSpherical(currentScene)
 
          // Switch to solar system view when far enough from the sphere (Earth).
       } else if (activeSceneType.current === SceneType.SPHERICAL
-         && distanceToSphereSurface.current
-         && distanceToSphereSurface.current > SOLAR_SYSTEM_TOGGLE_DISTANCE) {
+         && distanceToSphereSurface > SOLAR_SYSTEM_TOGGLE_DISTANCE) {
 
          switchToSolarSystem(currentScene)
 
          // Switch back to spherical earth view when near enough from the sphere (Earth).
-      } else if (activeSceneType.current === SceneType.SOLAR_SYSTEM) {
-         // TODO switchToSpherical(currentScene)
+      } else if (activeSceneType.current === SceneType.SOLAR_SYSTEM
+         && selectedAstre.body == Body.Earth
+         && distanceToSphereSurface < EARTH_RADIUS + 1e7) {
+         switchToSpherical(currentScene)
       }
    }
 
@@ -306,7 +308,7 @@ export function ThreeScene() {
       scenes.current[SceneType.SOLAR_SYSTEM].scene.visible = false
 
       // Set camera position
-      dir.multiplyScalar(EARTH_RADIUS + (distanceToSphereSurface.current ?? 0))
+      dir.multiplyScalar(EARTH_RADIUS + (distanceToSphereSurface ?? 0))
       sphereScene.camera.position.copy(dir)
 
       console.log(
@@ -396,8 +398,11 @@ export function ThreeScene() {
       scenes.current[SceneType.PLANE].scene.visible = false
 
       // Set camera position
-      dir.multiplyScalar(EARTH_RADIUS + (distanceToSphereSurface.current ?? 0))
+      dir.multiplyScalar(EARTH_RADIUS + (distanceToSphereSurface ?? 0))
       solarSystemScene.camera.position.copy(dir)
+
+
+      // TODO : might be the right way but needed testing solarSystemScene.camera.position.copy(getPlanetPosition(Body.Earth, dateValueToDate(selectedDate)))
 
       console.log(
          'Geo-Three: Switched scene from sphere to solar system.',
@@ -424,11 +429,23 @@ export function ThreeScene() {
       setDisplayedSceneData(currentScene)
       currentScene.controls.update()
 
+      setDistanceToSphereSurface(currentScene.controls.getDistance())
+
       renderer.current.clear()
       renderer.current.render(currentScene.scene!, currentScene.camera!)
 
-      handleLOD(currentScene)
    }
+
+   useEffect((): void => {
+      // Get the current scene based on the active scene type.
+      const currentScene = scenes.current[activeSceneType.current]
+
+      // Ensure that the scene and controls are valid before calling handleLOD.
+      if (currentScene == null || currentScene.controls == null) return
+
+      // Call handleLOD with the updated currentScene.
+      handleLOD(currentScene)
+   }, [scenes, selectedAstre, activeSceneType, distanceToSphereSurface])
 
    /**
     * Called on resize window.

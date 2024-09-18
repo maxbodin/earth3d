@@ -65,6 +65,7 @@ export default function Home() {
                <ScenesProvider>
                   <AstresListProvider>
                      <AstresListView />
+                     <ThreeScene />
                   </AstresListProvider>
                   <MarkersDashboardView />
                   <Geolocation />
@@ -73,7 +74,6 @@ export default function Home() {
                      <DetailsCard />
                      <NavigationBar />
                   </div>
-                  <ThreeScene />
                </ScenesProvider>
             </SolarSystemProvider>
          </PlaneMapProvider>

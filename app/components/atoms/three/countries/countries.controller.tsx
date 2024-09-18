@@ -349,7 +349,7 @@ export function CountriesController(): null {
       if (intersects.length > 0) {
          const selectedCountryObject: any = intersects[0].object
          const selectedCountryData: any = selectedCountryObject.userData
-         console.log(selectedCountryData)
+         // TODO console.log(selectedCountryData)
       }
    }
 

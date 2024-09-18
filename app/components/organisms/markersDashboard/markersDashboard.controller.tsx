@@ -51,7 +51,6 @@ export function MarkersDashboardController() {
       // Find the index of the existing puck marker.
       const puckIndex: number = markers.findIndex(marker => marker.isPuck)
 
-      console.log(markers)
       // If it exists, update its latitude and longitude.
       if (puckIndex !== -1) {
          const updatedRows = [...markers]

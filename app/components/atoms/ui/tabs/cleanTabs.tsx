@@ -2,18 +2,21 @@ import React, { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 
 /**
+ * @param selectedTabIndex - Default selected tab index.
  * @param tabTitles - Array of strings representing the titles of the tabs.
  * @param onTabClick - Function called when a tab is clicked.
  * @constructor
  */
 export function CleanTabs({
+                             selectedTabIndex,
                              tabTitles,
                              onTabClick,
                           }: {
+   selectedTabIndex: number,
    tabTitles: string[]
    onTabClick: (tabName: string) => void
 }) {
-   const [activeTab, setActiveTab] = useState<number>(0)
+   const [activeTab, setActiveTab] = useState<number>(selectedTabIndex)
    const [highlightHeight, setHighlightHeight] = useState<number>(0)
    const highlightRef = useRef<HTMLDivElement>(null)
    const tabRefs = useRef<(HTMLLabelElement | null)[]>([])
@@ -39,10 +42,10 @@ export function CleanTabs({
    return (
       <div className="relative grid place-items-center w-40 h-auto">
          <div
-            className="relative w-full h-full grid grid-flow-row auto-rows-fr border-4 border-white/20 bg-white/10 bg-opacity-10 backdrop-blur-md overflow-hidden"
+            className="relative w-full h-full grid grid-flow-row auto-rows-fr border-4 border-white/20 bg-white/10 bg-opacity-10 backdrop-blur-md overflow-hidden
+            rounded-2xl drop-shadow-lg"
             style={{
                borderWidth: `var(--nextui-border-width-medium)`,
-               borderColor: `hsl(var(--nextui-default) / var(--nextui-default-opacity, var(--tw-border-opacity)));`,
                borderRadius: `var(--nextui-radius-large)`,
             }}
          >
@@ -55,7 +58,7 @@ export function CleanTabs({
                   height: `${highlightHeight}px`,
                }}
             />
-            {tabTitles.map((title, index) => (
+            {tabTitles.map((title: string, index: number) => (
                <React.Fragment key={index}>
                   <input
                      type="radio"
