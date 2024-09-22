@@ -17,7 +17,7 @@ import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
 
 export function PlanetController(): null {
    const { displayedSceneData } = useScenes()
-   const { setPlanet } = usePlanet()
+   const { planet, setPlanet } = usePlanet()
 
    // Preload the map texture.
    const mapTexture: THREE.Texture = new THREE.TextureLoader().load(
@@ -37,12 +37,10 @@ export function PlanetController(): null {
          displayedSceneData?.scene == null ||
          srtmTexture == null ||
          mapTexture == null ||
-         displayedSceneData.type == SceneType.PLANE
-         || displayedSceneData.type == SceneType.SOLAR_SYSTEM
+         displayedSceneData.type != SceneType.SPHERICAL ||
+         (planet && displayedSceneData.scene.children.includes(planet))
       )
          return
-
-      //if (planet != null) removeObject3D(planet, scene)
 
       const newPlanet: THREE.Mesh<
          THREE.SphereGeometry,
@@ -105,9 +103,8 @@ export function PlanetController(): null {
       newPlanet.name = PLANET_NAME
       newPlanet.renderOrder = EARTH_RENDER_ORDER
 
+      displayedSceneData.scene.add(newPlanet)
       setPlanet(newPlanet)
-      displayedSceneData.scene?.add(newPlanet)
-
 
       // TODO WIP drawAreaOnSphere(displayedSceneData?.scene, areaCoordinates, EARTH_RADIUS)
    }

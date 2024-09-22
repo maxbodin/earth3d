@@ -52,63 +52,62 @@ export function SolarSystemController(): null {
       astres.forEach((astre: Astre): void => {
 
          // Hide Moon if not in true size.
-         if (trueSize && astre.body == Body.Moon) {
+         if (!trueSize && astre.body == Body.Moon) {
             return
          }
 
          const astreRadius: number = trueSize ? astre.radius : SUN_RADIUS
 
-         const astreMesh: THREE.Mesh<any
-            /*            THREE.SphereGeometry,
-                        THREE.ShaderMaterial,
-                        THREE.Object3DEventMap*/
-         > = new THREE.Mesh(
+         // TODO : Need to be fixed as atmospheres are not currently displayed.
+         const astreMesh: THREE.Mesh = new THREE.Mesh(
             new THREE.SphereGeometry(
                astreRadius,
                32,
                32,
             ),
-            new THREE.MeshBasicMaterial({
-               map: astre.texture,
-            })
-            // TODO : Fix it.
-            /*new THREE.ShaderMaterial({
-               side: THREE.FrontSide,
-               depthWrite: false,
-               depthTest: false,
+            new THREE.ShaderMaterial({
+               // side: THREE.FrontSide,
+               depthWrite: true,
+               depthTest: true,
                transparent: false,
+               blending: THREE.AdditiveBlending,
                vertexShader: `
-                    varying vec2 vertexUV;
-                    varying vec3 vertexNormal;
-                    
-                    void main() {
-                        vertexUV = uv;
-                        vertexNormal = normalize(normalMatrix * normal);
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0 );
-                    }
+                  varying vec3 vNormal;
+                  varying vec2 vUV;
+            
+                  void main() {
+                    vUV = uv;
+                    vNormal = normalize(normalMatrix * normal);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0 );
+                  }
                 `,
                fragmentShader: `
-               uniform sampler2D globeTexture;
-               varying vec2 vertexUV;
-               varying vec3 vertexNormal;
-               
-               void main(){
-                  //float intensity = 0.1 - dot(vertexNormal, vec3(0.0, 0.0, 0.0));
-                  //vec3 atmosphere = vec3(0.3, 0.6, 1.0) * pow(intensity, 1.8);
-                  
-                  gl_FragColor = texture2D(globeTexture, vertexUV); // vec4(atmosphere + texture2D(globeTexture, vertexUV).xyz, 1.0);
-               }`,
+                  uniform sampler2D globeTexture;
+                  uniform vec3 atmosphereColor;
+                  varying vec3 vNormal;
+                  varying vec2 vUV;
+            
+                  void main() {
+                     vec4 globeColor = texture2D(globeTexture, vUV);
+            
+                     float intensity = 0.1 - dot(vNormal, vec3(0.0, 0.0, 0.0));
+                     vec3 atmosphere = atmosphereColor * pow(intensity, 1.8);
+
+                     gl_FragColor = vec4(atmosphere + texture2D(globeTexture, vUV).xyz, 1.0);
+                  }
+                `,
                uniforms: {
                   globeTexture: {
                      value: astre.texture,
                   },
                   atmosphereColor: {
-                     value: astre.color,
+                     value: new THREE.Color(astre.color), // Ensure it's a THREE.Color
                   },
                },
-            })*/)
+            }),
+         )
 
-         //const astreMesh = new THREE.Mesh(new THREE.SphereGeometry(astreRadius, 32, 32), new THREE.MeshBasicMaterial({ color: astre.color }))
+
          astreMesh.name = astre.name
          astre.astreMesh = astreMesh
 
@@ -131,8 +130,8 @@ export function SolarSystemController(): null {
 
          // Loop through each planet and animate its trajectory
          astres.forEach((astre: Astre): void => {
-            const startPosition = getPlanetPosition(astre.body, startDate).multiplyScalar(1e10)
-            const endPosition = getPlanetPosition(astre.body, endDate).multiplyScalar(1e10)
+            const startPosition = getPlanetPosition(astre.body, startDate)
+            const endPosition = getPlanetPosition(astre.body, endDate)
 
             if (astre.astreMesh) {
                // Use GSAP to animate the position from start to end
@@ -155,7 +154,7 @@ export function SolarSystemController(): null {
     */
    const setSolarSystemPositions = (): void => {
       astres.forEach((astre: Astre): void => {
-         const position = getPlanetPosition(astre.body, dateValueToDate(selectedDate)).multiplyScalar(1e10)
+         const position: THREE.Vector3 = getPlanetPosition(astre.body, dateValueToDate(selectedDate))
          if (astre.astreMesh) {
             astre.astreMesh.position.set(
                position.x,
@@ -190,6 +189,11 @@ export function SolarSystemController(): null {
 
       astres.forEach((astre: Astre): void => {
          if (!astre.astreMesh) return
+
+         // Hide Moon Name if not in true size.
+         if (!trueSize && astre.body == Body.Moon) {
+            return
+         }
 
          const textGeo: TextGeometry = new TextGeometry(astre.name, {
             font: font.current!,
@@ -229,9 +233,14 @@ export function SolarSystemController(): null {
    }
 
    useEffect(() => {
+
       createSolarSystemMeshes()
       setSolarSystemPositions()
       createSolarSystemNames()
+
+      // Initialize Names Sizes.
+      handleNamesLOD()
+
       animate()
 
       displayedSceneData?.controls?.addEventListener('change', handleNamesLOD)
@@ -295,16 +304,3 @@ export function SolarSystemController(): null {
 
    return null
 }
-
-
-// TODO : When in solar system mode :
-////////// When a planet is selected :
-////////////// Open modal with data on planet.
-////////////// Display atmosphere on planet that uses astres color.
-//// Allow user to timelapse planets position.
-//////// If centered on earth, when zooming => get back to earth view.
-//////// In nav bar : button to get back to Earth scene instantly.
-//////// Allow user to display ellipses of astres trajectories.
-//////// Refactor font loading and usage in dedicated provider.
-//////// Fix moon in visualization size.
-// Hide ui when opening credit drawer for example.

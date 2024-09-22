@@ -51,27 +51,28 @@ export const SPHERE_TO_PLANE_TRANSITION_TOGGLE_DISTANCE: number = 1e6 * 0.8
 /**
  * Max distance possible from spherical earth.
  */
-export const MAX_SPHERICAL_DISTANCE: number = EARTH_RADIUS + 2e7
+export const MAX_EARTH_DISTANCE_GLOBE_SCENE: number = EARTH_RADIUS + 2e7
 
 /**
  * Min distance possible from spherical earth.
  */
-export const MIN_SPHERICAL_DISTANCE: number = EARTH_RADIUS + 3e4
+export const MIN_EARTH_DISTANCE_GLOBE_SCENE: number = EARTH_RADIUS + 1e5
 
 /**
  *
  */
-export const SOLAR_SYSTEM_TOGGLE_DISTANCE: number = MAX_SPHERICAL_DISTANCE - 2e2
+export const SOLAR_SYSTEM_TOGGLE_DISTANCE: number = MAX_EARTH_DISTANCE_GLOBE_SCENE - 2e2
+
+/**
+ *
+ */
+export const SOLAR_SYSTEM_TO_GLOBE_TOGGLE_DISTANCE: number = EARTH_RADIUS * 2.01
+
 
 /**
  * Max distance possible from solar system.
  */
 export const MAX_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS * 1e2
-
-/**
- * Min distance possible from solar system.
- */
-export const MIN_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS + 1e5
 
 
 export const GLOBE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1.1

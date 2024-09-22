@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { SceneType } from '@/app/enums/sceneType'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { EARTH_RADIUS } from '@/app/constants/numbers'
+import { EARTH_RADIUS, SUN_RADIUS } from '@/app/constants/numbers'
 import { gsap } from 'gsap'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { Astre } from '@/app/types/astre'
@@ -134,12 +134,14 @@ export function CameraFlyController() {
                },
             })
 
+            const distance: number = (trueSize ? astre.radius : SUN_RADIUS) * 4
+
             // GSAP animation to move the camera.
             gsap.to(displayedSceneData.camera.position, {
                duration: 2,
-               x: astreMesh.position.x,
-               y: astreMesh.position.y,
-               z: astreMesh.position.z,
+               x: astreMesh.position.x - distance,
+               y: astreMesh.position.y - distance,
+               z: astreMesh.position.z - distance,
                ease: 'power2.inOut',
                onComplete: (): void => {
                   displayedSceneData.controls.update()

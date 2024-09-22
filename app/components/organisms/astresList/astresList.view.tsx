@@ -8,17 +8,24 @@ import { CleanTabs } from '@/app/components/atoms/ui/tabs/cleanTabs'
 import { Astre } from '@/app/types/astre'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { DatePicker } from '@nextui-org/date-picker'
+import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
+import { Body } from 'astronomy-engine'
 
 export function AstresListView() {
    const { selectedAstre, setSelectedAstre, selectedDate, setSelectedDate } = useAstresList()
    const { displayedSceneData } = useScenes()
    const { flyToAstre } = CameraFlyController()
+   const { trueSize } = useSolarSystem()
 
 
    useEffect((): void => {
       flyToAstre(selectedAstre)
    }, [selectedAstre])
 
+   // Filter out the Moon if trueSize is false, so that it does not overlap the earth.
+   const filteredAstres: Astre[] = trueSize
+      ? astres
+      : astres.filter((astre: Astre): boolean => astre.body !== Body.Moon)
 
    return (
       <>
@@ -27,14 +34,14 @@ export function AstresListView() {
                <div
                   className="absolute transform bottom-10 left-10 p-4 z-40 flex flex-col space-y-4"
                >
-                  <DatePicker variant={'bordered'}
+                  <DatePicker variant="bordered"
                               className="rounded-2xl bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg"
                               value={selectedDate} onChange={setSelectedDate} />
                   <CleanTabs
-                     selectedTabIndex={astres.indexOf(selectedAstre)}
-                     tabTitles={astres.map((astre: Astre) => astre.name)}
+                     selectedTabIndex={filteredAstres.indexOf(selectedAstre)}
+                     tabTitles={filteredAstres.map((astre: Astre) => astre.name)}
                      onTabClick={(astreName: string): void => {
-                        const selected: Astre | undefined = astres.find((astre: Astre): boolean => astre.name === astreName)
+                        const selected: Astre | undefined = filteredAstres.find((astre: Astre): boolean => astre.name === astreName)
                         if (selected) {
                            setSelectedAstre(selected)
                         }

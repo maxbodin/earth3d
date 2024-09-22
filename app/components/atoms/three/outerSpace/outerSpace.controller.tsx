@@ -5,7 +5,7 @@ import { ConstellationFigures } from '@/app/components/atoms/three/outerSpace/co
 import { Hyptic } from '@/app/components/atoms/three/outerSpace/hyptic/hyptic'
 import { MilkyWay } from '@/app/components/atoms/three/outerSpace/milkyWay/milkyWay'
 
-export function OuterSpace(): React.JSX.Element {
+export function OuterSpaceController(): React.JSX.Element {
    return (
       <>
          <MilkyWay />

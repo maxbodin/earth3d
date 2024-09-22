@@ -10,10 +10,9 @@ export function SolarSystemHelper() {
     * @param planetBody
     * @param date
     */
-   const getPlanetPosition = (planetBody: Astronomy.Body, date: Date) => {
-      const time = new Astronomy.AstroTime(date)
-      const vector = Astronomy.HelioVector(planetBody, time)
-      return new THREE.Vector3(vector.x, vector.y, vector.z)
+   const getPlanetPosition = (planetBody: Astronomy.Body, date: Date): THREE.Vector3 => {
+      const vector: Astronomy.Vector = Astronomy.HelioVector(planetBody, new Astronomy.AstroTime(date))
+      return new THREE.Vector3(vector.x, vector.y, vector.z).multiplyScalar(1e10)
    }
 
    /**
