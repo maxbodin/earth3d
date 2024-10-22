@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 import { useCredit } from '@/app/components/organisms/credit/credit.model'
@@ -50,6 +51,24 @@ export function CreditView() {
                   </DrawerClose>
                </DrawerHeader>
                <div className="px-8 overflow-auto max-h-[45vh] min-h-[45vh] space-y-4 border-gray-700">
+                  <Alert>
+                     <AlertTitle>Next.js</AlertTitle>
+                     <AlertDescription className="flex flex-col space-y-2">
+                        <Link href="https://nextjs.org">Next.js</Link>
+                     </AlertDescription>
+                  </Alert>
+                  <Alert>
+                     <AlertTitle>Three.js</AlertTitle>
+                     <AlertDescription className="flex flex-col space-y-2">
+                        <Link href="https://threejs.org">Three.js</Link>
+                     </AlertDescription>
+                  </Alert>
+                  <Alert>
+                     <AlertTitle>Tiles displaying on the planet is inspired by geo-three</AlertTitle>
+                     <AlertDescription className="flex flex-col space-y-2">
+                        <Link href="https://github.com/tentone/geo-three">Geo-Three</Link>
+                     </AlertDescription>
+                  </Alert>
                   <Alert>
                      <AlertTitle>Autocomplete</AlertTitle>
                      <AlertDescription className="flex flex-col space-y-2">
