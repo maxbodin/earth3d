@@ -10,7 +10,7 @@ import { useSelection } from '@/app/components/atoms/clickHandler/selectionConte
 import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
 import { Geolocation, ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { GeocodeResponse } from '@/app/types/orsTypes'
-import { reverse } from '@/app/server/services/openRouteService'
+import { reverseORS } from '@/app/server/services/openRouteService'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { CursorModeType } from '@/app/enums/modeType'
 import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
@@ -61,7 +61,7 @@ export function ClickHandler(): null {
 
       try {
          // Call server-side function.
-         const data: GeocodeResponse = await reverse(geolocation.longitude, geolocation.latitude)
+         const data: GeocodeResponse = await reverseORS(geolocation.longitude, geolocation.latitude)
 
          // Display place data.
          setSelectedObjectData(data.features[0])
