@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { DynamicProviders } from '@/app/components/templates/providers/dynamicProviders'
 import React from 'react'
 import { NextFont } from 'next/dist/compiled/@next/font'
 import { ErrorSecurity } from '@/app/components/atoms/ui/errorSecurity/errorSecurity'
 import { NextUIProvider } from '@nextui-org/react'
 import { gsap } from 'gsap'
 import { useGSAP } from '@gsap/react'
+import { DynamicProviders } from '@/app/components/templates/providers/dynamicProviders'
 
 const inter: NextFont = Inter({ subsets: ['latin'] })
 
