@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect } from 'react'
 import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut/fadeInOut'
 import {
@@ -79,7 +80,10 @@ export function SearchBarView() {
                   </Dropdown>
 
                   <Autocomplete
-                     className="max-w-xl"
+                     className="max-w-xl pb-4"
+                     classNames={{
+                        listboxWrapper: 'max-h-fit',
+                     }}
                      isLoading={autoCompleteLoading}
                      inputProps={{
                         classNames: {

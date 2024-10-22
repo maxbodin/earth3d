@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
 import { PlaneDataDisplay } from '../../atoms/dataDisplay/planeDataDisplay/planeDataDisplay'

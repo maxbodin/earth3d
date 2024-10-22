@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut/fadeInOut'
@@ -24,7 +25,7 @@ import {
 import Link from 'next/link'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { GeocodeResponse } from '@/app/types/orsTypes'
-import { reverse } from '@/app/server/services/openRouteService'
+import { reverseORS } from '@/app/server/services/openRouteService'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { ObjectType } from '@/app/enums/objectType'
 import { CursorModeType } from '@/app/enums/modeType'
@@ -82,7 +83,7 @@ export function NavigationBar() {
 
       try {
          // Call server-side function.
-         const data: GeocodeResponse = await reverse(randomLongitude, randomLatitude)
+         const data: GeocodeResponse = await reverseORS(randomLongitude, randomLatitude)
 
          // Display place data.
          setSelectedObjectData(data.features[0])

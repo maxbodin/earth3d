@@ -1,3 +1,4 @@
+'use client'
 import React, { createContext, ReactNode, useContext, useState } from 'react'
 import { astres } from '@/app/data/astres'
 import { Astre } from '@/app/types/astre'
