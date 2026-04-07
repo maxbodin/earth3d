@@ -24,7 +24,6 @@ import {
    SUN_RADIUS,
 } from '@/app/constants/numbers'
 import { Geolocation, ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { getMapboxToken } from '@/app/server/actions/getMapboxToken'
 import { CustomMapBoxProvider } from '@/app/lib/customMapBoxProvider'
 import { PlaneSky } from '@/app/components/atoms/three/planeSky/planeSky'
 import { ClickHandler } from '@/app/components/atoms/clickHandler/clickHandler'
@@ -488,12 +487,6 @@ export function ThreeScene() {
 
       const mapBoxProvider: CustomMapBoxProvider = new CustomMapBoxProvider()
 
-      if (mapBoxProvider.publicToken == '') {
-         mapBoxProvider.publicToken = await getMapboxToken()
-         if (mapBoxProvider.publicToken == null) {
-            console.error('MISSING MAPBOX PUBLIC TOKEN.')
-         }
-      }
 
       setMapProvider(mapBoxProvider)
 
