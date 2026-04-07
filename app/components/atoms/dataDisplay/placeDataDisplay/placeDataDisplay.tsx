@@ -7,11 +7,12 @@ import { EyeIcon } from '@nextui-org/shared-icons'
 import { Feature, FeatureProperties } from '@/app/types/orsTypes'
 import { fetchGeoPhotos } from '@/app/server/services/flickrService'
 import debounce from 'lodash/debounce'
+import { CompassIcon } from 'lucide-react'
 
 export function PlaceDataDisplay(): React.JSX.Element {
    const { selectedObjectData } = useSelection()
 
-   const { flyToCoordinates } = CameraFlyController()
+   const { flyToCoordinates, flyToOppositeCoordinates } = CameraFlyController()
 
    const data: Feature = selectedObjectData as Feature
 
@@ -178,6 +179,24 @@ export function PlaceDataDisplay(): React.JSX.Element {
             endContent={<EyeIcon />}
             onClick={(): void => {
                flyToCoordinates(latitude, longitude)
+            }}>
+            Focus view on place
+         </Button>}
+
+         <br />
+
+         {latitude && longitude && <Button
+            variant="bordered"
+            size="sm"
+            aria-label="Get to opposite point on Earth."
+            className="z-50 bg-black bg-opacity-50"
+            endContent={<CompassIcon />}
+            onClick={(): void => {
+               flyToOppositeCoordinates(latitude, longitude)
+
+               // TODO : display data about this point after fly to.
+               // http://www.csgnetwork.com/latlonginfocalc.html
+               // Flyto + set selected date using ORS??
             }}>
             Focus view on place
          </Button>}

@@ -151,9 +151,27 @@ export function CameraFlyController() {
       }
    }
 
+   const flyToOppositeCoordinates = (lat: number, lon: number): void => {
+      const { latitude, longitude } = findAntipode(lat, lon)
+      flyToCoordinates(latitude, longitude)
+   }
+
+   function findAntipode(lat: number, lon: number): { latitude: number, longitude: number } {
+      const antipodeLat: number = -lat
+
+      // Shift the longitude by 180° and normalize to -180 to 180 range.
+      let antipodeLon: number = lon + 180
+      if (antipodeLon > 180) {
+         antipodeLon -= 360
+      }
+
+      return { latitude: antipodeLat, longitude: antipodeLon }
+   }
+
    return {
       flyToCoordinates,
       flyToCountryPos,
       flyToAstre,
+      flyToOppositeCoordinates,
    }
 }
