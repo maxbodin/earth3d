@@ -30,7 +30,7 @@ export const WINDOW_WIDTH_ERROR_MESSAGE: string =
    'Screen width is not supported. Please use a larger screen.'
 export const WAITING_TO_DETECT_ERROR_MESSAGE: string =
    'Waiting for possible errors...'
-export const NO_ERROR_MESSAGE: string = ''
+export const NO_ERROR_MESSAGE: string = 'No error detected.'
 
 /**
  * Various.

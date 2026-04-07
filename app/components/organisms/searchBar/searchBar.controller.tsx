@@ -3,12 +3,13 @@ import countriesCoords from '@/app/data/country-codes-lat-long-alpha3.json'
 import debounce from 'lodash/debounce'
 import { SearchSubjectType } from '@/app/enums/SearchSubjectType'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
-import { autocomplete } from '@/app/server/services/openRouteService'
+import { autocompleteORS } from '@/app/server/services/openRouteService'
 import { Country } from '@/app/types/countryType'
 import { Selection } from '@nextui-org/react'
 import { useSearchBar } from '@/app/components/organisms/searchBar/searchBar.model'
 import { Key } from '@react-types/shared'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
+import { lookupOSM, reverseOSM, searchOSM } from '@/app/server/services/nominatimService'
 
 export function SearchBarController() {
    const [searchTerm, setSearchTerm] = useState<string>('')
@@ -47,8 +48,18 @@ export function SearchBarController() {
 
             if (selectedSubject === SearchSubjectType.PLACE) {
                // Call server-side function.
-               const data: GeocodeResponse = await autocomplete(value)
+               const data: GeocodeResponse = await autocompleteORS(value)
                setFeatureSuggestions(data.features || [])
+
+               const results = await searchOSM(value, { polygon_geojson: '1' })
+               console.log(results)
+
+               const reverseResults = await reverseOSM(52.5487921, -1.8164308)
+               console.log(reverseResults)
+
+               const lookupResults = await lookupOSM('W123,N456')
+               console.log(lookupResults)
+
             } else if (selectedSubject === SearchSubjectType.COUNTRY) {
                // Filter countries based on input value.
                const filteredCountries =
@@ -61,11 +72,11 @@ export function SearchBarController() {
                setCountrySuggestions(filteredCountries || [])
             }
          } catch (err) {
-            setAutoCompleteError('Error fetching autocomplete results.')
+            setAutoCompleteError('Error fetching autocompleteORS results.')
          } finally {
             setAutoCompleteLoading(false)
          }
-      }, 300), // Throttle input to 300ms.
+      }, 500),
       [selectedSubject],
    )
 
