@@ -1,6 +1,6 @@
 'use client'
 import * as THREE from 'three'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import {
    EARTH_ANGLE,
    OUTER_SPACE_RADIUS,
@@ -10,35 +10,40 @@ import {
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { OUTER_SPACE_RENDER_ORDER } from '@/app/constants/renderOrder'
-import { useOuterSpaceTab } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
 import { CONSTELLATION_BOUNDS_PNG } from '@/app/constants/paths'
 import { CONSTELLATION_BOUNDS_NAME } from '@/app/constants/strings'
+import {
+   useOuterSpaceTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
+import { useOuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { removeObject3D } from '@/app/helpers/threeHelper'
 
 export function ConstellationBounds(): null {
-   const constellationBounds = useRef<THREE.Mesh | null>(null)
-   const constellationBoundsTexture: THREE.Texture =
-      new THREE.TextureLoader().load(CONSTELLATION_BOUNDS_PNG)
+   const { constellationBounds, setConstellationBounds } = useOuterSpace()
    const { displayedSceneData } = useScenes()
    const { constellationBoundsActivated } = useOuterSpaceTab()
 
+   const constellationBoundsTexture: THREE.Texture =
+      new THREE.TextureLoader().load(CONSTELLATION_BOUNDS_PNG)
    /**
     * Function to create the constellation bounds mesh.
     */
    const createConstellationBounds = (): void => {
+      // Return early if scene data is missing, or the scene is of type PLANE.
       if (
-         displayedSceneData == null ||
-         displayedSceneData.scene == null ||
+         !constellationBoundsActivated ||
+         !displayedSceneData?.scene ||
          displayedSceneData.type == SceneType.PLANE
       )
          return
 
-      if (constellationBounds.current != null)
-         removeObject3D(constellationBounds.current, displayedSceneData.scene)
+      // If the constellationBounds already exists and is part of the scene, return early to prevent duplication.
+      if (constellationBounds && displayedSceneData.scene.children.includes(constellationBounds)) {
+         return
+      }
 
-      if (!constellationBoundsActivated) return
-
-      constellationBounds.current = new THREE.Mesh(
+      // Create and add the constellationBounds mesh if it doesn't already exist in the scene.
+      const newConstellationBounds = new THREE.Mesh(
          new THREE.SphereGeometry(
             OUTER_SPACE_RADIUS,
             SPHERE_WIDTH_SEGMENTS,
@@ -52,16 +57,28 @@ export function ConstellationBounds(): null {
          }),
       )
 
-      constellationBounds.current.rotation.x =
+      // Set rotation, name, and render order for the constellationBounds.
+      newConstellationBounds.rotation.x =
          THREE.MathUtils.degToRad(EARTH_ANGLE)
+      newConstellationBounds.name = CONSTELLATION_BOUNDS_NAME
+      newConstellationBounds.renderOrder = OUTER_SPACE_RENDER_ORDER
 
-      constellationBounds.current.name = CONSTELLATION_BOUNDS_NAME
-      constellationBounds.current.renderOrder = OUTER_SPACE_RENDER_ORDER
-      displayedSceneData.scene.add(constellationBounds.current)
+      // Add the constellationBounds to the scene.
+      displayedSceneData.scene.add(newConstellationBounds)
+
+      // Save the created constellationBounds in state, so it's not recreated again.
+      setConstellationBounds(newConstellationBounds)
    }
 
-   useEffect((): void => {
+   useEffect(() => {
       createConstellationBounds()
+
+      // Clean up the constellationBounds when the component unmounts or when the scene changes.
+      return (): void => {
+         if (constellationBounds && displayedSceneData?.scene) {
+            removeObject3D(constellationBounds, displayedSceneData.scene)
+         }
+      }
    }, [displayedSceneData, constellationBoundsActivated])
 
    return null

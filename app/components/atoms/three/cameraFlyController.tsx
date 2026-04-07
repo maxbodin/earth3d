@@ -3,12 +3,15 @@ import * as THREE from 'three'
 import { SceneType } from '@/app/enums/sceneType'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { EARTH_RADIUS } from '@/app/constants/numbers'
+import { EARTH_RADIUS, SUN_RADIUS } from '@/app/constants/numbers'
 import { gsap } from 'gsap'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
+import { Astre } from '@/app/types/astre'
+import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 
 export function CameraFlyController() {
    const { displayedSceneData } = useScenes()
+   const { trueSize } = useSolarSystem()
 
    /**
     * Used to fly the camera to a given country position.
@@ -36,56 +39,139 @@ export function CameraFlyController() {
    const flyToCoordinates = (latitude: number, longitude: number): void => {
       let targetPosition: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
 
-      if (displayedSceneData.type == SceneType.SPHERICAL) {
-         targetPosition = latLongToVector3(
-            latitude as number,
-            longitude as number,
-         )
-      } else if (displayedSceneData.type == SceneType.PLANE) {
-         const worldPos: THREE.Vector2 = ThreeGeoUnitsUtils.datumsToSpherical(
-            latitude as number,
-            longitude as number,
-         )
-         targetPosition = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
-      }
-
       // Get current spherical coordinates of the camera relative to the target.
       const target: THREE.Vector3 = displayedSceneData.controls.target
       const currentPosition: THREE.Vector3 = new THREE.Vector3()
       currentPosition.copy(displayedSceneData.camera.position).sub(target)
 
-      const sphericalCurrent: THREE.Spherical = new THREE.Spherical().setFromVector3(
-         currentPosition,
-      )
-      const sphericalTarget: THREE.Spherical = new THREE.Spherical().setFromVector3(
-         targetPosition.clone().sub(target),
-      )
+      if (displayedSceneData.type == SceneType.SPHERICAL) {
+         targetPosition = latLongToVector3(
+            latitude as number,
+            longitude as number,
+         )
 
-      // Set a target zoom.
-      const targetZoom: number = EARTH_RADIUS * 1.2
+         const sphericalCurrent: THREE.Spherical = new THREE.Spherical().setFromVector3(
+            currentPosition,
+         )
 
-      // Use GSAP to animate the spherical coordinates.
-      gsap.to(sphericalCurrent, {
-         duration: 2,
-         theta: sphericalTarget.theta,
-         phi: sphericalTarget.phi,
-         radius: targetZoom,
-         onUpdate: (): void => {
-            // Update camera position based on new spherical coordinates.
-            const newPosition: THREE.Vector3 = new THREE.Vector3()
-               .setFromSpherical(sphericalCurrent)
-               .add(target)
-            displayedSceneData.camera.position.copy(newPosition)
-            displayedSceneData.camera.lookAt(target)
-            displayedSceneData.controls.update()
-         },
-         ease: 'power2.inOut',
-      })
+         const sphericalTarget: THREE.Spherical = new THREE.Spherical().setFromVector3(
+            targetPosition.clone().sub(target),
+         )
+
+         // Set a target zoom.
+         const targetZoom: number = EARTH_RADIUS * 1.2
+
+         // Use GSAP to animate the spherical coordinates.
+         gsap.to(sphericalCurrent, {
+            duration: 2,
+            theta: sphericalTarget.theta,
+            phi: sphericalTarget.phi,
+            radius: targetZoom,
+            onUpdate: (): void => {
+               // Update camera position based on new spherical coordinates.
+               const newPosition: THREE.Vector3 = new THREE.Vector3()
+                  .setFromSpherical(sphericalCurrent)
+                  .add(target)
+               displayedSceneData.camera.position.copy(newPosition)
+               displayedSceneData.camera.lookAt(target)
+               displayedSceneData.controls.update()
+            },
+            ease: 'power2.inOut',
+         })
+
+      } else if (displayedSceneData.type == SceneType.PLANE) {
+         const worldPos: THREE.Vector2 = ThreeGeoUnitsUtils.datumsToSpherical(
+            latitude as number,
+            longitude as number,
+         )
+
+         // GSAP animation to zoom the camera.
+         gsap.to(displayedSceneData.controls.target, {
+            duration: 2,
+            x: worldPos.x,
+            y: 0,
+            z: -worldPos.y,
+            ease: 'power2.inOut',
+            onComplete: (): void => {
+               displayedSceneData.controls.update()
+            },
+         })
+
+         // GSAP animation to move the camera.
+         gsap.to(displayedSceneData.camera.position, {
+            duration: 2,
+            x: worldPos.x,
+            y: displayedSceneData.controls.getDistance() * 0.2,
+            z: -worldPos.y,
+            ease: 'power2.inOut',
+            onComplete: (): void => {
+               displayedSceneData.controls.update()
+            },
+         })
+      }
    }
 
+   /**
+    *
+    * @param astre
+    */
+   const flyToAstre = (astre: Astre): void => {
+      if (!displayedSceneData || displayedSceneData.type != SceneType.SOLAR_SYSTEM) return
+
+      if (astre) {
+         const astreMesh = astre.astreMesh
+         if (astreMesh) {
+
+            // GSAP animation to zoom the camera.
+            gsap.to(displayedSceneData.controls.target, {
+               duration: 2,
+               x: astreMesh.position.x,
+               y: astreMesh.position.y,
+               z: astreMesh.position.z,
+               ease: 'power2.inOut',
+               onComplete: (): void => {
+                  displayedSceneData.controls.update()
+               },
+            })
+
+            const distance: number = (trueSize ? astre.radius : SUN_RADIUS) * 4
+
+            // GSAP animation to move the camera.
+            gsap.to(displayedSceneData.camera.position, {
+               duration: 2,
+               x: astreMesh.position.x - distance,
+               y: astreMesh.position.y - distance,
+               z: astreMesh.position.z - distance,
+               ease: 'power2.inOut',
+               onComplete: (): void => {
+                  displayedSceneData.controls.update()
+               },
+            })
+         }
+      }
+   }
+
+   const flyToOppositeCoordinates = (lat: number, lon: number): void => {
+      const { latitude, longitude } = findAntipode(lat, lon)
+      flyToCoordinates(latitude, longitude)
+   }
+
+   function findAntipode(lat: number, lon: number): { latitude: number, longitude: number } {
+      const antipodeLat: number = -lat
+
+      // Shift the longitude by 180° and normalize to -180 to 180 range.
+      let antipodeLon: number = lon + 180
+      if (antipodeLon > 180) {
+         antipodeLon -= 360
+      }
+
+      return { latitude: antipodeLat, longitude: antipodeLon }
+   }
 
    return {
       flyToCoordinates,
       flyToCountryPos,
+      flyToAstre,
+      flyToOppositeCoordinates,
    }
 }

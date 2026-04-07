@@ -7,6 +7,14 @@ import { useAirports } from '@/app/components/atoms/three/airports/airports.mode
 import { ObjectType } from '@/app/enums/objectType'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
+import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
+import { Geolocation, ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
+import { GeocodeResponse } from '@/app/types/orsTypes'
+import { reverseORS } from '@/app/server/services/openRouteService'
+import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
+import { CursorModeType } from '@/app/enums/modeType'
+import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
+import { SceneType } from '@/app/enums/sceneType'
 
 export function ClickHandler(): null {
 
@@ -14,10 +22,60 @@ export function ClickHandler(): null {
    const mouse: THREE.Vector2 = new THREE.Vector2()
 
    const { displayedSceneData } = useScenes()
-   const { setSelectedObjectType, setSelectedObjectData } = useSelection()
+   const { setSelectedObjectType, setSelectedObjectData, cursorMode } = useSelection()
    const { displayedVesselsGroup } = useVessels()
    const { displayedAirportsGroup } = useAirports()
    const { displayedPlanesGroup } = usePlanes()
+   const { planet } = usePlanet()
+   const { flyToCoordinates } = CameraFlyController()
+   const { planeMap } = usePlaneMap()
+
+   /**
+    * Handle click on planet.
+    */
+   const clickOnPlanet = async (): Promise<void> => {
+      if (!planet || cursorMode == CursorModeType.HAND) return
+
+      let geolocation: Geolocation | null = null
+
+      if (displayedSceneData.type == SceneType.SPHERICAL) {
+         const intersectPlanet = raycaster.intersectObject(
+            planet,
+         )
+
+         if (intersectPlanet.length > 0) {
+            const selectedPlanet: THREE.Intersection<THREE.Object3D<THREE.Object3DEventMap>> = intersectPlanet[0]
+            geolocation = ThreeGeoUnitsUtils.vectorToDatums(selectedPlanet.point)
+
+         }
+      } else if (displayedSceneData.type == SceneType.PLANE) {
+         const intersectPlaneMap = raycaster.intersectObject(
+            planeMap,
+         )
+
+         const selectedPlaneMap: THREE.Intersection<THREE.Object3D<THREE.Object3DEventMap>> = intersectPlaneMap[0]
+         geolocation = ThreeGeoUnitsUtils.sphericalToDatums(selectedPlaneMap.point.x, -selectedPlaneMap.point.z)
+      }
+
+      if (!geolocation) return
+
+      try {
+         // Call server-side function.
+         const data: GeocodeResponse = await reverseORS(geolocation.longitude, geolocation.latitude)
+
+         // Display place data.
+         setSelectedObjectData(data.features[0])
+         setSelectedObjectType(ObjectType.PLACE)
+
+         flyToCoordinates(
+            geolocation.latitude,
+            geolocation.longitude,
+         )
+
+      } catch (err) {
+         // TODO : Signaler l'erreur.
+      }
+   }
 
    /**
     * Handle click on vessel.
@@ -26,7 +84,7 @@ export function ClickHandler(): null {
       if (!displayedVesselsGroup) return
 
       const intersectsVessels = raycaster.intersectObjects(
-         displayedVesselsGroup!.children,
+         Array.from(displayedVesselsGroup),
       )
 
       if (intersectsVessels.length > 0) {
@@ -115,6 +173,7 @@ export function ClickHandler(): null {
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
       raycaster.setFromCamera(mouse, displayedSceneData.camera)
 
+      clickOnPlanet()
       clickOnVessel()
       clickOnAirport()
       clickOnPlanes()
@@ -129,7 +188,7 @@ export function ClickHandler(): null {
 
       // Clean up the event listener.
       return cleanup
-   }, [displayedSceneData])
+   }, [displayedSceneData, cursorMode, planet, displayedVesselsGroup, displayedAirportsGroup, displayedPlanesGroup])
 
    return null
 }

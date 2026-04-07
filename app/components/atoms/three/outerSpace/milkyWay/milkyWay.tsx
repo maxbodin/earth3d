@@ -1,6 +1,6 @@
 'use client'
 import * as THREE from 'three'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import {
    EARTH_ANGLE,
    EARTH_RADIUS,
@@ -14,11 +14,13 @@ import { SceneType } from '@/app/enums/sceneType'
 import { OUTER_SPACE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { MILKY_WAY_NAME } from '@/app/constants/strings'
 import { MILKY_WAY_PNG } from '@/app/constants/paths'
+import { useOuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { removeObject3D } from '@/app/helpers/threeHelper'
 
 export function MilkyWay(): null {
-   const milkyWay = useRef<THREE.Mesh | null>(null)
+   const { milkyWay, setMilkyWay } = useOuterSpace()
    const { displayedSceneData } = useScenes()
+
    const milkyWayTexture: THREE.Texture = new THREE.TextureLoader().load(
       MILKY_WAY_PNG,
    )
@@ -27,23 +29,32 @@ export function MilkyWay(): null {
     * Function to create the milky way mesh.
     */
    const createMilkyWay = (): void => {
+      // Return early if scene data is missing, or the scene is of type PLANE.
       if (
-         displayedSceneData == null ||
-         displayedSceneData.scene == null ||
+         !displayedSceneData?.scene ||
          displayedSceneData.type == SceneType.PLANE
-      )
+      ) {
          return
+      }
 
-      if (milkyWay.current != null)
-         removeObject3D(milkyWay.current, displayedSceneData.scene)
+      // If the milkyWay already exists and is part of the scene, return early to prevent duplication.
+      if (milkyWay && displayedSceneData.scene.children.includes(milkyWay)) {
+         return
+      }
 
-      milkyWay.current = new THREE.Mesh(
+      // Create and add the milkyWay mesh if it doesn't already exist in the scene.
+      const newMilkyWay = new THREE.Mesh(
          new THREE.SphereGeometry(
             OUTER_SPACE_RADIUS,
             SPHERE_WIDTH_SEGMENTS,
             SPHERE_HEIGHT_SEGMENTS,
          ),
          new THREE.ShaderMaterial({
+            blending: THREE.AdditiveBlending,
+            side: THREE.BackSide,
+            depthWrite: true,
+            depthTest: true,
+            transparent: false,
             vertexShader: `
                uniform float scale;
                varying vec2 vertexUV;
@@ -66,9 +77,6 @@ export function MilkyWay(): null {
                void main(){
                   gl_FragColor = vec4(texture2D(globeTexture, vertexUV).xyz, 0.5);
                }`,
-            blending: THREE.AdditiveBlending,
-            side: THREE.BackSide,
-            transparent: false,
             uniforms: {
                globeTexture: {
                   value: milkyWayTexture,
@@ -80,14 +88,27 @@ export function MilkyWay(): null {
          }),
       )
 
-      milkyWay.current.rotation.x = THREE.MathUtils.degToRad(EARTH_ANGLE)
-      milkyWay.current.name = MILKY_WAY_NAME
-      milkyWay.current.renderOrder = OUTER_SPACE_RENDER_ORDER
-      displayedSceneData.scene.add(milkyWay.current)
+      // Set rotation, name, and render order for the milkyWay.
+      newMilkyWay.rotation.x = THREE.MathUtils.degToRad(EARTH_ANGLE)
+      newMilkyWay.name = MILKY_WAY_NAME
+      newMilkyWay.renderOrder = OUTER_SPACE_RENDER_ORDER
+
+      // Add the milkyWay to the scene.
+      displayedSceneData.scene.add(newMilkyWay)
+
+      // Save the created milkyWay in state, so it's not recreated again.
+      setMilkyWay(newMilkyWay)
    }
 
-   useEffect((): void => {
+   useEffect(() => {
       createMilkyWay()
+
+      // Clean up the milkyWay when the component unmounts or when the scene changes.
+      return (): void => {
+         if (milkyWay && displayedSceneData?.scene) {
+            removeObject3D(milkyWay, displayedSceneData.scene)
+         }
+      }
    }, [displayedSceneData])
 
    return null

@@ -3,6 +3,7 @@ import { fetchPlanesData, fetchPlaneTrackData } from '@/app/server/services/plan
 import { useData } from '@/app/context_todo_improve/dataContext'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 
+// TODO : Fix.
 export function PlaneDataFetch(): null {
    const { setPlanesData } = useData()
 
@@ -19,10 +20,11 @@ export function PlaneDataFetch(): null {
    return null
 }
 
+// TODO : Fix.
 export const onPlaneSelected = (data: Record<string, any>): void => {
    const { setPlaneTrackData } = useData()
    const { setSelectedObjectData } = useSelection()
-   
+
    setSelectedObjectData(data)
 
    fetchPlaneTrackData(data.data[0])

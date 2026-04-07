@@ -1,22 +1,5 @@
 # Earth 3D
 
-## 3D visualizer for multiple data on Earth.
-
-## Available data: aircraft, airports and vessels
-
-### Powered by Next.js and Three.js
-
-> [Next.js](https://nextjs.org)
-
-> [Three.js](https://threejs.org)
-
-> Data used for airports is coming is
-> from [ArcGIS Hub](https://hub.arcgis.com/datasets/esri-de-content::world-airports/explore?)
-> Tiles making on the planet is inspired by geo-three [Geo-Three](https://github.com/tentone/geo-three)
-> Mesh line https://github.com/pmndrs/meshline
-> World GEO JSON https://github.com/georgique/world-geojson/tree/develop
-> Countries lat long https://github.com/eesur/country-codes-lat-long/blob/master/country-codes-lat-long-alpha3.json
-
 ### Table of Contents
 
 - [Introduction](#introduction)
@@ -26,18 +9,26 @@
 
 ## Introduction
 
-**Earth 3D** is vowed to be a public 3D visualizer for aircraft, airports and other vehicles or data, hosted
-using vercel, developed by [MaxBodin](https://github.com/maxbodin), and
-available [here](https://earth3d.vercel.app/).
+**Earth 3D** is a free, open-source, web-based 3D visualization platform that provides real-time interactive mapping of
+aircraft, airports, weather patterns, seismic activity, and more. Developed by [MaxBodin](https://github.com/maxbodin),
+Earth 3D allows users to explore global locations and visualize dynamic datasets on Earth, as well as in the broader
+Solar System.
+
+Currently, in early beta, the project can be explored [here](https://earth3d.maximebodin.fr/). With its intuitive
+interface, users can immerse themselves in real-time data visualizations, offering a unique perspective on natural
+events, transportation networks, and planetary systems.
+
+Built using Next.js and Three.js, Earth 3D delivers smooth 3D experiences directly in the browser, making it an
+accessible and powerful tool for both casual users and professionals interested in global and celestial phenomena.
 
 ## Roadmap
 
-See ROADMAP.md to see the project global advancement or how you can contribute.
+See the issues on the GitHub page to learn about the project global advancement or how you can contribute.
 
 ## Start the project - development
 
-- Clone this repository with `git clone https://github.com/maxbodin/flightradar3d`
-- Execute `cd flightradar3d/`
+- Clone this repository with `git clone https://github.com/maxbodin/earth3d.git`
+- Execute `cd earth3d/`
 - Install dependencies.
 - Run the development server:
 
@@ -50,11 +41,6 @@ pnpm dev
 # or
 bun dev
 ```
-
-- Create .env.local file with:
-    - SECRET_PUBLIC_MAPBOX_TOKEN='Your secret public mapbox token'
-    - AISSTREAM_TOKEN='Your aisstream token'
-    - ORS_API_KEY='Your open route service api key'
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

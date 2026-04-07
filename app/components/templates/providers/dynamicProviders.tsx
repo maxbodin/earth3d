@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { ToastProvider } from '@/app/context_todo_improve/toastsContext'
 import dynamic from 'next/dynamic'
 import { UiProvider } from '@/app/context_todo_improve/UIContext'
 import { DashboardTabsProviders } from '@/app/components/templates/providers/dashboardTabsProviders'
@@ -22,23 +21,21 @@ import { DataProvider } from '@/app/context_todo_improve/dataContext'
 export function Providers({ children }: { children: React.ReactNode }) {
    return (
       <UiProvider>
-         <ToastProvider>
-            <SearchBarProvider>
-               <DashboardTabsProviders>
-                  <EntitiesProviders>
-                     <SelectionProvider>
-                        <DataProvider>
-                           <DashboardTabsProviders>
-                              <DrawerProviders>
-                                 {children}
-                              </DrawerProviders>
-                           </DashboardTabsProviders>
-                        </DataProvider>
-                     </SelectionProvider>
-                  </EntitiesProviders>
-               </DashboardTabsProviders>
-            </SearchBarProvider>
-         </ToastProvider>
+         <SearchBarProvider>
+            <DashboardTabsProviders>
+               <EntitiesProviders>
+                  <SelectionProvider>
+                     <DataProvider>
+                        <DashboardTabsProviders>
+                           <DrawerProviders>
+                              {children}
+                           </DrawerProviders>
+                        </DashboardTabsProviders>
+                     </DataProvider>
+                  </SelectionProvider>
+               </EntitiesProviders>
+            </DashboardTabsProviders>
+         </SearchBarProvider>
       </UiProvider>
    )
 }

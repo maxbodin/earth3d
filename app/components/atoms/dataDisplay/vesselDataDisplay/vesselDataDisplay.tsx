@@ -1,9 +1,15 @@
 import React from 'react'
 import { N_A_VALUE } from '@/app/constants/strings'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
+import { Button } from '@nextui-org/react'
+import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
+import { EyeIcon } from '@nextui-org/shared-icons'
+import { Coordinates } from '@/app/types/coordinates'
 
 export function VesselDataDisplay(): React.JSX.Element {
    const { selectedObjectData } = useSelection()
+
+   const { flyToCoordinates } = CameraFlyController()
 
    const message = selectedObjectData?.message
 
@@ -28,11 +34,13 @@ export function VesselDataDisplay(): React.JSX.Element {
    const cog: string = message.cog?.toString() || N_A_VALUE
    const sog: string = message.sog?.toString() || N_A_VALUE
    const hdg: string = message.hdg?.toString() || N_A_VALUE
-   const newCoordinates: any = message.location?.newCoordinates
-   const latitude: string =
-      newCoordinates[0]?.toFixed(3)?.toString() || N_A_VALUE
-   const longitude: string =
-      newCoordinates[1]?.toFixed(3)?.toString() || N_A_VALUE
+   const coordinates: Coordinates = message.location?.coordinates as Coordinates
+
+   const latitude: number = coordinates[0][0]
+   const longitude: number = coordinates[0][1]
+
+   const strLatitude: string = latitude?.toFixed(3).toString() || N_A_VALUE
+   const strLongitude: string = longitude?.toFixed(3).toString() || N_A_VALUE
 
    return (
       <div>
@@ -73,7 +81,10 @@ export function VesselDataDisplay(): React.JSX.Element {
          </div>
          <div className="mb-2">
             <p className="text-gray-300">
-               Longitude: {longitude} Latitude: {latitude}
+               Longitude: {strLongitude}
+            </p>
+            <p className="text-gray-300">
+               Latitude: {strLatitude}
             </p>
 
             {eta != N_A_VALUE && (
@@ -131,10 +142,10 @@ export function VesselDataDisplay(): React.JSX.Element {
             <p className="text-gray-400">Last communication: {time_utc}</p>
          )}
          <div className="mb-2 mt-2">
-            {longitude == N_A_VALUE && (
+            {strLongitude == N_A_VALUE && (
                <p className="text-gray-400">Longitude: {longitude}</p>
             )}{' '}
-            {latitude == N_A_VALUE && (
+            {strLatitude == N_A_VALUE && (
                <p className="text-gray-400">Latitude: {latitude}</p>
             )}
             {eta == N_A_VALUE && (
@@ -155,6 +166,18 @@ export function VesselDataDisplay(): React.JSX.Element {
                <p className="text-gray-400">Course Over Ground: {cog}</p>
             )}
          </div>
+
+         {latitude && longitude && <Button
+            variant="bordered"
+            size="sm"
+            aria-label="Focus view on vessel"
+            className="z-50 bg-black bg-opacity-50"
+            endContent={<EyeIcon />}
+            onClick={(): void => {
+               flyToCoordinates(longitude, latitude)
+            }}>
+            Focus view on vessel
+         </Button>}
       </div>
    )
 }

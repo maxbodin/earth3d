@@ -3,10 +3,10 @@ import { Marker } from '@/app/types/marker'
 import { getRandomVibrantColor } from '@/app/lib/utils'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
 import debounce from 'lodash/debounce'
-import { autocomplete, reverse } from '@/app/server/services/openRouteService'
 import { Option } from '@/shadcn/ui/autocomplete'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
+import { autocompleteORS, reverseORS } from '@/app/server/services/openRouteService'
 
 export function MarkersDashboardController() {
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
@@ -51,7 +51,6 @@ export function MarkersDashboardController() {
       // Find the index of the existing puck marker.
       const puckIndex: number = markers.findIndex(marker => marker.isPuck)
 
-      console.log(markers)
       // If it exists, update its latitude and longitude.
       if (puckIndex !== -1) {
          const updatedRows = [...markers]
@@ -131,9 +130,8 @@ export function MarkersDashboardController() {
             setAutoCompleteError('')
 
             // Call server-side function.
-            const data: GeocodeResponse = await autocomplete(value)
+            const data: GeocodeResponse = await autocompleteORS(value)
             setFeatureSuggestions(data.features || [])
-
          } catch (err) {
             setAutoCompleteError('Error fetching autocomplete results.')
          } finally {
@@ -160,7 +158,7 @@ export function MarkersDashboardController() {
       debounce(async (marker: Marker) => {
          try {
             // Call server-side function.
-            const data: GeocodeResponse = await reverse(marker.latitude, marker.longitude)
+            const data: GeocodeResponse = await reverseORS(marker.latitude, marker.longitude)
 
             const selectedSuggestion: Feature = data.features[0]
 

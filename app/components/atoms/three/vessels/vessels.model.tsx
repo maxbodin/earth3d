@@ -2,8 +2,11 @@ import React, { createContext, ReactNode, useContext, useState } from 'react'
 import * as THREE from 'three'
 
 interface VesselsContextValue {
-   displayedVesselsGroup: THREE.Group
-   setDisplayedVesselsGroup: React.Dispatch<React.SetStateAction<any>>
+   // TODO : Add type.
+   vesselsRawData: any[]
+   setVesselsRawData: React.Dispatch<React.SetStateAction<any[]>>
+   displayedVesselsGroup: Set<THREE.Group>
+   setDisplayedVesselsGroup: React.Dispatch<React.SetStateAction<Set<THREE.Group>>>
 }
 
 const VesselsContext = createContext<VesselsContextValue | null>(null)
@@ -17,12 +20,16 @@ export function useVessels(): VesselsContextValue {
 }
 
 export function VesselsProvider({ children }: { children: ReactNode }) {
+   // TODO : Add type.
+   const [vesselsRawData, setVesselsRawData] = useState<any[]>([])
    const [displayedVesselsGroup, setDisplayedVesselsGroup] =
-      useState<THREE.Group>(new THREE.Group())
+      useState<Set<THREE.Group>>(new Set<THREE.Group>())
 
    const value: VesselsContextValue = {
       displayedVesselsGroup: displayedVesselsGroup,
       setDisplayedVesselsGroup: setDisplayedVesselsGroup,
+      vesselsRawData: vesselsRawData,
+      setVesselsRawData: setVesselsRawData,
    }
 
    return (

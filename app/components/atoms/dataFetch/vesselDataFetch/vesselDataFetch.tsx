@@ -1,15 +1,15 @@
 import { useEffect } from 'react'
-import { useData } from '@/app/context_todo_improve/dataContext'
 import { processAndSaveMessages } from '@/app/server/services/vesselDataService'
+import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
 
 export function VesselDataFetch(): null {
-   const { setVesselsData, vesselsData } = useData()
+   const { setVesselsRawData } = useVessels()
 
    useEffect(() => {
       const intervalId = setInterval((): void => {
          processAndSaveMessages()
-            .then((response) => {
-               setVesselsData(response)
+            .then((response): void => {
+               setVesselsRawData(response ?? [])
             })
             .catch((error): void => {
                // TODO setError(error.message)
@@ -19,7 +19,7 @@ export function VesselDataFetch(): null {
       return (): void => {
          clearInterval(intervalId) // Clear interval on component unmount.
       }
-   }, [setVesselsData])
+   }, [setVesselsRawData])
 
    return null
 }

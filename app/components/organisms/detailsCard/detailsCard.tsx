@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
 import { PlaneDataDisplay } from '../../atoms/dataDisplay/planeDataDisplay/planeDataDisplay'
@@ -5,6 +6,7 @@ import { AirportDataDisplay } from '../../atoms/dataDisplay/airportDataDisplay/a
 import { VesselDataDisplay } from '@/app/components/atoms/dataDisplay/vesselDataDisplay/vesselDataDisplay'
 import { ObjectType } from '@/app/enums/objectType'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
+import { PlaceDataDisplay } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeDataDisplay'
 
 export function DetailsCard() {
    const {
@@ -32,6 +34,8 @@ export function DetailsCard() {
                         <PlaneDataDisplay />
                      ) : selectedObjectType === ObjectType.VESSEL ? (
                         <VesselDataDisplay />
+                     ) : selectedObjectType === ObjectType.PLACE ? (
+                        <PlaceDataDisplay />
                      ) : (
                         <></>
                      )

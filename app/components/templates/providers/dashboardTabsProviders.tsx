@@ -1,11 +1,19 @@
 'use client'
 
 import React from 'react'
-import { OuterSpaceTabProvider } from '@/app/components/organisms/dashboardTabs/outerSpaceTab/model'
-import { MapTabProvider } from '@/app/components/organisms/dashboardTabs/mapTab/mapTab.model'
-import { VesselsTabProvider } from '@/app/components/organisms/dashboardTabs/vesselsTab/vesselsTab.model'
-import { CountriesTabProvider } from '@/app/components/organisms/dashboardTabs/countriesTab/countriesTab.model'
-import { AirportsTabProvider } from '@/app/components/organisms/dashboardTabs/airportsTab/airportsTab.model'
+import {
+   VesselsTabProvider,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/vesselsTab/vesselsTab.model'
+import { MapTabProvider } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
+import {
+   OuterSpaceTabProvider,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
+import {
+   CountriesTabProvider,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
+import {
+   AirportsTabProvider,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/airportsTab/airportsTab.model'
 
 /**
  * Hell. x2

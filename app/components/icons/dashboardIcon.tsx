@@ -1,7 +1,7 @@
 import React from 'react'
 
 export const DashboardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-   props
+   props,
 ) => (
    <svg
       {...props}

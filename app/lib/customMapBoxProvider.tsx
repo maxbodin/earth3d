@@ -46,8 +46,8 @@ export class CustomMapBoxProvider extends MapProvider {
             image.onerror = function(): void {
                reject()
             }
-            image.crossOrigin = 'Anonymous'
-            image.src = `${CustomMapBoxProvider.ADDRESS}v4/${this.mapStyle}/${zoom}/${x}/${y}@2x.jpg?access_token=${this.publicToken}`
+            // Load tiles from same-origin API route to avoid direct browser CORS issues.
+            image.src = `/api/mapbox/v4/${this.mapStyle}/${zoom}/${x}/${y}`
          }
       })
    }
