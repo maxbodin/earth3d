@@ -1,31 +1,19 @@
-'use client'
 import React from 'react'
-import { ToastDanger } from '@/app/components/molecules/toasts/toastDanger/toastDanger'
-import { ToastSuccess } from '@/app/components/molecules/toasts/toastSuccess/toastSuccess'
-import { VesselDataFetch } from '@/app/components/atoms/dataFetch/vesselDataFetch/vesselDataFetch'
+import { SettingsDashboardView } from '@/app/components/organisms/settingsDashboard/settingsDashboard.view'
 import { PlaneMapProvider } from '@/app/components/atoms/three/planeMapContext'
 import { CreditView } from '@/app/components/organisms/credit/credit.view'
+import { DataDashboardView } from '@/app/components/organisms/dataDashboard/dataDashboard.view'
+import { ScenesProvider } from '@/app/components/templates/scenes/scenes.model'
+import { SolarSystemProvider } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
+import { ThreeScene } from '@/app/components/templates/threeScene/threeScene'
+import { AstresListProvider } from '@/app/components/organisms/astresList/astresList.model'
+import { AstresListView } from '@/app/components/organisms/astresList/astresList.view'
 import { NavigationBar } from '@/app/components/molecules/navigationBar/navigationBar'
+import { MarkersDashboardView } from '@/app/components/organisms/markersDashboard/markersDashboard.view'
 import { SearchBarView } from '@/app/components/organisms/searchBar/searchBar.view'
 import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
-import { ThreeScene } from '@/app/components/templates/threeScene/threeScene'
-import { ScenesProvider } from '@/app/components/templates/scenes/scenes.model'
-import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
-import { MarkersDashboardView } from '@/app/components/organisms/markersDashboard/markersDashboard.view'
-import { useToast } from '@/app/context_todo_improve/toastsContext'
-import { DataDashboardView } from '@/app/components/organisms/dataDashboard/dataDashboard.view'
-import { SettingsDashboardView } from '@/app/components/organisms/settingsDashboard/settingsDashboard.view'
-import { SolarSystemProvider } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
-import { AstresListView } from '@/app/components/organisms/astresList/astresList.view'
-import { AstresListProvider } from '@/app/components/organisms/astresList/astresList.model'
 
 export default function Home() {
-   const {
-      dangerToastIsDisplayed,
-      setDangerToastIsDisplayed,
-      successToastIsDisplayed,
-      setSuccessToastIsDisplayed,
-   } = useToast()
 
    /**
 
@@ -68,7 +56,7 @@ export default function Home() {
                      <ThreeScene />
                   </AstresListProvider>
                   <MarkersDashboardView />
-                  <Geolocation />
+                  {/* TODO UNCOMMENT <Geolocation />*/}
                   <div className="w-full items-center justify-between font-mono text-sm lg:flex">
                      <SearchBarView />
                      <DetailsCard />
@@ -80,11 +68,13 @@ export default function Home() {
 
          {/*         <PlaneDataFetch />
           */}
-         <VesselDataFetch />
-         {successToastIsDisplayed && <ToastSuccess message={'Plane found.'} />}
+
+         {/* <VesselDataFetch />*/}
+
+         {/*{successToastIsDisplayed && <ToastSuccess message={'Plane found.'} />}
          {dangerToastIsDisplayed && (
             <ToastDanger message={'Plane not found.'} />
-         )}
+         )}*/}
       </>
    )
 }
