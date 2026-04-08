@@ -261,9 +261,10 @@ export function SolarSystemController(): null {
     * Update min distance from selected astre using selected astre radius.
     */
    useEffect((): void => {
-      if (displayedSceneData?.controls)
+      if (displayedSceneData?.controls && displayedSceneData.type === SceneType.SOLAR_SYSTEM) {
          displayedSceneData.controls.minDistance = (trueSize ? selectedAstre.radius : SUN_RADIUS) * 2
-   }, [displayedSceneData?.controls, selectedAstre, trueSize])
+      }
+   }, [displayedSceneData, selectedAstre, trueSize])
 
 
    /**
