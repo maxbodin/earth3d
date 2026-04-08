@@ -19,6 +19,7 @@ import { Astre } from '@/app/types/astre'
 import { clamp } from '@/app/helpers/numberHelper'
 import { useAstresList } from '@/app/components/organisms/astresList/astresList.model'
 import { SolarSystemHelper } from '@/app/components/atoms/three/solarSystem/solarSystem.helper'
+import { SOLAR_SYSTEM_FRAGMENT_SHADER, SOLAR_SYSTEM_VERTEX_SHADER } from '@/app/lib/shaders'
 
 export function SolarSystemController(): null {
    const { displayedSceneData } = useScenes()
@@ -71,31 +72,8 @@ export function SolarSystemController(): null {
                depthTest: true,
                transparent: false,
                blending: THREE.AdditiveBlending,
-               vertexShader: `
-                  varying vec3 vNormal;
-                  varying vec2 vUV;
-            
-                  void main() {
-                    vUV = uv;
-                    vNormal = normalize(normalMatrix * normal);
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0 );
-                  }
-                `,
-               fragmentShader: `
-                  uniform sampler2D globeTexture;
-                  uniform vec3 atmosphereColor;
-                  varying vec3 vNormal;
-                  varying vec2 vUV;
-            
-                  void main() {
-                     vec4 globeColor = texture2D(globeTexture, vUV);
-            
-                     float intensity = 0.1 - dot(vNormal, vec3(0.0, 0.0, 0.0));
-                     vec3 atmosphere = atmosphereColor * pow(intensity, 1.8);
-
-                     gl_FragColor = vec4(atmosphere + texture2D(globeTexture, vUV).xyz, 1.0);
-                  }
-                `,
+               vertexShader: SOLAR_SYSTEM_VERTEX_SHADER,
+               fragmentShader: SOLAR_SYSTEM_FRAGMENT_SHADER,
                uniforms: {
                   globeTexture: {
                      value: astre.texture,
@@ -212,7 +190,11 @@ export function SolarSystemController(): null {
 
          const astreRadius: number = trueSize ? astre.radius : SUN_RADIUS
          const position: THREE.Vector3 = astre.astreMesh.position
-         const textMesh: THREE.Mesh<TextGeometry, THREE.MeshBasicMaterial[], THREE.Object3DEventMap> = new THREE.Mesh(textGeo, materials)
+          const textMesh: THREE.Mesh<
+             TextGeometry,
+             THREE.MeshBasicMaterial[],
+             THREE.Object3DEventMap
+          > = new THREE.Mesh(textGeo, materials)
          textMesh.position.set(position.x, position.y + astreRadius * 2, position.z)
          textMesh.name = `${astre.name} Mesh`
 
@@ -246,7 +228,7 @@ export function SolarSystemController(): null {
       displayedSceneData?.controls?.addEventListener('change', handleNamesLOD)
 
       return cleanup
-   }, [displayedSceneData, font.current, trueSize, selectedDate])
+   }, [displayedSceneData, trueSize, selectedDate])
 
 
    const astresNamesAdjustedScale = useRef<number>(SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE)
@@ -281,7 +263,7 @@ export function SolarSystemController(): null {
    useEffect((): void => {
       if (displayedSceneData?.controls)
          displayedSceneData.controls.minDistance = (trueSize ? selectedAstre.radius : SUN_RADIUS) * 2
-   }, [selectedAstre, trueSize])
+   }, [displayedSceneData?.controls, selectedAstre, trueSize])
 
 
    /**

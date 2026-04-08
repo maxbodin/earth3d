@@ -23,8 +23,9 @@ export const TAB_TITLES: string[] = [
 /**
  * Errors Messages.
  */
-export const SAFARI_OR_CHROME_ERROR_MESSAGE: string =
-   'Earth 3D is currently unavailable on Safari and Chrome. Please try using Firefox, Microsoft Edge, or any other modern browser for the time being.'
+export const WEBGL_ERROR_MESSAGE: string =
+   'Earth 3D could not detect a compatible WebGL context. '
+   + 'Please enable hardware acceleration or try a modern browser with WebGL support.'
 
 export const WINDOW_WIDTH_ERROR_MESSAGE: string =
    'Screen width is not supported. Please use a larger screen.'

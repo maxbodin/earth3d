@@ -1,6 +1,6 @@
 'use client'
 import * as THREE from 'three'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import {
    EARTH_ANGLE,
    EARTH_RADIUS,
@@ -16,6 +16,7 @@ import { MILKY_WAY_NAME } from '@/app/constants/strings'
 import { MILKY_WAY_PNG } from '@/app/constants/paths'
 import { useOuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { removeObject3D } from '@/app/helpers/threeHelper'
+import { MILKY_WAY_FRAGMENT_SHADER, MILKY_WAY_VERTEX_SHADER } from '@/app/lib/shaders'
 
 export function MilkyWay(): null {
    const { milkyWay, setMilkyWay } = useOuterSpace()
@@ -28,7 +29,7 @@ export function MilkyWay(): null {
    /**
     * Function to create the milky way mesh.
     */
-   const createMilkyWay = (): void => {
+   const createMilkyWay = useCallback((): void => {
       // Return early if scene data is missing, or the scene is of type PLANE.
       if (
          !displayedSceneData?.scene ||
@@ -52,31 +53,11 @@ export function MilkyWay(): null {
          new THREE.ShaderMaterial({
             blending: THREE.AdditiveBlending,
             side: THREE.BackSide,
-            depthWrite: true,
+            depthWrite: false,
             depthTest: true,
-            transparent: false,
-            vertexShader: `
-               uniform float scale;
-               varying vec2 vertexUV;
-               varying vec3 vertexNormal;
-               varying float height;
-
-               void main() {
-                  vertexUV = uv;
-                  vertexNormal = normalize(normalMatrix * normal);
-                  
-                  vec3 newPosition = position * 0.991 + normal * scale;
-                  
-                  gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0 );
-               } `,
-            fragmentShader: `
-               uniform sampler2D globeTexture;
-               varying vec2 vertexUV;
-               varying vec3 vertexNormal;
-               
-               void main(){
-                  gl_FragColor = vec4(texture2D(globeTexture, vertexUV).xyz, 0.5);
-               }`,
+            transparent: true,
+            vertexShader: MILKY_WAY_VERTEX_SHADER,
+            fragmentShader: MILKY_WAY_FRAGMENT_SHADER,
             uniforms: {
                globeTexture: {
                   value: milkyWayTexture,
@@ -98,7 +79,7 @@ export function MilkyWay(): null {
 
       // Save the created milkyWay in state, so it's not recreated again.
       setMilkyWay(newMilkyWay)
-   }
+   }, [displayedSceneData, milkyWay, setMilkyWay])
 
    useEffect(() => {
       createMilkyWay()
@@ -109,7 +90,7 @@ export function MilkyWay(): null {
             removeObject3D(milkyWay, displayedSceneData.scene)
          }
       }
-   }, [displayedSceneData])
+   }, [createMilkyWay, displayedSceneData?.scene, milkyWay])
 
    return null
 }

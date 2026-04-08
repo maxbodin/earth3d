@@ -14,6 +14,7 @@ import { EARTH_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
+import { PLANET_FRAGMENT_SHADER, PLANET_VERTEX_SHADER } from '@/app/lib/shaders'
 
 export function PlanetController(): null {
    const { displayedSceneData } = useScenes()
@@ -58,33 +59,8 @@ export function PlanetController(): null {
             transparent: true,
             depthWrite: true,
             depthTest: true,
-            vertexShader: `
-               varying vec2 vertexUV;
-               varying vec3 vertexNormal;
-               varying float height;
-               uniform sampler2D displacementTexture;
-               uniform float scale;
-               
-               void main() {
-                  vertexUV = uv;
-                  vertexNormal = normalize(normalMatrix * normal);
-               
-                  height = texture2D(displacementTexture, vertexUV).r;
-                  vec3 newPosition = position + normal * height * scale;
-                  
-                  gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
-               } `,
-            fragmentShader: `
-               uniform sampler2D globeTexture;
-               varying vec2 vertexUV;
-               varying vec3 vertexNormal;
-               
-               void main(){
-                  float intensity = 0.1 - dot(vertexNormal, vec3(0.0, 0.0, 0.0));
-                  vec3 atmosphere = vec3(0.3, 0.6, 1.0) * pow(intensity, 1.8);
-                  
-                  gl_FragColor = vec4(atmosphere + texture2D(globeTexture, vertexUV).xyz, 1.0);
-               }`,
+            vertexShader: PLANET_VERTEX_SHADER,
+            fragmentShader: PLANET_FRAGMENT_SHADER,
 
             uniforms: {
                globeTexture: {
