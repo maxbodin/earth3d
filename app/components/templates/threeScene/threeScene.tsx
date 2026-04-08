@@ -93,6 +93,8 @@ export function ThreeScene() {
       PLANE_TO_SPHERE_EXIT_DISTANCE,
       PLANE_ENTER_DISTANCE_THRESHOLD * 1.15,
    )
+   const GLOBE_STARTUP_ALTITUDE = MIN_REACHABLE_GLOBE_ALTITUDE + 300000
+   const GLOBE_STARTUP_DISTANCE_FROM_CENTER = EARTH_RADIUS + GLOBE_STARTUP_ALTITUDE
 
    /**
     * Function to set up renderer, scene, and camera.
@@ -122,6 +124,17 @@ export function ThreeScene() {
 
       // List of scenes.
       scenes.current = [createGlobeScene(), createPlaneScene(), createSolarSystemScene()]
+
+      // Start explicitly on spherical scene to avoid bootstrap LOD oscillations.
+      activeSceneType.current = SceneType.SPHERICAL
+      sphereDistanceRef.current = GLOBE_STARTUP_ALTITUDE
+      distanceToSphereSurface.current = GLOBE_STARTUP_DISTANCE_FROM_CENTER
+      distanceToPlaneSurface.current = GLOBE_STARTUP_ALTITUDE
+      lastGlobeAltitudeRef.current = GLOBE_STARTUP_ALTITUDE
+
+      scenes.current[SceneType.SPHERICAL].scene.visible = true
+      scenes.current[SceneType.PLANE].scene.visible = false
+      scenes.current[SceneType.SOLAR_SYSTEM].scene.visible = false
 
       // Initialize shared scene data once to avoid null consumers at startup.
       syncDisplayedSceneData(SceneType.SPHERICAL)
@@ -239,10 +252,11 @@ export function ThreeScene() {
       }
       globeControls.current!.minPolarAngle = 0
       globeControls.current!.maxPolarAngle = Math.PI
-      globeControls.current!.update()
 
-      // Set initial camera position
-      globeCamera.current.position.set(10e9, 8e9, EARTH_RADIUS + 1e9)
+      // Set initial camera position in a stable spherical range.
+      globeCamera.current.position.set(0, 0, GLOBE_STARTUP_DISTANCE_FROM_CENTER)
+      globeControls.current.target.set(0, 0, 0)
+      globeControls.current!.update()
 
       return {
          type: SceneType.SPHERICAL,
@@ -541,8 +555,20 @@ export function ThreeScene() {
       }
       lastGlobeAltitudeRef.current = sphereDistanceRef.current
 
-      // Set the camera's position, so it's looking at the Earth from the side.
-      solarSystemScene.camera.position.set(earthPosition.x + 1000, earthPosition.y + 1000, earthPosition.z)
+      // Keep a safe orbital distance to avoid immediate solar->sphere bounce.
+      const relativeDirection = currentScene.camera.position.clone().normalize()
+      if (relativeDirection.lengthSq() === 0) {
+         relativeDirection.set(0, 1, 0)
+      }
+      const safeSolarDistance = Math.max(
+         currentScene.camera.position.length(),
+         SOLAR_SYSTEM_TO_GLOBE_TOGGLE_DISTANCE * 1.05,
+      )
+      solarDistanceRef.current = safeSolarDistance
+
+      solarSystemScene.camera.position.copy(
+         earthPosition.clone().add(relativeDirection.multiplyScalar(safeSolarDistance)),
+      )
       solarSystemScene.controls.target.copy(earthPosition)
       solarSystemScene.controls.update()
 

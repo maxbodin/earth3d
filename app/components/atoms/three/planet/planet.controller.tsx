@@ -16,19 +16,12 @@ import { SceneType } from '@/app/enums/sceneType'
 import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
 import { PLANET_FRAGMENT_SHADER, PLANET_VERTEX_SHADER } from '@/app/lib/shaders'
 
+const mapTexture: THREE.Texture = new THREE.TextureLoader().load(EARTH_TEXTURE_JPG)
+const srtmTexture: THREE.Texture = new THREE.TextureLoader().load(DISPLACEMENT_MAP_TEXTURE_JPG)
+
 export function PlanetController(): null {
    const { displayedSceneData } = useScenes()
    const { planet, setPlanet } = usePlanet()
-
-   // Preload the map texture.
-   const mapTexture: THREE.Texture = new THREE.TextureLoader().load(
-      EARTH_TEXTURE_JPG,
-   )
-
-   // Preload the displacement map texture.
-   const srtmTexture: THREE.Texture = new THREE.TextureLoader().load(
-      DISPLACEMENT_MAP_TEXTURE_JPG,
-   )
 
    /**
     * Function to create the planet sphere mesh.

@@ -1,7 +1,7 @@
 'use client'
+import { clearGroup } from '@/app/helpers/threeHelper'
 import { useEffect, useRef } from 'react'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
-
 import * as THREE from 'three'
 import { SceneType } from '@/app/enums/sceneType'
 import { astres } from '@/app/data/astres'
@@ -21,6 +21,11 @@ import { useAstresList } from '@/app/components/organisms/astresList/astresList.
 import { SolarSystemHelper } from '@/app/components/atoms/three/solarSystem/solarSystem.helper'
 import { SOLAR_SYSTEM_FRAGMENT_SHADER, SOLAR_SYSTEM_VERTEX_SHADER } from '@/app/lib/shaders'
 
+const materials = [
+   new THREE.MeshBasicMaterial({ color: '#ffffff' }), // Front.
+   new THREE.MeshBasicMaterial({ color: '#444444' }), // Side.
+]
+
 export function SolarSystemController(): null {
    const { displayedSceneData } = useScenes()
    const { selectedAstre, selectedDate } = useAstresList()
@@ -30,10 +35,6 @@ export function SolarSystemController(): null {
    const astresMeshesGroup = useRef<THREE.Group>(new THREE.Group())
 
    const font = useRef<Font>()
-   const materials = [
-      new THREE.MeshBasicMaterial({ color: '#ffffff' }), // Front.
-      new THREE.MeshBasicMaterial({ color: '#444444' }), // Side.
-   ]
 
    const { trueSize } = useSolarSystem()
 
@@ -48,7 +49,7 @@ export function SolarSystemController(): null {
       )
          return
 
-      astresMeshesGroup.current.clear()
+      clearGroup(astresMeshesGroup.current)
 
       astres.forEach((astre: Astre): void => {
 
@@ -163,7 +164,7 @@ export function SolarSystemController(): null {
 
       if (font.current == null || displayedSceneData == null) return
 
-      namesGroup.current.clear()
+      clearGroup(namesGroup.current)
 
       astres.forEach((astre: Astre): void => {
          if (!astre.astreMesh) return

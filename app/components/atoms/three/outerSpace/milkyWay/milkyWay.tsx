@@ -18,13 +18,11 @@ import { useOuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpac
 import { removeObject3D } from '@/app/helpers/threeHelper'
 import { MILKY_WAY_FRAGMENT_SHADER, MILKY_WAY_VERTEX_SHADER } from '@/app/lib/shaders'
 
+const milkyWayTexture: THREE.Texture = new THREE.TextureLoader().load(MILKY_WAY_PNG)
+
 export function MilkyWay(): null {
    const { milkyWay, setMilkyWay } = useOuterSpace()
    const { displayedSceneData } = useScenes()
-
-   const milkyWayTexture: THREE.Texture = new THREE.TextureLoader().load(
-      MILKY_WAY_PNG,
-   )
 
    /**
     * Function to create the milky way mesh.
