@@ -9,9 +9,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/shadcn/ui/alert'
 import Link from 'next/link'
 
 export function CreditView() {
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
-
    const { isCreditOpen, setIsCreditOpen } = useCredit()
+
+   if (!isCreditOpen) {
+      return null
+   }
+
+   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
    return (
       <Drawer
