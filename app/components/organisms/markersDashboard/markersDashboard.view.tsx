@@ -31,10 +31,14 @@ import { PUCK_COLOR } from '@/app/constants/colors'
 const columns: string[] = ['Selection', 'Name', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
 
 export function MarkersDashboardView() {
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
-
    const { isMarkersDashboardOpen, setIsMarkersDashboardOpen } =
       useMarkersDashboard()
+
+   if (!isMarkersDashboardOpen) {
+      return null
+   }
+   
+   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
    const { flyToCoordinates } = CameraFlyController()
 

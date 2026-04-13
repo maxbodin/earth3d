@@ -18,13 +18,13 @@ import {
 import { useOuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { removeObject3D } from '@/app/helpers/threeHelper'
 
+const constellationFiguresTexture: THREE.Texture =
+   new THREE.TextureLoader().load(CONSTELLATION_FIGURES_TEXTURE_PNG)
+
 export function ConstellationFigures(): null {
    const { constellationFigures, setConstellationFigures } = useOuterSpace()
    const { displayedSceneData } = useScenes()
    const { constellationFiguresActivated } = useOuterSpaceTab()
-
-   const constellationFiguresTexture: THREE.Texture =
-      new THREE.TextureLoader().load(CONSTELLATION_FIGURES_TEXTURE_PNG)
 
    /**
     * Function to create the constellation figures mesh.

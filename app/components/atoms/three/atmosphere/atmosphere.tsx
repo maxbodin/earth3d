@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import {
    EARTH_RADIUS,
@@ -11,6 +11,7 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { GLOBE_SCENE_ATMOSPHERE_NAME } from '@/app/constants/strings'
 import { removeObject3D } from '@/app/helpers/threeHelper'
+import { ATMOSPHERE_FRAGMENT_SHADER, ATMOSPHERE_VERTEX_SHADER } from '@/app/lib/shaders'
 
 export function Atmosphere(): null {
    const globeAtmosphere = useRef<THREE.Mesh | null>(null)
@@ -20,7 +21,7 @@ export function Atmosphere(): null {
    /**
     * Function to create the atmosphere mesh.
     */
-   const createAtmosphere = (): void => {
+   const createAtmosphere = useCallback((): void => {
       if (displayedSceneData == null || displayedSceneData.scene == null) return
 
       if (displayedSceneData.type == SceneType.SPHERICAL) {
@@ -36,24 +37,11 @@ export function Atmosphere(): null {
             new THREE.ShaderMaterial({
                side: THREE.BackSide,
                transparent: true,
-               depthWrite: true,
+               depthWrite: false,
                depthTest: true,
                blending: THREE.AdditiveBlending,
-               vertexShader: `
-                    varying vec3 vertexNormal;
-                    void main() {
-                        vertexNormal = normalize(normalMatrix * normal);
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-                    }
-                `,
-               fragmentShader: `
-                    varying vec3 vertexNormal;
-                    void main(){
-                        float intensity = pow(0.99 - dot(vertexNormal, vec3(0, 0, 1.0)), 2.0);
-                        vec3 color = vec3(0.3, 0.6, 1.0) * intensity;
-                        gl_FragColor = vec4(color, intensity) ;
-                    }
-                `,
+               vertexShader: ATMOSPHERE_VERTEX_SHADER,
+               fragmentShader: ATMOSPHERE_FRAGMENT_SHADER,
             }),
          )
 
@@ -61,11 +49,11 @@ export function Atmosphere(): null {
          globeAtmosphere.current.name = GLOBE_SCENE_ATMOSPHERE_NAME
          displayedSceneData.scene?.add(globeAtmosphere.current)
       }
-   }
+   }, [displayedSceneData])
 
    useEffect((): void => {
       createAtmosphere()
-   }, [displayedSceneData])
+   }, [createAtmosphere])
 
    return null
 }

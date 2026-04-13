@@ -18,13 +18,14 @@ import {
 import { useOuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { removeObject3D } from '@/app/helpers/threeHelper'
 
+const constellationBoundsTexture: THREE.Texture =
+   new THREE.TextureLoader().load(CONSTELLATION_BOUNDS_PNG)
+
 export function ConstellationBounds(): null {
    const { constellationBounds, setConstellationBounds } = useOuterSpace()
    const { displayedSceneData } = useScenes()
    const { constellationBoundsActivated } = useOuterSpaceTab()
 
-   const constellationBoundsTexture: THREE.Texture =
-      new THREE.TextureLoader().load(CONSTELLATION_BOUNDS_PNG)
    /**
     * Function to create the constellation bounds mesh.
     */

@@ -27,6 +27,21 @@ import {
 
 const geoJson = require('world-geojson')
 
+const materials = [
+   new THREE.MeshBasicMaterial({ color: '#ffffff' }), // front
+   new THREE.MeshBasicMaterial({ color: '#444444' }), // side
+]
+
+const globeFrontierMaterial = new MeshLineMaterial({
+   resolution: new THREE.Vector2(0, 0),
+   color: '#DC0073',
+})
+
+const planeFrontierMaterial = new MeshLineMaterial({
+   resolution: new THREE.Vector2(1e6, 1e6),
+   color: '#DC0073',
+})
+
 export function CountriesController(): null {
    const { displayedSceneData } = useScenes()
    const { selectedCountry } = useCountries()
@@ -35,10 +50,6 @@ export function CountriesController(): null {
 
    const font = useRef<Font>()
 
-   const materials = [
-      new THREE.MeshBasicMaterial({ color: '#ffffff' }), // front
-      new THREE.MeshBasicMaterial({ color: '#444444' }), // side
-   ]
 
    function loadFont(): void {
       const loader: FontLoader = new FontLoader()
@@ -190,10 +201,12 @@ export function CountriesController(): null {
                points,
                (p: number): number => GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH,
             )
-            const material: MeshLineMaterial = new MeshLineMaterial({
-               resolution: resolution,
-               color: '#DC0073',
-            })
+            
+            const material = displayedSceneData.type == SceneType.SPHERICAL ? globeFrontierMaterial : planeFrontierMaterial;
+            if (displayedSceneData.type == SceneType.SPHERICAL) {
+               material.resolution = resolution;
+            }
+
             const mesh: THREE.Mesh<
                MeshLineGeometry,
                MeshLineMaterial,

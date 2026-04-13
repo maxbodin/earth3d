@@ -10,40 +10,49 @@ export function removeObject3D(
    object3D: any,
    scene: THREE.Scene | null,
 ): void {
-   if (object3D.geometry) object3D.geometry.dispose()
+   if (!object3D) return;
+   
+   disposeNode(object3D);
 
-   if (object3D.material) {
-      if (object3D.material instanceof Array) {
-         object3D.material.forEach((material: THREE.Material) =>
-            material.dispose(),
-         )
-      } else {
-         object3D.material.dispose()
+   object3D.removeFromParent();
+   scene?.remove(object3D);
+}
+
+export function clearGroup(group: THREE.Group): void {
+   if (!group) return;
+   for (let i = group.children.length - 1; i >= 0; i--) {
+      removeObject3D(group.children[i], null);
+   }
+}
+
+function disposeNode(node: any): void {
+   if (node.geometry) {
+      node.geometry.dispose()
+   }
+
+   if (node.material) {
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      for (const material of materials) {
+         if (material.map) material.map.dispose()
+         if (material.lightMap) material.lightMap.dispose()
+         if (material.bumpMap) material.bumpMap.dispose()
+         if (material.normalMap) material.normalMap.dispose()
+         if (material.specularMap) material.specularMap.dispose()
+         if (material.envMap) material.envMap.dispose()
+         if (material.alphaMap) material.alphaMap.dispose()
+         if (material.aoMap) material.aoMap.dispose()
+         if (material.displacementMap) material.displacementMap.dispose()
+         if (material.emissiveMap) material.emissiveMap.dispose()
+         if (material.metalnessMap) material.metalnessMap.dispose()
+         if (material.roughnessMap) material.roughnessMap.dispose()
+         material.dispose()
       }
    }
 
-   // disposeNode(object3D)
-
-   // object3D.removeFromParent()
-   scene?.remove(object3D)
-}
-
-
-function disposeNode(parentObject: any): void {
-   parentObject.traverse(function(node: any): void {
-      if (node instanceof THREE.Mesh) {
-         if (node.geometry) {
-            node.geometry.dispose()
-         }
-
-         if (node.material.map) node.material.map.dispose()
-         if (node.material.lightMap) node.material.lightMap.dispose()
-         if (node.material.bumpMap) node.material.bumpMap.dispose()
-         if (node.material.normalMap) node.material.normalMap.dispose()
-         if (node.material.specularMap) node.material.specularMap.dispose()
-         if (node.material.envMap) node.material.envMap.dispose()
-
-         node.material.dispose()
+   if (node.children) {
+      for (let i = node.children.length - 1; i >= 0; i--) {
+         disposeNode(node.children[i]);
+         node.remove(node.children[i]);
       }
-   })
+   }
 }

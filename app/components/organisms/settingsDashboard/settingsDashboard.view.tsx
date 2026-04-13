@@ -27,10 +27,14 @@ import {
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/settingsDashboardTabsExecuteDefaultValues'
 
 export function SettingsDashboardView() {
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
-
    const { activeSettingsDashboardTab, isSettingsDashboardOpen, setIsSettingsDashboardOpen } =
       useSettingsDashboard()
+
+   if (!isSettingsDashboardOpen) {
+      return null
+   }
+   
+   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
    const { onTabSelection } = SettingsDashboardController()
 

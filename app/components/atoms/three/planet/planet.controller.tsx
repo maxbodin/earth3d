@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import {
    EARTH_RADIUS,
@@ -14,102 +14,128 @@ import { EARTH_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
+import { PLANET_FRAGMENT_SHADER, PLANET_VERTEX_SHADER } from '@/app/lib/shaders'
+import { AssetManager } from '@/app/lib/assetManager'
+
+let mapTexture: THREE.Texture | null = null
+let srtmTexture: THREE.Texture | null = null
+const texturesLoaded = { current: false }
+
+// Shared geometry cache to avoid recreation.
+const planetGeometryCache: {
+   geometry: THREE.SphereGeometry | null
+   key: string | null
+} = { geometry: null, key: null }
+
+// Shared material to avoid recreation.
+let planetMaterial: THREE.ShaderMaterial | null = null
 
 export function PlanetController(): null {
    const { displayedSceneData } = useScenes()
    const { planet, setPlanet } = usePlanet()
+   const initialized = useRef(false)
 
-   // Preload the map texture.
-   const mapTexture: THREE.Texture = new THREE.TextureLoader().load(
-      EARTH_TEXTURE_JPG,
-   )
+   /**
+    * Load textures once asynchronously.
+    */
+   const loadTextures = async (): Promise<void> => {
+      if (texturesLoaded.current) return
 
-   // Preload the displacement map texture.
-   const srtmTexture: THREE.Texture = new THREE.TextureLoader().load(
-      DISPLACEMENT_MAP_TEXTURE_JPG,
-   )
+      try {
+         const [earthMap, displacementMap] = await Promise.all([
+            AssetManager.loadTexture(EARTH_TEXTURE_JPG),
+            AssetManager.loadTexture(DISPLACEMENT_MAP_TEXTURE_JPG),
+         ])
+         mapTexture = earthMap
+         srtmTexture = displacementMap
+         texturesLoaded.current = true
+      } catch (error) {
+         console.error('Error loading planet textures:', error)
+      }
+   }
+
+   /**
+    * Create or reuse the planet geometry.
+    */
+   const getPlanetGeometry = (): THREE.SphereGeometry => {
+      const segmentsKey = `${SPHERE_WIDTH_SEGMENTS * PLANET_RESOLUTION_FACTOR}_${SPHERE_HEIGHT_SEGMENTS * PLANET_RESOLUTION_FACTOR}`
+
+      if (planetGeometryCache.geometry && planetGeometryCache.key === segmentsKey) {
+         return planetGeometryCache.geometry
+      }
+
+      // Dispose old geometry if exists.
+      if (planetGeometryCache.geometry) {
+         planetGeometryCache.geometry.dispose()
+      }
+
+      const geometry = new THREE.SphereGeometry(
+         EARTH_RADIUS,
+         SPHERE_WIDTH_SEGMENTS * PLANET_RESOLUTION_FACTOR,
+         SPHERE_HEIGHT_SEGMENTS * PLANET_RESOLUTION_FACTOR,
+      )
+      planetGeometryCache.geometry = geometry
+      planetGeometryCache.key = segmentsKey
+      return geometry
+   }
+
+   /**
+    * Create or reuse the planet shader material.
+    */
+   const getPlanetMaterial = (): THREE.ShaderMaterial => {
+      if (planetMaterial) return planetMaterial
+
+      planetMaterial = new THREE.ShaderMaterial({
+         side: THREE.FrontSide,
+         transparent: true,
+         depthWrite: true,
+         depthTest: true,
+         vertexShader: PLANET_VERTEX_SHADER,
+         fragmentShader: PLANET_FRAGMENT_SHADER,
+         uniforms: {
+            globeTexture: { value: null },
+            displacementTexture: { value: null },
+            scale: { value: EARTH_RADIUS * PLANET_DISPLACEMENT_SCALE },
+         },
+      })
+
+      return planetMaterial
+   }
 
    /**
     * Function to create the planet sphere mesh.
     */
-   const createPlanet = (): void => {
+   const createPlanet = async (): Promise<void> => {
       if (
-         displayedSceneData?.scene == null ||
-         srtmTexture == null ||
-         mapTexture == null ||
-         displayedSceneData.type != SceneType.SPHERICAL ||
+         !displayedSceneData?.scene ||
+         displayedSceneData.type !== SceneType.SPHERICAL ||
+         initialized.current ||
          (planet && displayedSceneData.scene.children.includes(planet))
-      )
+      ) {
          return
+      }
 
-      const newPlanet: THREE.Mesh<
-         THREE.SphereGeometry,
-         THREE.ShaderMaterial,
-         THREE.Object3DEventMap
-      > = new THREE.Mesh(
-         new THREE.SphereGeometry(
-            EARTH_RADIUS,
-            SPHERE_WIDTH_SEGMENTS * PLANET_RESOLUTION_FACTOR,
-            SPHERE_HEIGHT_SEGMENTS * PLANET_RESOLUTION_FACTOR,
-         ),
+      await loadTextures()
 
-         new THREE.ShaderMaterial({
-            side: THREE.FrontSide,
-            transparent: true,
-            depthWrite: true,
-            depthTest: true,
-            vertexShader: `
-               varying vec2 vertexUV;
-               varying vec3 vertexNormal;
-               varying float height;
-               uniform sampler2D displacementTexture;
-               uniform float scale;
-               
-               void main() {
-                  vertexUV = uv;
-                  vertexNormal = normalize(normalMatrix * normal);
-               
-                  height = texture2D(displacementTexture, vertexUV).r;
-                  vec3 newPosition = position + normal * height * scale;
-                  
-                  gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
-               } `,
-            fragmentShader: `
-               uniform sampler2D globeTexture;
-               varying vec2 vertexUV;
-               varying vec3 vertexNormal;
-               
-               void main(){
-                  float intensity = 0.1 - dot(vertexNormal, vec3(0.0, 0.0, 0.0));
-                  vec3 atmosphere = vec3(0.3, 0.6, 1.0) * pow(intensity, 1.8);
-                  
-                  gl_FragColor = vec4(atmosphere + texture2D(globeTexture, vertexUV).xyz, 1.0);
-               }`,
+      if (!mapTexture || !srtmTexture) return
 
-            uniforms: {
-               globeTexture: {
-                  value: mapTexture,
-               },
-               displacementTexture: {
-                  value: srtmTexture,
-               },
-               scale: {
-                  value: EARTH_RADIUS * PLANET_DISPLACEMENT_SCALE,
-               },
-            },
-         }),
-      )
+      const geometry = getPlanetGeometry()
+      const material = getPlanetMaterial()
 
+      // Update uniform values.
+      material.uniforms.globeTexture.value = mapTexture
+      material.uniforms.displacementTexture.value = srtmTexture
+
+      const newPlanet = new THREE.Mesh(geometry, material)
       newPlanet.name = PLANET_NAME
       newPlanet.renderOrder = EARTH_RENDER_ORDER
 
       displayedSceneData.scene.add(newPlanet)
       setPlanet(newPlanet)
-
-      // TODO WIP drawAreaOnSphere(displayedSceneData?.scene, areaCoordinates, EARTH_RADIUS)
+      initialized.current = true
    }
 
-   useEffect((): void => {
+   useEffect(() => {
       createPlanet()
    }, [displayedSceneData])
 

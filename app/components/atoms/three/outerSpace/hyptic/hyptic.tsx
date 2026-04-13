@@ -18,14 +18,13 @@ import {
 import { useOuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { removeObject3D } from '@/app/helpers/threeHelper'
 
+const hypticTexture: THREE.Texture = new THREE.TextureLoader().load(HYPTIC_TEXTURE_PNG)
+
 export function Hyptic(): null {
    const { hyptic, setHyptic } = useOuterSpace()
    const { displayedSceneData } = useScenes()
    const { hypticActivated } = useOuterSpaceTab()
 
-   const hypticTexture: THREE.Texture = new THREE.TextureLoader().load(
-      HYPTIC_TEXTURE_PNG,
-   )
    /**
     * Function to create the hyptic mesh.
     */

@@ -9,10 +9,14 @@ import { useDataDashboard } from '@/app/components/organisms/dataDashboard/dataD
 
 
 export function DataDashboardView() {
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
-
    const { isDataDashboardOpen, setIsDataDashboardOpen } =
       useDataDashboard()
+
+   if (!isDataDashboardOpen) {
+      return null
+   }
+
+   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
    return (
       <Drawer
