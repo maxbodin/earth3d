@@ -12,6 +12,7 @@ import { NavigationBar } from '@/app/components/molecules/navigationBar/navigati
 import { MarkersDashboardView } from '@/app/components/organisms/markersDashboard/markersDashboard.view'
 import { SearchBarView } from '@/app/components/organisms/searchBar/searchBar.view'
 import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
+import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
 
 export default function Home() {
 
@@ -44,37 +45,25 @@ export default function Home() {
     */
 
    return (
-      <>
-         <PlaneMapProvider>
-            <SettingsDashboardView />
-            <CreditView />
-            <DataDashboardView />
-            <SolarSystemProvider>
-               <ScenesProvider>
-                  <AstresListProvider>
-                     <AstresListView />
-                     <ThreeScene />
-                  </AstresListProvider>
-                  <MarkersDashboardView />
-                  {/* TODO UNCOMMENT <Geolocation />*/}
-                  <div className="w-full items-center justify-between font-mono text-sm lg:flex">
-                     <SearchBarView />
-                     <DetailsCard />
-                     <NavigationBar />
-                  </div>
-               </ScenesProvider>
-            </SolarSystemProvider>
-         </PlaneMapProvider>
-
-         {/*         <PlaneDataFetch />
-          */}
-
-         {/* <VesselDataFetch />*/}
-
-         {/*{successToastIsDisplayed && <ToastSuccess message={'Plane found.'} />}
-         {dangerToastIsDisplayed && (
-            <ToastDanger message={'Plane not found.'} />
-         )}*/}
-      </>
+      <PlaneMapProvider>
+         <SettingsDashboardView />
+         <CreditView />
+         <DataDashboardView />
+         <SolarSystemProvider>
+            <ScenesProvider>
+               <AstresListProvider>
+                  <AstresListView />
+                  <ThreeScene />
+               </AstresListProvider>
+               <MarkersDashboardView />
+               <Geolocation />
+               <div className="w-full items-center justify-between font-mono text-sm lg:flex">
+                  <SearchBarView />
+                  <DetailsCard />
+                  <NavigationBar />
+               </div>
+            </ScenesProvider>
+         </SolarSystemProvider>
+      </PlaneMapProvider>
    )
 }
