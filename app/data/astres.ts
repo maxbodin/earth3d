@@ -16,6 +16,24 @@ import {
    VENUS_SURFACE_TEXTURE_JPG,
 } from '@/app/constants/paths'
 
+// Shared texture loader - single instance for all celestial bodies.
+const sharedTextureLoader = new THREE.TextureLoader()
+
+// Pre-load all textures once at module initialization.
+const textureCache = {
+   sun: sharedTextureLoader.load(SUN_TEXTURE_JPG),
+   mercury: sharedTextureLoader.load(MERCURY_TEXTURE_JPG),
+   venus: sharedTextureLoader.load(VENUS_SURFACE_TEXTURE_JPG),
+   earth: sharedTextureLoader.load(EARTH_TEXTURE_JPG),
+   moon: sharedTextureLoader.load(MOON_TEXTURE_JPG),
+   mars: sharedTextureLoader.load(MARS_TEXTURE_JPG),
+   jupiter: sharedTextureLoader.load(JUPITER_TEXTURE_JPG),
+   saturn: sharedTextureLoader.load(SATURN_TEXTURE_JPG),
+   uranus: sharedTextureLoader.load(URANUS_TEXTURE_JPG),
+   neptune: sharedTextureLoader.load(NEPTUNE_TEXTURE_JPG),
+   pluto: sharedTextureLoader.load(PLUTO_SURFACE_TEXTURE_JPG),
+}
+
 export const astres: Astre[] = [
    {
       name: 'Sun',
@@ -25,9 +43,7 @@ export const astres: Astre[] = [
       mass: 1.989e30,
       astreMesh: null as any,
       body: Body.Sun,
-      texture: new THREE.TextureLoader().load(
-         SUN_TEXTURE_JPG,
-      ),
+      texture: textureCache.sun,
    },
    {
       name: 'Mercury',
@@ -37,9 +53,7 @@ export const astres: Astre[] = [
       mass: 3.3011e23, // kg
       astreMesh: null as any,
       body: Body.Mercury,
-      texture: new THREE.TextureLoader().load(
-         MERCURY_TEXTURE_JPG,
-      ),
+      texture: textureCache.mercury,
    },
    {
       name: 'Venus',
@@ -49,9 +63,7 @@ export const astres: Astre[] = [
       mass: 4.8675e24,
       astreMesh: null as any,
       body: Body.Venus,
-      texture: new THREE.TextureLoader().load(
-         VENUS_SURFACE_TEXTURE_JPG,
-      ),
+      texture: textureCache.venus,
    },
    {
       name: 'Earth',
@@ -61,9 +73,7 @@ export const astres: Astre[] = [
       mass: 5.9724e24,
       astreMesh: null as any,
       body: Body.Earth,
-      texture: new THREE.TextureLoader().load(
-         EARTH_TEXTURE_JPG,
-      ),
+      texture: textureCache.earth,
    },
    {
       name: 'Moon',
@@ -73,9 +83,7 @@ export const astres: Astre[] = [
       mass: 7.342e22, // kg
       astreMesh: null as any,
       body: Body.Moon,
-      texture: new THREE.TextureLoader().load(
-         MOON_TEXTURE_JPG,
-      ),
+      texture: textureCache.moon,
    },
    {
       name: 'Mars',
@@ -85,9 +93,7 @@ export const astres: Astre[] = [
       mass: 6.4171e23,
       astreMesh: null as any,
       body: Body.Mars,
-      texture: new THREE.TextureLoader().load(
-         MARS_TEXTURE_JPG,
-      ),
+      texture: textureCache.mars,
    },
    {
       name: 'Jupiter',
@@ -97,9 +103,7 @@ export const astres: Astre[] = [
       mass: 1.8982e27,
       astreMesh: null as any,
       body: Body.Jupiter,
-      texture: new THREE.TextureLoader().load(
-         JUPITER_TEXTURE_JPG,
-      ),
+      texture: textureCache.jupiter,
    },
    {
       name: 'Saturn',
@@ -109,9 +113,7 @@ export const astres: Astre[] = [
       mass: 5.6834e26,
       astreMesh: null as any,
       body: Body.Saturn,
-      texture: new THREE.TextureLoader().load(
-         SATURN_TEXTURE_JPG,
-      ),
+      texture: textureCache.saturn,
    },
    {
       name: 'Uranus',
@@ -121,9 +123,7 @@ export const astres: Astre[] = [
       mass: 8.6810e25,
       astreMesh: null as any,
       body: Body.Uranus,
-      texture: new THREE.TextureLoader().load(
-         URANUS_TEXTURE_JPG,
-      ),
+      texture: textureCache.uranus,
    },
    {
       name: 'Neptune',
@@ -133,9 +133,7 @@ export const astres: Astre[] = [
       mass: 1.02413e26,
       astreMesh: null as any,
       body: Body.Neptune,
-      texture: new THREE.TextureLoader().load(
-         NEPTUNE_TEXTURE_JPG,
-      ),
+      texture: textureCache.neptune,
    },
    {
       name: 'Pluto',
@@ -145,8 +143,6 @@ export const astres: Astre[] = [
       mass: 1.309e22, // kg
       astreMesh: null as any,
       body: Body.Pluto,
-      texture: new THREE.TextureLoader().load(
-         PLUTO_SURFACE_TEXTURE_JPG,
-      ),
+      texture: textureCache.pluto,
    },
 ]
