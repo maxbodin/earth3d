@@ -1,53 +1,32 @@
 import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
-import { useMapTab } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
-import {
-   MapTabController,
-} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.controller'
+import { useMapTabController } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.controller'
 
 export function MapTabView() {
    const {
-      satelliteMapStyleActivated,
-      purpleElevationMapStyleActivated,
-      blackLabelMapStyleActivated,
-      activateTrafficMapStyleActivated,
-   } = useMapTab()
-
-   const {
-      activatePurpleElevationMapStyle,
-      activateBlackLabelMapStyle,
-      activateSatelliteMapStyle,
-      deactivateSatelliteMapStyle,
-      activateTrafficMapStyle,
-      // TODO activateTerrainMapStyle,
-      // TODO activateTerrainDEMMapStyle,
-   } = MapTabController()
+      activeMapStyleId,
+      activateMapStyle,
+      deactivateMapStyle,
+      mapStyleSections,
+   } = useMapTabController()
 
    return (
-      <div className="flex flex-col w-full">
-         <SwitchTitled
-            title={'Activate Satellite style on Map'}
-            defaultChecked={satelliteMapStyleActivated}
-            onCheck={activateSatelliteMapStyle}
-            onUncheck={deactivateSatelliteMapStyle}
-         />
-         <SwitchTitled
-            title={'Activate Purple Elevation style on Map'}
-            defaultChecked={purpleElevationMapStyleActivated}
-            onCheck={activatePurpleElevationMapStyle}
-            onUncheck={activateSatelliteMapStyle}
-         />
-         <SwitchTitled
-            title={'Activate Black Label style on Map'}
-            defaultChecked={blackLabelMapStyleActivated}
-            onCheck={activateBlackLabelMapStyle}
-            onUncheck={activateSatelliteMapStyle}
-         />
-         <SwitchTitled
-            title={'Activate Traffic style on Map'}
-            defaultChecked={activateTrafficMapStyleActivated}
-            onCheck={activateTrafficMapStyle}
-            onUncheck={activateSatelliteMapStyle}
-         />
+      <div className="flex w-full flex-col gap-8">
+         {mapStyleSections.map((section) => (
+            <section key={section.title} className="flex flex-col gap-2">
+               <div className="px-8 text-[0.68rem] font-semibold uppercase tracking-[0.3em] text-white/45">
+                  {section.title}
+               </div>
+               {section.options.map((option) => (
+                  <SwitchTitled
+                     key={option.id}
+                     title={option.title}
+                     defaultChecked={activeMapStyleId === option.id}
+                     onCheck={() => activateMapStyle(option.id)}
+                     onUncheck={() => deactivateMapStyle(option.fallbackStyleId)}
+                  />
+               ))}
+            </section>
+         ))}
       </div>
    )
 }

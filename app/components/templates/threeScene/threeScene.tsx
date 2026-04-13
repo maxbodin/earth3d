@@ -36,6 +36,7 @@ import { SolarSystemHelper } from '@/app/components/atoms/three/solarSystem/sola
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 import { SceneData } from '@/app/types/sceneData'
 import { OuterSpaceProvider } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
+import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
 
 // TODO : we want lat and lon in search params.
 // TODO : we want planar, sphere, and solar system.
@@ -62,7 +63,8 @@ export function ThreeScene() {
    // Ref to track last scene type to avoid unnecessary React state updates.
    const lastSetSceneTypeRef = useRef<SceneType | null>(null)
 
-   const { planeMap, setPlaneMap, setMapProvider } = usePlaneMap()
+   const { planeMap, setPlaneMap, setMapProvider, mapProvider, mapStyle } =
+      usePlaneMap()
 
    const raycaster: THREE.Raycaster = new THREE.Raycaster()
 
@@ -749,12 +751,19 @@ export function ThreeScene() {
          )
 
       const mapBoxProvider: CustomMapBoxProvider = new CustomMapBoxProvider()
+      mapBoxProvider.mapStyle = mapStyle ?? DEFAULT_MAP_STYLE_ID
 
 
       setMapProvider(mapBoxProvider)
 
       return mapBoxProvider
    }
+
+   useEffect(() => {
+      if (mapProvider != null && mapStyle != null) {
+         mapProvider.mapStyle = mapStyle
+      }
+   }, [mapProvider, mapStyle])
 
    useEffect(() => {
       window.addEventListener('resize', handleResize)

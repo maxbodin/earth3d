@@ -1,5 +1,5 @@
 import './styles.css'
-import React from 'react'
+import React, { useId } from 'react'
 
 /**
  * Inspired by https://uiverse.io/mobinkakei/plastic-snail-19
@@ -21,6 +21,8 @@ export function SwitchTitled({
    onCheck: () => void
    onUncheck: () => void
 }) {
+   const switchId = useId()
+
    const handleSwitchChange = (
       event: React.ChangeEvent<HTMLInputElement>,
    ): void => {
@@ -40,11 +42,11 @@ export function SwitchTitled({
             <div className="switch-toggle">
                <input
                   type="checkbox"
-                  id={title}
+                  id={switchId}
                   checked={defaultChecked}
                   onChange={handleSwitchChange}
                />
-               <label htmlFor={title}></label>
+               <label htmlFor={switchId}></label>
             </div>
          </div>
       </div>

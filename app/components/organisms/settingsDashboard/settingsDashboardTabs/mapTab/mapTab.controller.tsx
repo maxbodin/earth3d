@@ -1,73 +1,34 @@
 'use client'
 import { useMapTab } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
 import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
+import { MAP_STYLE_SECTIONS } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.styles'
+import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
 
-export function MapTabController() {
-   const {
-      setSatelliteMapStyleActivated,
-      setPurpleElevationMapStyleActivated,
-      setBlackLabelMapStyleActivated,
-      setActivateTrafficMapStyleActivated,
-   } = useMapTab()
-   const { mapProvider } = usePlaneMap()
+export function useMapTabController() {
+   const { activeMapStyleId, setActiveMapStyleId } = useMapTab()
+   const { mapProvider, setMapStyle } = usePlaneMap()
 
-   function activateBlackLabelMapStyle(): void {
-      deactivateAllMapStyles()
-      mapProvider.mapStyle = 'mapbox.mapbox-streets-v8'
-      setBlackLabelMapStyleActivated(true)
+   function applyMapStyle(mapStyleId: string): void {
+      setActiveMapStyleId(mapStyleId)
+      setMapStyle(mapStyleId)
+
+      if (mapProvider != null) {
+         mapProvider.mapStyle = mapStyleId
+      }
    }
 
-   function activatePurpleElevationMapStyle(): void {
-      deactivateAllMapStyles()
-      mapProvider.mapStyle = 'mapbox.mapbox-terrain-v2'
-      setPurpleElevationMapStyleActivated(true)
+   function activateMapStyle(mapStyleId: string): void {
+      applyMapStyle(mapStyleId)
    }
 
-   function activateSatelliteMapStyle(): void {
-      deactivateAllMapStyles()
-      mapProvider.mapStyle = 'mapbox.satellite'
-      setSatelliteMapStyleActivated(true)
-   }
-
-   function activateTrafficMapStyle(): void {
-      deactivateAllMapStyles()
-      mapProvider.mapStyle = 'mapbox.mapbox-traffic-v1'
-      setActivateTrafficMapStyleActivated(true)
-   }
-
-   // TODO Implement
-   function activateTerrainMapStyle(): void {
-      deactivateAllMapStyles()
-      mapProvider.mapStyle = 'mapbox.terrain-rgb'
-   }
-
-   // TODO Implement
-   function activateTerrainDEMMapStyle(): void {
-      deactivateAllMapStyles()
-      mapProvider.mapStyle = 'mapbox.mapbox-terrain-dem-v1'
-   }
-
-   /**
-    * Still set to a default type when deactivating satellite style.
-    */
-   function deactivateSatelliteMapStyle(): void {
-      activateBlackLabelMapStyle()
-   }
-
-   function deactivateAllMapStyles(): void {
-      setBlackLabelMapStyleActivated(false)
-      setPurpleElevationMapStyleActivated(false)
-      setSatelliteMapStyleActivated(false)
-      setActivateTrafficMapStyleActivated(false)
+   function deactivateMapStyle(fallbackStyleId: string = DEFAULT_MAP_STYLE_ID): void {
+      applyMapStyle(fallbackStyleId)
    }
 
    return {
-      activatePurpleElevationMapStyle,
-      activateBlackLabelMapStyle,
-      activateSatelliteMapStyle,
-      deactivateSatelliteMapStyle,
-      activateTrafficMapStyle,
-      activateTerrainMapStyle,
-      activateTerrainDEMMapStyle,
+      activeMapStyleId,
+      activateMapStyle,
+      deactivateMapStyle,
+      mapStyleSections: MAP_STYLE_SECTIONS,
    }
 }

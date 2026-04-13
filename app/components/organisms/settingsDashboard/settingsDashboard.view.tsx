@@ -32,10 +32,6 @@ export function SettingsDashboardView() {
 
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
-   if (!isSettingsDashboardOpen) {
-      return null
-   }
-
    const { onTabSelection } = SettingsDashboardController()
 
    const renderTab = React.useCallback(() => {
@@ -56,6 +52,10 @@ export function SettingsDashboardView() {
       }
    }, [activeSettingsDashboardTab])
 
+   if (!isSettingsDashboardOpen) {
+      return null
+   }
+   
    return (
       <>
          <SettingsDashboardTabsExecuteDefaultValues />

@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import {
+   isMapboxStyleUrl,
+   parseMapboxStyleUrl,
+} from '@/app/constants/mapStyles'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -12,7 +16,7 @@ type RouteParams = {
 
 export async function GET(
    _request: NextRequest,
-   { params }: { params: RouteParams },
+   { params }: { params: Promise<RouteParams> },
 ): Promise<NextResponse> {
    const token = process.env.SECRET_PUBLIC_MAPBOX_TOKEN
 
@@ -23,8 +27,25 @@ export async function GET(
       )
    }
 
-   const { style, z, x, y } = params
-   const mapboxUrl = `https://api.mapbox.com/v4/${style}/${z}/${x}/${y}@2x.jpg?access_token=${token}`
+   const { style, z, x, y } = await params
+   const decodedStyle = decodeURIComponent(style)
+
+   let mapboxUrl: string
+
+   if (isMapboxStyleUrl(decodedStyle)) {
+      const styleParts = parseMapboxStyleUrl(decodedStyle)
+
+      if (!styleParts) {
+         return NextResponse.json(
+            { error: 'Invalid Mapbox style URL.' },
+            { status: 400 },
+         )
+      }
+
+      mapboxUrl = `https://api.mapbox.com/styles/v1/${styleParts.username}/${styleParts.styleId}/tiles/512/${z}/${x}/${y}@2x?access_token=${token}`
+   } else {
+      mapboxUrl = `https://api.mapbox.com/v4/${decodedStyle}/${z}/${x}/${y}@2x.jpg?access_token=${token}`
+   }
 
    let mapboxResponse: Response
 

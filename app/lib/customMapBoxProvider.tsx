@@ -1,6 +1,7 @@
 'use client'
 // @ts-ignore
 import { MapProvider } from 'geo-three'
+import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
 
 /**
  * Map box service tile provider. Map tiles can be fetched from style or from a map id.
@@ -10,7 +11,7 @@ import { MapProvider } from 'geo-three'
  */
 export class CustomMapBoxProvider extends MapProvider {
    /**
-    * Base adress of the mapbox service.
+    * Base address of the mapbox service.
     */
    public static ADDRESS: string = 'https://api.mapbox.com/'
 
@@ -28,7 +29,7 @@ export class CustomMapBoxProvider extends MapProvider {
     *
     * Map identifier composed of \{username\}.\{style\}
     */
-   public mapStyle: string = 'mapbox.satellite'
+   public mapStyle: string = DEFAULT_MAP_STYLE_ID
 
    public publicToken: string = ''
 
@@ -47,7 +48,7 @@ export class CustomMapBoxProvider extends MapProvider {
                reject()
             }
             // Load tiles from same-origin API route to avoid direct browser CORS issues.
-            image.src = `/api/mapbox/v4/${this.mapStyle}/${zoom}/${x}/${y}`
+            image.src = `/api/mapbox/v4/${encodeURIComponent(this.mapStyle)}/${zoom}/${x}/${y}`
          }
       })
    }
