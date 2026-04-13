@@ -1,5 +1,5 @@
 'use client'
-import { clearGroup } from '@/app/helpers/threeHelper'
+import { clearGroup, disposeMaterial } from '@/app/helpers/threeHelper'
 import { useEffect, useRef } from 'react'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import * as THREE from 'three'
@@ -7,7 +7,7 @@ import { SceneType } from '@/app/enums/sceneType'
 import { astres } from '@/app/data/astres'
 import { Body } from 'astronomy-engine'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
-import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
+import { Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import {
    SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE,
    SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MIN_SCALE,
@@ -20,11 +20,15 @@ import { clamp } from '@/app/helpers/numberHelper'
 import { useAstresList } from '@/app/components/organisms/astresList/astresList.model'
 import { SolarSystemHelper } from '@/app/components/atoms/three/solarSystem/solarSystem.helper'
 import { SOLAR_SYSTEM_FRAGMENT_SHADER, SOLAR_SYSTEM_VERTEX_SHADER } from '@/app/lib/shaders'
+import { AssetManager } from '@/app/lib/assetManager'
 
-const materials = [
-   new THREE.MeshBasicMaterial({ color: '#ffffff' }), // Front.
-   new THREE.MeshBasicMaterial({ color: '#444444' }), // Side.
-]
+// Shared materials for text labels.
+const textMaterialFront = new THREE.MeshBasicMaterial({ color: '#ffffff' })
+const textMaterialSide = new THREE.MeshBasicMaterial({ color: '#444444' })
+const textMaterials = [textMaterialFront, textMaterialSide]
+
+// Shared shader material cache for celestial bodies.
+const solarSystemMaterials: Map<string, THREE.ShaderMaterial> = new Map()
 
 export function SolarSystemController(): null {
    const { displayedSceneData } = useScenes()
@@ -35,65 +39,101 @@ export function SolarSystemController(): null {
    const astresMeshesGroup = useRef<THREE.Group>(new THREE.Group())
 
    const font = useRef<Font>()
+   const fontLoaded = useRef<boolean>(false)
 
    const { trueSize } = useSolarSystem()
 
    /**
-    *
+    * Load font once and cache it.
+    */
+   const loadFont = async (): Promise<void> => {
+      if (fontLoaded.current) return
+      try {
+         font.current = await AssetManager.loadFont(TEXT_FONT)
+         fontLoaded.current = true
+      } catch (error) {
+         console.error('Error loading font:', error)
+      }
+   }
+
+   /**
+    * Get or create a cached shader material for a celestial body.
+    */
+   const getCelestialMaterial = (astre: Astre): THREE.ShaderMaterial => {
+      const cacheKey = `solar_${astre.name}`
+      let material = solarSystemMaterials.get(cacheKey)
+
+      if (!material) {
+         material = new THREE.ShaderMaterial({
+            depthWrite: true,
+            depthTest: true,
+            transparent: false,
+            blending: THREE.AdditiveBlending,
+            vertexShader: SOLAR_SYSTEM_VERTEX_SHADER,
+            fragmentShader: SOLAR_SYSTEM_FRAGMENT_SHADER,
+            uniforms: {
+               globeTexture: { value: astre.texture },
+               atmosphereColor: { value: new THREE.Color(astre.color) },
+            },
+         })
+         solarSystemMaterials.set(cacheKey, material)
+      } else {
+         // Update uniforms if needed.
+         material.uniforms.globeTexture.value = astre.texture
+         material.uniforms.atmosphereColor.value = new THREE.Color(astre.color)
+      }
+
+      return material
+   }
+
+   /**
+    * Create or reuse sphere geometry based on radius.
+    */
+   const geometryCache: Map<number, THREE.SphereGeometry> = useRef(new Map()).current
+
+   const getCelestialGeometry = (radius: number, segments: number = 32): THREE.SphereGeometry => {
+      // Use radius and segments as cache key
+      const cacheKey = radius * 1000 + segments
+      let geometry = geometryCache.get(cacheKey)
+
+      if (!geometry) {
+         geometry = new THREE.SphereGeometry(radius, segments, segments)
+         geometryCache.set(cacheKey, geometry)
+      }
+
+      return geometry
+   }
+
+   /**
+    * Create solar system meshes with geometry and material reuse.
     */
    const createSolarSystemMeshes = (): void => {
       if (
          displayedSceneData?.scene == null ||
-         displayedSceneData.type == SceneType.PLANE
-         || displayedSceneData.type == SceneType.SPHERICAL
-      )
+         displayedSceneData.type !== SceneType.SOLAR_SYSTEM
+      ) {
          return
+      }
 
       clearGroup(astresMeshesGroup.current)
 
-      astres.forEach((astre: Astre): void => {
-
+      for (const astre of astres) {
          // Hide Moon if not in true size.
-         if (!trueSize && astre.body == Body.Moon) {
-            return
-         }
+         if (!trueSize && astre.body === Body.Moon) continue
 
-         const astreRadius: number = trueSize ? astre.radius : SUN_RADIUS
+         const astreRadius = trueSize ? astre.radius : SUN_RADIUS
 
-         // TODO : Need to be fixed as atmospheres are not currently displayed.
-         const astreMesh: THREE.Mesh = new THREE.Mesh(
-            new THREE.SphereGeometry(
-               astreRadius,
-               32,
-               32,
-            ),
-            new THREE.ShaderMaterial({
-               // side: THREE.FrontSide,
-               depthWrite: true,
-               depthTest: true,
-               transparent: false,
-               blending: THREE.AdditiveBlending,
-               vertexShader: SOLAR_SYSTEM_VERTEX_SHADER,
-               fragmentShader: SOLAR_SYSTEM_FRAGMENT_SHADER,
-               uniforms: {
-                  globeTexture: {
-                     value: astre.texture,
-                  },
-                  atmosphereColor: {
-                     value: new THREE.Color(astre.color), // Ensure it's a THREE.Color
-                  },
-               },
-            }),
-         )
+         const geometry = getCelestialGeometry(astreRadius)
+         const material = getCelestialMaterial(astre)
 
-
+         const astreMesh = new THREE.Mesh(geometry, material)
          astreMesh.name = astre.name
          astre.astreMesh = astreMesh
 
          astresMeshesGroup.current.add(astreMesh)
-      })
+      }
 
-      displayedSceneData.scene?.add(astresMeshesGroup.current)
+      displayedSceneData.scene.add(astresMeshesGroup.current)
    }
 
    /**
@@ -145,85 +185,87 @@ export function SolarSystemController(): null {
    }
 
    /**
-    *
+    * Create celestial body name labels with optimized geometry caching.
     */
-   function loadFont(): void {
-      const loader: FontLoader = new FontLoader()
-      loader.load(TEXT_FONT, function(response: Font): void {
-         font.current = response
-      })
-   }
+   const textGeometryCache: Map<string, TextGeometry> = useRef(new Map()).current
 
-   /**
-    *
-    */
-   const createSolarSystemNames = (): void => {
-      if (font.current == null) {
-         loadFont()
+   const createSolarSystemNames = async (): Promise<void> => {
+      if (!fontLoaded.current) {
+         await loadFont()
       }
 
-      if (font.current == null || displayedSceneData == null) return
+      if (!font.current || !displayedSceneData) return
 
       clearGroup(namesGroup.current)
 
-      astres.forEach((astre: Astre): void => {
-         if (!astre.astreMesh) return
+      for (const astre of astres) {
+         if (!astre.astreMesh) continue
+         if (!trueSize && astre.body === Body.Moon) continue
 
-         // Hide Moon Name if not in true size.
-         if (!trueSize && astre.body == Body.Moon) {
-            return
+         // Cache text geometry by name and size.
+         const cacheKey = `${astre.name}_${SUN_RADIUS}`
+         let textGeo = textGeometryCache.get(cacheKey)
+
+         if (!textGeo) {
+            textGeo = new TextGeometry(astre.name, {
+               font: font.current,
+               size: SUN_RADIUS,
+               depth: 50,
+               curveSegments: 4,
+               bevelEnabled: true,
+               bevelThickness: SUN_RADIUS / 1e3,
+               bevelSize: SUN_RADIUS / 1e4,
+               bevelOffset: 0,
+               bevelSegments: 4,
+            })
+            textGeo.computeBoundingBox()
+            textGeometryCache.set(cacheKey, textGeo)
          }
-
-         const textGeo: TextGeometry = new TextGeometry(astre.name, {
-            font: font.current!,
-            size: SUN_RADIUS,
-            depth: 50,
-            curveSegments: 4,
-            bevelEnabled: true,
-            bevelThickness: SUN_RADIUS / 1e3,
-            bevelSize: SUN_RADIUS / 1e4,
-            bevelOffset: 0,
-            bevelSegments: 4,
-         })
-
-         textGeo.computeBoundingBox()
-         textGeo.name = `${astre.name} Geometry`
 
          const astreRadius: number = trueSize ? astre.radius : SUN_RADIUS
          const position: THREE.Vector3 = astre.astreMesh.position
-          const textMesh: THREE.Mesh<
-             TextGeometry,
-             THREE.MeshBasicMaterial[],
-             THREE.Object3DEventMap
-          > = new THREE.Mesh(textGeo, materials)
+         const textMesh = new THREE.Mesh(textGeo, textMaterials)
          textMesh.position.set(position.x, position.y + astreRadius * 2, position.z)
-         textMesh.name = `${astre.name} Mesh`
+         textMesh.name = `${astre.name} Label`
 
          namesGroup.current.add(textMesh)
-      })
+      }
 
       displayedSceneData.scene.add(namesGroup.current)
    }
 
    /**
-    * Cleanup : remove events listeners.
+    * Cleanup function to dispose of cached resources.
     */
    const cleanup = (): void => {
-      displayedSceneData?.controls?.removeEventListener(
-         'change',
-         handleNamesLOD,
-      )
+      displayedSceneData?.controls?.removeEventListener('change', handleNamesLOD)
+
+      // Dispose cached geometries.
+      geometryCache.forEach((geometry): void => {
+         geometry.dispose()
+      })
+      geometryCache.clear()
+
+      // Dispose cached text geometries.
+      textGeometryCache.forEach((geometry): void => {
+         geometry.dispose()
+      })
+      textGeometryCache.clear()
+
+      // Dispose materials.
+      disposeMaterial(textMaterialFront)
+      disposeMaterial(textMaterialSide)
+      solarSystemMaterials.forEach((material): void => {
+         material.dispose()
+      })
+      solarSystemMaterials.clear()
    }
 
    useEffect(() => {
-
       createSolarSystemMeshes()
       setSolarSystemPositions()
       createSolarSystemNames()
-
-      // Initialize Names Sizes.
       handleNamesLOD()
-
       animate()
 
       displayedSceneData?.controls?.addEventListener('change', handleNamesLOD)
