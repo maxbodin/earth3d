@@ -12,11 +12,11 @@ export function DataDashboardView() {
    const { isDataDashboardOpen, setIsDataDashboardOpen } =
       useDataDashboard()
 
+   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
+
    if (!isDataDashboardOpen) {
       return null
    }
-
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
    return (
       <Drawer

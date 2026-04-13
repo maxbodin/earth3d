@@ -30,11 +30,11 @@ export function SettingsDashboardView() {
    const { activeSettingsDashboardTab, isSettingsDashboardOpen, setIsSettingsDashboardOpen } =
       useSettingsDashboard()
 
+   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
+
    if (!isSettingsDashboardOpen) {
       return null
    }
-   
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
    const { onTabSelection } = SettingsDashboardController()
 

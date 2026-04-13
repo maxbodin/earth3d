@@ -34,11 +34,11 @@ export function MarkersDashboardView() {
    const { isMarkersDashboardOpen, setIsMarkersDashboardOpen } =
       useMarkersDashboard()
 
+   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
+
    if (!isMarkersDashboardOpen) {
       return null
    }
-   
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
    const { flyToCoordinates } = CameraFlyController()
 

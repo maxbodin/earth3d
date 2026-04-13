@@ -11,11 +11,11 @@ import Link from 'next/link'
 export function CreditView() {
    const { isCreditOpen, setIsCreditOpen } = useCredit()
 
+   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
+
    if (!isCreditOpen) {
       return null
    }
-
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
    return (
       <Drawer
