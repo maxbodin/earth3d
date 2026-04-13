@@ -37,6 +37,8 @@ import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSy
 import { SceneData } from '@/app/types/sceneData'
 import { OuterSpaceProvider } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 
+// TODO : we want lat and lon in search params.
+// TODO : we want planar, sphere, and solar system.
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
    const renderer = useRef<THREE.WebGLRenderer | null>(null)
@@ -57,6 +59,9 @@ export function ThreeScene() {
    const { globeScene, planeScene, solarSystemScene, setDisplayedSceneData } =
       useScenes()
 
+   // Ref to track last scene type to avoid unnecessary React state updates.
+   const lastSetSceneTypeRef = useRef<SceneType | null>(null)
+
    const { planeMap, setPlaneMap, setMapProvider } = usePlaneMap()
 
    const raycaster: THREE.Raycaster = new THREE.Raycaster()
@@ -65,6 +70,7 @@ export function ThreeScene() {
 
    const distanceToPlaneSurface = useRef<number | null>(null)
    const distanceToSphereSurface = useRef<number>(0)
+   const isBootstrapFrameRef = useRef<boolean>(true)
 
    const { selectedAstre, selectedDate } = useAstresList()
    const { getPlanetPosition, dateValueToDate } = SolarSystemHelper()
@@ -127,10 +133,12 @@ export function ThreeScene() {
 
       // Start explicitly on spherical scene to avoid bootstrap LOD oscillations.
       activeSceneType.current = SceneType.SPHERICAL
+      isBootstrapFrameRef.current = true
       sphereDistanceRef.current = GLOBE_STARTUP_ALTITUDE
       distanceToSphereSurface.current = GLOBE_STARTUP_DISTANCE_FROM_CENTER
       distanceToPlaneSurface.current = GLOBE_STARTUP_ALTITUDE
       lastGlobeAltitudeRef.current = GLOBE_STARTUP_ALTITUDE
+      solarDistanceRef.current = Number.POSITIVE_INFINITY
 
       scenes.current[SceneType.SPHERICAL].scene.visible = true
       scenes.current[SceneType.PLANE].scene.visible = false
@@ -142,14 +150,16 @@ export function ThreeScene() {
 
    /**
     * Sync displayed scene data only when active scene changes.
+    * Uses ref tracking to avoid unnecessary React state updates.
     */
    const syncDisplayedSceneData = (sceneType: SceneType): void => {
-      if (displayedSceneTypeRef.current === sceneType) return
+      if (displayedSceneTypeRef.current === sceneType && lastSetSceneTypeRef.current === sceneType) return
 
       const sceneData = scenes.current[sceneType]
       if (sceneData == null) return
 
       displayedSceneTypeRef.current = sceneType
+      lastSetSceneTypeRef.current = sceneType
       setDisplayedSceneData(sceneData)
    }
 
@@ -362,6 +372,7 @@ export function ThreeScene() {
     * @param currentScene
     */
    const handleLOD = useCallback((currentScene: SceneData): void => {
+      if (isBootstrapFrameRef.current) return
       if (!canSwitchScene()) return
 
       if (activeSceneType.current === SceneType.SPHERICAL) {
@@ -393,8 +404,10 @@ export function ThreeScene() {
    }, [selectedAstre])
 
    /**
-    *
-    * @param currentScene
+    * Switch to spherical Earth scene with proper lifecycle management.
+    * - Disables plane/solar controls and objects.
+    * - Restores globe camera position from stored state.
+    * - Updates scene visibility and active type.
     */
    const switchToSpherical = (currentScene: SceneData): void => {
       let coords: Geolocation
@@ -418,16 +431,14 @@ export function ThreeScene() {
          }
       }
 
-      // Get sphere surface point from coordinates
-      const dir: THREE.Vector3 = ThreeGeoUnitsUtils.datumsToVector(
-         coords.latitude,
-         coords.longitude,
-      )
-
       const sphereScene = scenes.current[SceneType.SPHERICAL]
-      sphereScene.scene.visible = true
+
+      // Disable other scenes.
       scenes.current[SceneType.PLANE].scene.visible = false
       scenes.current[SceneType.SOLAR_SYSTEM].scene.visible = false
+
+      // Enable spherical scene.
+      sphereScene.scene.visible = true
 
       // Keep a stable globe altitude when returning from plane/solar.
       const minGlobeAltitude = MIN_EARTH_DISTANCE_GLOBE_SCENE - EARTH_RADIUS
@@ -442,31 +453,35 @@ export function ThreeScene() {
       sphereDistanceRef.current = restoredAltitude
 
       // Set camera position from geolocation + restored altitude.
+      const dir = ThreeGeoUnitsUtils.datumsToVector(coords.latitude, coords.longitude)
       dir.multiplyScalar(EARTH_RADIUS + restoredAltitude)
       sphereScene.camera.position.copy(dir)
       sphereScene.controls.target.set(0, 0, 0)
       sphereScene.controls.update()
 
-      console.log(
-         'Geo-Three: Switched scene from plane to sphere.',
-         currentScene.controls,
-         coords,
-         dir,
-      )
-
-      // Change to spherical earth model
+      // Update active scene type.
       activeSceneType.current = SceneType.SPHERICAL
       syncDisplayedSceneData(SceneType.SPHERICAL)
       markSceneSwitch()
+
+      // TODO : move in dedicated function.
+      console.log(
+         'Geo-Three: Switched scene to spherical.',
+         coords.latitude.toFixed(4),
+         coords.longitude.toFixed(4),
+         `altitude: ${restoredAltitude.toFixed(0)}m`,
+      )
    }
 
    /**
-    *
-    * @param currentScene
+    * Switch to plane map scene with proper lifecycle management.
+    * - Captures current view context for seamless transition.
+    * - Disables spherical/solar scenes.
+    * - Sets up plane camera and controls for 2D navigation.
     */
    const switchToPlaneMap = (currentScene: SceneData): void => {
       // Set raycaster to the camera center.
-      const pointer: THREE.Vector2 = new THREE.Vector2(0.0, 0.0)
+      const pointer = new THREE.Vector2(0.0, 0.0)
       raycaster.setFromCamera(pointer, currentScene.camera)
 
       // Raycast recursively to find closest intersection with any object
@@ -497,20 +512,22 @@ export function ThreeScene() {
 
       if (hitPoint != null) {
          // Get coordinates from sphere surface
-         const planetPos: Geolocation =
-            ThreeGeoUnitsUtils.vectorToDatums(hitPoint)
+         const planetPos: Geolocation = ThreeGeoUnitsUtils.vectorToDatums(hitPoint)
 
          const planeScene = scenes.current[SceneType.PLANE]
-         planeScene.scene.visible = true
+
+         // Disable other scenes
          scenes.current[SceneType.SPHERICAL].scene.visible = false
          scenes.current[SceneType.SOLAR_SYSTEM].scene.visible = false
 
+         // Enable plane scene.
+         planeScene.scene.visible = true
+
          // Calculate plane coordinates.
-         const worldCoords: THREE.Vector2 =
-            ThreeGeoUnitsUtils.datumsToSpherical(
-               planetPos.latitude,
-               planetPos.longitude,
-            )
+         const worldCoords: THREE.Vector2 = ThreeGeoUnitsUtils.datumsToSpherical(
+            planetPos.latitude,
+            planetPos.longitude,
+         )
 
          planeScene.controls.target.set(worldCoords.x, 0, -worldCoords.y)
          planeScene.camera.position.set(
@@ -520,33 +537,40 @@ export function ThreeScene() {
          )
          planeScene.controls.update()
 
-         console.log(
-            'Geo-Three: Switched scene from sphere to plane.',
-            hitPoint,
-            planetPos,
-            worldCoords,
-         )
-
-         // Change scene to "plane" earth.
+         // Update active scene type.
          activeSceneType.current = SceneType.PLANE
          syncDisplayedSceneData(SceneType.PLANE)
          markSceneSwitch()
+
+         // TODO : move in dedicated function.
+         console.log(
+            'Geo-Three: Switched scene to plane.',
+            `lat: ${planetPos.latitude.toFixed(4)}`,
+            `lon: ${planetPos.longitude.toFixed(4)}`,
+         )
       } else {
          console.warn('Geo-Three: No raycast intersection found for plane transition')
       }
    }
 
    /**
-    *
-    * @param currentScene
+    * Switch to solar system scene with proper lifecycle management.
+    * - Captures current Earth view context for return transition
+    * - Disables globe/plane scenes
+    * - Sets up orbital camera around selected celestial body
+    * - Applies safe distance to prevent immediate scene bounce
     */
    const switchToSolarSystem = (currentScene: SceneData): void => {
       const solarSystemScene = scenes.current[SceneType.SOLAR_SYSTEM]
-      solarSystemScene.scene.visible = true
+
+      // Disable other scenes
       scenes.current[SceneType.SPHERICAL].scene.visible = false
       scenes.current[SceneType.PLANE].scene.visible = false
 
-      const earthPosition: THREE.Vector3 = getPlanetPosition(Body.Earth, dateValueToDate(selectedDate))
+      // Enable solar system scene
+      solarSystemScene.scene.visible = true
+
+      const earthPosition = getPlanetPosition(Body.Earth, dateValueToDate(selectedDate))
 
       // Capture globe view context before leaving globe scene.
       const globePoint = getGlobeSurfacePointFromView(currentScene)
@@ -572,17 +596,15 @@ export function ThreeScene() {
       solarSystemScene.controls.target.copy(earthPosition)
       solarSystemScene.controls.update()
 
-      console.log(
-         'Geo-Three: Switched scene from sphere to solar system.',
-         currentScene.controls,
-         solarSystemScene.camera.position,
-         solarSystemScene.controls.target,
-      )
-
-      // Change to spherical earth model
+      // Update active scene type
       activeSceneType.current = SceneType.SOLAR_SYSTEM
       syncDisplayedSceneData(SceneType.SOLAR_SYSTEM)
       markSceneSwitch()
+
+      console.log(
+         'Geo-Three: Switched scene to solar system.',
+         `distance: ${safeSolarDistance.toFixed(0)}m`,
+      )
    }
 
 
@@ -654,6 +676,11 @@ export function ThreeScene() {
       const sceneToRender = scenes.current[activeSceneType.current] ?? sceneBeforeLOD
       renderer.current.clear()
       renderer.current.render(sceneToRender.scene!, sceneToRender.camera!)
+
+      if (isBootstrapFrameRef.current) {
+         isBootstrapFrameRef.current = false
+         return
+      }
    }
 
    useEffect((): void => {
