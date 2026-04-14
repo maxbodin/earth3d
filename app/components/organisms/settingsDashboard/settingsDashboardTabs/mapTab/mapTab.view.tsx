@@ -1,30 +1,28 @@
-import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
-import { useMapTabController } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.controller'
+import { MapStyleCard } from '@/app/components/atoms/ui/mapStyleCard'
+import {
+   useMapTabController
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.controller'
 
 export function MapTabView() {
-   const {
-      activeMapStyleId,
-      activateMapStyle,
-      deactivateMapStyle,
-      mapStyleSections,
-   } = useMapTabController()
+   const { activeMapStyleId, selectMapStyle, mapStyleSections } = useMapTabController()
 
    return (
-      <div className="flex w-full flex-col gap-8">
+      <div className="flex w-full flex-col gap-6 overflow-y-auto p-4">
          {mapStyleSections.map((section) => (
-            <section key={section.title} className="flex flex-col gap-2">
-               <div className="px-8 text-[0.68rem] font-semibold uppercase tracking-[0.3em] text-white/45">
+            <section key={section.title}>
+               <p className="mb-2 text-sm font-semibold uppercase text-white/45">
                   {section.title}
+               </p>
+               <div className="grid grid-cols-4 gap-2 md:grid-cols-5 xl:grid-cols-6 p-2">
+                  {section.options.map((option) => (
+                     <MapStyleCard
+                        key={option.id}
+                        option={option}
+                        isSelected={activeMapStyleId === option.id}
+                        onSelect={() => selectMapStyle(option.id)}
+                     />
+                  ))}
                </div>
-               {section.options.map((option) => (
-                  <SwitchTitled
-                     key={option.id}
-                     title={option.title}
-                     defaultChecked={activeMapStyleId === option.id}
-                     onCheck={() => activateMapStyle(option.id)}
-                     onUncheck={() => deactivateMapStyle(option.fallbackStyleId)}
-                  />
-               ))}
             </section>
          ))}
       </div>

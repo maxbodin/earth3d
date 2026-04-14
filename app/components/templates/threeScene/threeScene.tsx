@@ -63,8 +63,13 @@ export function ThreeScene() {
    // Ref to track last scene type to avoid unnecessary React state updates.
    const lastSetSceneTypeRef = useRef<SceneType | null>(null)
 
+   // Tracks the previous map style so we only rebuild Geo-Three map roots on
+   // real style changes, not on the initial mount.
+   const prevMapStyleRef = useRef<string | null>(null)
+
    const { planeMap, setPlaneMap, setMapProvider, mapProvider, mapStyle } =
       usePlaneMap()
+   const planeMapRef = useRef<any>(null)
 
    const raycaster: THREE.Raycaster = new THREE.Raycaster()
 
@@ -759,45 +764,95 @@ export function ThreeScene() {
       return mapBoxProvider
    }
 
-   useEffect(() => {
-      if (mapProvider != null && mapStyle != null) {
-         mapProvider.mapStyle = mapStyle
+   /**
+    * Rebuilds the planar root when style changes to avoid Geo-Three's
+    * child-load counter overflow that can happen with clear() on populated trees.
+    */
+   const refreshPlaneMapForStyle = (mapView: any): void => {
+      if (typeof mapView?.setRoot !== 'function') return
+
+      const planarRootMode = mapView.constructor?.PLANAR ?? 200
+      mapView.setRoot(planarRootMode)
+
+      if (typeof mapView.preSubdivide === 'function') {
+         mapView.preSubdivide()
       }
-   }, [mapProvider, mapStyle])
+
+      mapView.updateMatrixWorld(true)
+   }
 
    useEffect(() => {
+      planeMapRef.current = planeMap
+   }, [planeMap])
+
+   useEffect(() => {
+      if (mapProvider == null || mapStyle == null) return
+
+      const isStyleChange =
+         prevMapStyleRef.current !== null && prevMapStyleRef.current !== mapStyle
+
+      mapProvider.mapStyle = mapStyle
+      prevMapStyleRef.current = mapStyle
+
+      if (!isStyleChange || planeMap == null) return
+
+      refreshPlaneMapForStyle(planeMap)
+   }, [mapProvider, mapStyle, planeMap])
+
+   useEffect(() => {
+      let isDisposed = false
+
       window.addEventListener('resize', handleResize)
 
       // Set up renderer, scene, and camera.
       setupRenderer()
 
-      if (typeof window !== 'undefined' && planeMap == null) {
-         // Import the CustomMapBoxProvider and initialize the map view.
-         importCustomMapBoxProvider()
-            .then((mapBoxProvider: CustomMapBoxProvider): void => {
-               // Import MapView dynamically.
-               // @ts-ignore
-               import('geo-three').then(({ MapView }): void => {
-                  const map = new MapView(MapView.PLANAR, mapBoxProvider)
-                  planeScene.add(map)
-                  map.updateMatrixWorld(true)
-                  setPlaneMap(map)
-               })
-            })
-            .catch((error): void => {
-               console.error(
-                  'Error importing or initializing map components:',
-                  error,
-               )
-            })
+      const initializePlaneMap = async (): Promise<void> => {
+         if (typeof window === 'undefined' || planeMapRef.current != null) return
+
+         try {
+            const mapBoxProvider = await importCustomMapBoxProvider()
+            if (isDisposed || planeMapRef.current != null) return
+
+            // Import MapView dynamically.
+            // @ts-ignore
+            const { MapView } = await import('geo-three')
+            if (isDisposed || planeMapRef.current != null) return
+
+            const map = new MapView(MapView.PLANAR, mapBoxProvider)
+            planeScene.add(map)
+            map.updateMatrixWorld(true)
+
+            planeMapRef.current = map
+            setPlaneMap(map)
+         } catch (error) {
+            if (isDisposed) return
+
+            console.error(
+               'Error importing or initializing map components:',
+               error,
+            )
+         }
       }
+
+      initializePlaneMap()
 
       if (!mountRef.current) return
 
       animate()
 
+      return (): void => {
+         isDisposed = true
 
-      return cleanup
+         const mapToRemove = planeMapRef.current
+         if (mapToRemove != null) {
+            planeScene.remove(mapToRemove)
+            planeMapRef.current = null
+            setPlaneMap((current: any) => (current === mapToRemove ? null : current))
+         }
+
+         cleanup()
+      }
    }, [])
 
    return (
