@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import {
@@ -18,21 +17,22 @@ import { clamp } from '@/app/helpers/numberHelper'
 import { VESSEL_MATERIAL } from '@/app/constants/materials'
 import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
 import { debounce } from 'lodash'
-import { removeObject3D } from '@/app/helpers/threeHelper'
 import { VESSEL_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { gsap } from 'gsap'
 import { Coordinates } from '@/app/types/coordinates'
+import { AssetManager } from '@/app/lib/assetManager'
 
 export function VesselsController(): null {
    const { displayedSceneData } = useScenes()
    const { vesselsRawData, displayedVesselsGroup } = useVessels()
 
    const vesselModel = useRef<THREE.Group<THREE.Object3DEventMap> | null>(null)
+   const vesselModelLoaded = useRef<boolean>(false)
 
-   const loader: GLTFLoader = new GLTFLoader()
-   const VESSEL_PREFIX: string = 'Vessel: '
+   const VESSEL_PREFIX: string = 'vessel:'
+   const VESSEL_PREFIX_LEN: number = VESSEL_PREFIX.length
 
    // TODO const vesselsCommunicationsFrequencies: Map<string, any> = new Map()
    const registeredVesselsData = useRef<Map<string, any>>(new Map())
@@ -41,35 +41,30 @@ export function VesselsController(): null {
    >(new Map())
 
    /**
-    * Load vessel model to load it only once.
+    * Load vessel model once and cache it.
     */
-   const loadVesselModel = (): void => {
-      // Load vessel model.
-      loader.load(
-         VESSEL_GLB_MODEL,
-         (gltf: GLTF): void => {
-            const vesselTemplate = gltf.scene
+   const loadVesselModel = async (): Promise<void> => {
+      if (vesselModelLoaded.current) return
 
-            // Apply material to all meshes in the vessel model.
-            vesselTemplate.traverse((child: any): void => {
-               if (child instanceof THREE.Mesh) {
-                  child.material = VESSEL_MATERIAL
-               }
-            })
+      try {
+         const vesselTemplate = await AssetManager.loadModel(VESSEL_GLB_MODEL)
 
-            // Clone vessel model.
-            vesselModel.current = vesselTemplate.clone()
-         },
-         (xhr): void => {
-            //console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-         },
-         (error: any): void => {
-            console.error('Error loading vessel model:', error)
-         },
-      )
+         // Apply material to all meshes in the vessel model.
+         vesselTemplate.traverse((child): void => {
+            if (child instanceof THREE.Mesh) {
+               child.material = VESSEL_MATERIAL
+            }
+         })
+
+         vesselModel.current = vesselTemplate
+         vesselModelLoaded.current = true
+      } catch (error) {
+         console.error('Error loading vessel model:', error)
+      }
    }
 
    /**
+    * Update vessel coordinates in the registered data map.
     *
     * @param vesselData
     */
@@ -77,124 +72,105 @@ export function VesselsController(): null {
       const vesselDataMessage = vesselData.message
       const mmsi = vesselDataMessage?.mmsi
 
-      if (vesselDataMessage == undefined || mmsi == undefined) return
+      if (!vesselDataMessage || mmsi == null) return
+
+      const coords = vesselDataMessage.location?.coordinates
+      if (!coords) return
 
       // Check if the vessel exists in the map.
       if (registeredVesselsData.current.has(mmsi)) {
          const previousData = registeredVesselsData.current.get(mmsi)
-         const newCoordinates = vesselDataMessage.location.coordinates
-
-         // Update the coordinates and save the previous coordinates as oldCoordinates.
-         previousData.message.location.coordinates = [...previousData.message.location.coordinates, newCoordinates]
+         // Append new coordinates for animation.
+         previousData.message.location.coordinates = [...previousData.message.location.coordinates, coords]
       } else {
-         // If the vessel doesn't exist in the map, add it.
-         vesselDataMessage.location.coordinates = [vesselDataMessage.location.coordinates]
+         vesselDataMessage.location.coordinates = [coords]
          registeredVesselsData.current.set(mmsi, vesselData)
       }
    }
 
-
    const visibleVessels = useRef<any[]>([])
+   const lastProcessedVesselCount = useRef<number>(0)
 
    /**
     * Process vessels data to display on the current scene.
+    * Optimized to minimize allocations and reuse data structures.
     */
    const processVessels = (): void => {
       if (!vesselModel.current ||
          !displayedSceneData ||
          !displayedVesselsGroup ||
-         displayedSceneData?.camera == null ||
-         !displayedSceneData?.controls == null
+         displayedSceneData.camera == null
       ) {
          return
       }
 
-      const planeMaxDistForVesselVisible: number = clamp(PLANE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA * (cameraDistanceToPlanetCenter.current / 2e5), 1e3, 1e6)
+      const isPlaneScene = displayedSceneData.type === SceneType.PLANE
+      const planeMaxDistForVesselVisible: number = isPlaneScene
+         ? clamp(PLANE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA * (cameraDistanceToPlanetCenter.current / 2e5), 1e3, 1e6)
+         : 0
 
-      // Update vessels coordinates if already displayed.
-      // Else add vessels to registered vessels.
-      vesselsRawData.forEach((vesselData: any): void => {
+      // Update vessel coordinates
+      for (const vesselData of vesselsRawData) {
          updateVesselCoordinates(vesselData)
-      })
-
-      // Remove vessels that are out of visible zone.
-      visibleVessels.current = Array.from(
-         registeredVesselsData.current.values(),
-      ).filter((vesselData: any): boolean => {
-         let coordinates: Coordinates = vesselData.message.location.coordinates as Coordinates
-
-         const lat: number = coordinates[0][0]
-         const lon: number = coordinates[0][1]
-
-         if (lat == null || lon == null) {
-            return false
-         }
-
-         if (displayedSceneData.type == SceneType.SPHERICAL) {
-            vesselData.globePosition = latLongToVector3(
-               lon as number,
-               lat as number,
-            )
-
-            const distanceToCamera: number =
-               displayedSceneData.camera.position.distanceTo(
-                  vesselData.globePosition,
-               )
-
-            return (
-               distanceToCamera <= GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA
-            )
-         } else if (displayedSceneData.type == SceneType.PLANE) {
-            const worldPos: THREE.Vector2 =
-               ThreeGeoUnitsUtils.datumsToSpherical(
-                  lon as number,
-                  lat as number,
-               )
-            vesselData.planePosition = new THREE.Vector3(
-               worldPos.x,
-               0,
-               -worldPos.y,
-            )
-
-            const distanceToCamera: number =
-               displayedSceneData.camera.position.distanceTo(
-                  vesselData.planePosition,
-               )
-
-            return (
-               distanceToCamera <= planeMaxDistForVesselVisible
-            )
-         } else {
-            return false
-         }
-      })
-
-      if (visibleVessels.current.length > MAX_DISPLAYED_VESSELS) {
-         visibleVessels.current.splice(0, visibleVessels.current.length - MAX_DISPLAYED_VESSELS)
       }
 
+      // Filter visible vessels with early exits
+      const allVessels = Array.from(registeredVesselsData.current.values())
+      visibleVessels.current = allVessels.filter((vesselData: any): boolean => {
+         const coordinates: Coordinates = vesselData.message.location.coordinates as Coordinates
+         if (!coordinates?.[0]) return false
+
+         const [lat, lon] = coordinates[0]
+         if (lat == null || lon == null) return false
+
+         if (displayedSceneData.type === SceneType.SPHERICAL) {
+            vesselData.globePosition = latLongToVector3(lon, lat)
+            return displayedSceneData.camera.position.distanceTo(vesselData.globePosition) <= GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA
+         } else if (isPlaneScene) {
+            const worldPos = ThreeGeoUnitsUtils.datumsToSpherical(lon, lat)
+            vesselData.planePosition = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
+            return displayedSceneData.camera.position.distanceTo(vesselData.planePosition) <= planeMaxDistForVesselVisible
+         }
+         return false
+      })
+
+      // Limit displayed vessels.
+      if (visibleVessels.current.length > MAX_DISPLAYED_VESSELS) {
+         visibleVessels.current.length = MAX_DISPLAYED_VESSELS
+      }
+
+      // Skip if no change.
+      if (visibleVessels.current.length === lastProcessedVesselCount.current) {
+         updateVesselPositions()
+         return
+      }
+
+      lastProcessedVesselCount.current = visibleVessels.current.length
       displayVessels(visibleVessels.current)
    }
 
    /**
-    *
-    * @param vessels
+    * Display vessels with optimized material and geometry reuse.
     */
    const displayVessels = (vessels: any[]): void => {
-      // Clear previous vessels.
-      displayedVesselsGroup.forEach((vesselMeshGroup: THREE.Group): void => {
-         removeObject3D(vesselMeshGroup, displayedSceneData.scene)
+      if (!displayedSceneData?.scene) return
+
+      // Clear previous vessels efficiently.
+      displayedVesselsGroup.forEach((vessel): void => {
+         displayedSceneData.scene.remove(vessel)
       })
       displayedVesselsGroup.clear()
+      vesselsModels.current.clear()
 
-      vessels.forEach((vesselData: any): void => {
-         if (vesselModel.current == null) return
+      const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
+      const scale = isSpherical ? globeAdjustedScale.current : planeAdjustedScale.current
 
-         const vessel: THREE.Group<THREE.Object3DEventMap> =
-            vesselModel.current.clone()
+      for (const vesselData of vessels) {
+         if (!vesselModel.current) continue
 
+         const vessel = vesselModel.current.clone()
          const mmsi = vesselData.message.mmsi
-         vessel.name = `${VESSEL_PREFIX} ${mmsi}`
+         vessel.name = `${VESSEL_PREFIX}${mmsi}`
 
          // Save vessel model in map to allow lerping model position in animation.
          vesselsModels.current.set(mmsi, vessel)
@@ -212,120 +188,105 @@ export function VesselsController(): null {
                      }
                   })*/
 
-         if (displayedSceneData.type == SceneType.SPHERICAL) {
+         if (isSpherical) {
             vessel.position.copy(vesselData.globePosition)
-            vessel.scale.set(
-               globeAdjustedScale.current,
-               globeAdjustedScale.current,
-               globeAdjustedScale.current,
-            )
-         } else if (displayedSceneData.type == SceneType.PLANE) {
+         } else {
             const hdg = vesselData.message.hdg
-            if (hdg !== null) {
-               vessel.rotateY(hdg)
-            }
+            if (hdg !== null) vessel.rotation.y = hdg
             vessel.position.copy(vesselData.planePosition)
-            vessel.scale.set(
-               planeAdjustedScale.current,
-               planeAdjustedScale.current,
-               planeAdjustedScale.current,
-            )
          }
 
+         vessel.scale.setScalar(scale)
          vessel.renderOrder = VESSEL_RENDER_ORDER
          vessel.userData = { data: vesselData }
 
          // Also used for handling click on vessel.
          displayedVesselsGroup.add(vessel)
-
-         if (displayedVesselsGroup && displayedSceneData.scene) {
-            displayedSceneData.scene.add(vessel)
-         }
-      })
+         displayedSceneData.scene.add(vessel)
+      }
    }
-
 
    /**
-    * Retrieve all objects in the scene whose names start with a specified prefix.
-    * @param scene - The Three.js scene to search within.
-    * @param prefix - The prefix to match object names against.
-    * @returns An array of objects whose names start with the specified prefix.
+    * Update positions of existing vessels without recreating them.
     */
-   const getObjectsByNamePrefix = (scene: THREE.Scene, prefix: string): THREE.Object3D[] => {
-      const matchingObjects: THREE.Object3D[] = []
+   const updateVesselPositions = (): void => {
+      if (!vesselModel.current || !displayedSceneData) return
 
-      scene.traverse((object) => {
-         if (object.name.startsWith(prefix)) {
-            matchingObjects.push(object)
+      const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
+      const scale = isSpherical ? globeAdjustedScale.current : planeAdjustedScale.current
+
+      displayedVesselsGroup.forEach((vessel): void => {
+         const mmsi = vessel.userData?.data?.message?.mmsi
+         if (!mmsi) return
+
+         const vesselData = registeredVesselsData.current.get(mmsi)
+         if (!vesselData) return
+
+         if (isSpherical) {
+            vessel.position.copy(vesselData.globePosition)
+         } else {
+            vessel.position.copy(vesselData.planePosition)
          }
+         vessel.scale.setScalar(scale)
       })
-
-      return matchingObjects
    }
+
 
    const vesselTimelines = new Map<string, gsap.core.Timeline>()
 
    // TODO Fix animation, currently not working.
-   const animate: () => void = (): void => {
+   const animate = (): void => {
       if (!displayedSceneData?.scene) return
 
-      getObjectsByNamePrefix(displayedSceneData.scene, VESSEL_PREFIX).forEach((vessel, index: number): void => {
-         // if (vessel.userData.data.message.mmsi != '205278390') return
+      // Use cached vessel references instead of traversing scene.
+      vesselsModels.current.forEach((vessel, mmsi): void => {
+         const vesselData = registeredVesselsData.current.get(mmsi)
+         if (!vesselData) return
 
-         const coordinates: Coordinates = vessel.userData.data.message.location.coordinates as Coordinates
-         const mmsi: string = vessel.userData.data.mmsi
-
-         // Need two coordinates to animate between them.
-         if (coordinates.length <= 1 || mmsi == undefined) return
+         const coordinates: Coordinates = vesselData.message.location.coordinates as Coordinates
+         // Need at least two coordinates to animate.
+         if (coordinates.length <= 1) return
 
          let timeline = vesselTimelines.get(mmsi)
 
-         if (timeline == undefined || !timeline || !timeline.isActive()) {
-            timeline = gsap.timeline({ repeat: 100 })
+         if (!timeline || !timeline.isActive()) {
+            timeline = gsap.timeline({ repeat: -1 })
             vesselTimelines.set(mmsi, timeline)
 
-            coordinates.forEach((coordinate: [number, number], coordIndex: number): void => {
-               const [lat, lon] = coordinate
-
-               if (displayedSceneData.type == SceneType.PLANE) {
-                  const worldPos: THREE.Vector2 = ThreeGeoUnitsUtils.datumsToSpherical(
-                     lon as number,
-                     lat as number,
-                  )
-                  const { x, y, z } = new THREE.Vector3(
-                     worldPos.x,
-                     0,
-                     -worldPos.y,
-                  )
-
-                  // Animate position
-                  timeline!.add(gsap.to(vessel.position, {
-                     x,
-                     y,
-                     z,
+            for (let i = 0; i < coordinates.length; i++) {
+               const [lat, lon] = coordinates[i]
+               if (displayedSceneData.type === SceneType.PLANE) {
+                  const worldPos = ThreeGeoUnitsUtils.datumsToSpherical(lon, lat)
+                  timeline.to(vessel.position, {
+                     x: worldPos.x,
+                     y: 0,
+                     z: -worldPos.y,
                      duration: 10,
-                     onComplete: (): void => {
-                        console.log(`Completed animation for vessel ${mmsi}, ${coordIndex}`)
-                     },
-                  }), '>')
+                     ease: 'linear',
+                  }, i * 10)
                }
-            })
+            }
          }
       })
    }
 
-   useEffect((): void => {
+   useEffect(() => {
       if (displayedSceneData?.camera == null) return
 
-      if (vesselModel.current == null) {
+      if (!vesselModelLoaded.current) {
          loadVesselModel()
       }
 
-      // Call vessels in useEffect instead of controls change,
-      // as useEffect is call when vessels raw data is updated.
       processVessels()
-
       animate()
+
+      return () => {
+         // Cleanup timelines.
+         vesselTimelines.forEach((timeline): void => {
+            timeline.kill()
+         })
+         vesselTimelines.clear()
+      }
    }, [vesselsRawData, displayedSceneData])
 
 
