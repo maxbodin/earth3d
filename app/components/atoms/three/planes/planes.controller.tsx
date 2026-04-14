@@ -1,6 +1,5 @@
 import * as THREE from 'three'
-import { useEffect } from 'react'
-import { GLTF, GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { useEffect, useRef } from 'react'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { useData } from '@/app/context_todo_improve/dataContext'
 import { PLANE_MATERIAL } from '@/app/constants/materials'
@@ -8,81 +7,109 @@ import { PLANE_GLB_MODEL } from '@/app/constants/paths'
 import { PLANE_SCALE } from '@/app/constants/numbers'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
+import { clearGroup } from '@/app/helpers/threeHelper'
+import { AssetManager } from '@/app/lib/assetManager'
+
+let sharedPlaneTemplate: THREE.Group | null = null
+const planeLoadPromise = useRef<Promise<THREE.Group> | null>(null)
 
 export function PlanesController(): null {
    const { planesData } = useData()
    const { displayedSceneData } = useScenes()
    const { displayedPlanesGroup } = usePlanes()
+   const planesCache = useRef<Map<string, THREE.Group>>(new Map())
 
-   // Create group of planes.
-   const addPlanes = (): void => {
-      if (!displayedPlanesGroup || !planesData.current) return
+   /**
+    * Load plane model once and cache it.
+    */
+   const loadPlaneModel = async (): Promise<THREE.Group> => {
+      if (sharedPlaneTemplate) return sharedPlaneTemplate
+      if (planeLoadPromise.current) return planeLoadPromise.current
 
-      // Clear previous planes.
-      displayedPlanesGroup.clear()
-
-      // Load plane model.
-      const loader: GLTFLoader = new GLTFLoader()
-      loader.load(
-         PLANE_GLB_MODEL,
-         (gltf: GLTF): void => {
-            const planeTemplate = gltf.scene
-
-            // Apply yellow material to all meshes in the plane model
-            planeTemplate.traverse((child) => {
+      planeLoadPromise.current = AssetManager.loadModel(PLANE_GLB_MODEL)
+         .then((template) => {
+            // Apply material to all meshes
+            template.traverse((child) => {
                if (child instanceof THREE.Mesh) {
                   child.material = PLANE_MATERIAL
                }
             })
-
-            planesData.current.forEach((state: any): void => {
-               const lat = state[5]
-               const lon = state[6]
-               const altitude = state[7] // Altitude represents the distance between the planet and the plane.
-               const trueTrack = state[10] // True track in decimal degrees clockwise from north.
-               const position: THREE.Vector3 = latLongToVector3(
-                  lon as number,
-                  lat as number,
-               )
-
-               // Adjust position based on altitude
-               const adjustedAltitude: number = altitude / 100000
-               const normal: THREE.Vector3 = position.clone().normalize() // Normal vector from the center of the planet to the point
-               const adjustedPosition: THREE.Vector3 = position.add(
-                  normal.multiplyScalar(adjustedAltitude),
-               )
-
-               // Clone plane model
-               const plane = planeTemplate.clone()
-               plane.position.copy(adjustedPosition)
-
-               // Calculate Y rotation based on true_track.
-               if (trueTrack !== null) {
-                  plane.rotateY(trueTrack)
-               }
-
-               plane.scale.set(PLANE_SCALE, PLANE_SCALE, PLANE_SCALE)
-               plane.userData = { data: state }
-               displayedPlanesGroup.add(plane)
-            })
-         },
-         (xhr): void => {
-            //console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-         },
-         (error): void => {
+            sharedPlaneTemplate = template
+            return template
+         })
+         .catch((error) => {
             console.error('Error loading plane model:', error)
-         },
-      )
+            throw error
+         })
 
-      if (displayedPlanesGroup && displayedSceneData.scene) {
+      return planeLoadPromise.current
+   }
+
+   /**
+    * Create or reuse a plane instance.
+    */
+   const getPlaneInstance = (template: THREE.Group): THREE.Group => {
+      return template.clone()
+   }
+
+   /**
+    * Add planes to the scene with optimized instance creation.
+    */
+   const addPlanes = async (): Promise<void> => {
+      if (!displayedPlanesGroup || !planesData.current || !displayedSceneData?.scene) {
+         return
+      }
+
+      // Clear previous planes efficiently.
+      clearGroup(displayedPlanesGroup)
+      planesCache.current.clear()
+
+      try {
+         const template = await loadPlaneModel()
+
+         for (const state of planesData.current) {
+            const lat = state[5]
+            const lon = state[6]
+            const altitude = state[7]
+            const trueTrack = state[10]
+
+            if (lat == null || lon == null) continue
+
+            const position = latLongToVector3(lon, lat)
+
+            // Adjust position based on altitude.
+            const adjustedAltitude = altitude / 100000
+            const normal = position.clone().normalize()
+            position.add(normal.multiplyScalar(adjustedAltitude))
+
+            // Clone plane model.
+            const plane = getPlaneInstance(template)
+            plane.position.copy(position)
+
+            // Apply rotation based on true track.
+            if (trueTrack !== null) {
+               plane.rotation.y = trueTrack
+            }
+
+            plane.scale.setScalar(PLANE_SCALE)
+            plane.userData = { data: state }
+
+            displayedPlanesGroup.add(plane)
+         }
+
          displayedSceneData.scene.add(displayedPlanesGroup)
+      } catch (error) {
+         console.error('Error adding planes:', error)
       }
    }
 
    useEffect(() => {
       addPlanes()
-   }, [planesData.current])
 
+      return () => {
+         clearGroup(displayedPlanesGroup)
+      }
+   }, [planesData.current])
 
    return null
 }
