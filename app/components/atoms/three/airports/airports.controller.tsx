@@ -3,7 +3,6 @@ import * as THREE from 'three'
 import { useEffect, useRef } from 'react'
 import layers from '../../../../data/Airports.json'
 import {
-   AIRPORT_SCALE,
    PLANE_MIN_ALLOWED_AIRPORT_DISTANCE_TO_CAMERA,
    PLANE_SCENE_AIRPORT_MAX_SCALE,
    PLANE_SCENE_AIRPORT_MIN_SCALE,
@@ -14,153 +13,152 @@ import { useAirports } from '@/app/components/atoms/three/airports/airports.mode
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { AIRPORT_RENDER_ORDER } from '@/app/constants/renderOrder'
-import { removeObject3D } from '@/app/helpers/threeHelper'
 import { clamp } from '@/app/helpers/numberHelper'
-import { debounce } from 'lodash'
+
+// Shared geometry for all airports, avoids creating thousands of geometries.
+const sharedAirportGeometry = new THREE.BoxGeometry(1, 1, 1, 4, 4, 4)
 
 export function AirportsController(): null {
    const { displayedSceneData } = useScenes()
    const { displayedAirportsGroup } = useAirports()
 
    const visibleAirports = useRef<any[]>([])
+   const cameraDistanceToPlanetCenter = useRef<number>(0)
+   const globeAirportAdjustedScale = useRef<number>(PLANE_SCENE_AIRPORT_MAX_SCALE)
+
+   // Threshold tracking to avoid unnecessary re-renders.
+   const lastVisibleAirportCount = useRef<number>(0)
+   const lastAirportScale = useRef<number>(PLANE_SCENE_AIRPORT_MAX_SCALE)
+   const LOD_THRESHOLD_CHANGE = 0.1 // Minimum scale change to trigger re-render.
 
    /**
-    * Process airports to display only visible airports.
+    * Display airports with geometry and material reuse.
     */
-   const processAirports = (): void => {
-      // Clear previous airports.
-      displayedAirportsGroup.forEach((airportMesh: THREE.Mesh): void => {
-         removeObject3D(airportMesh, displayedSceneData.scene)
+   const displayAirports = (airports: any[]): void => {
+      if (!displayedSceneData?.scene) return
+
+      // Limit displayed airports for performance.
+      const limitedAirports = airports.length > 300 ? airports.slice(0, 300) : airports
+
+      // Clear previous airports efficiently.
+      displayedAirportsGroup.forEach((airportMesh): void => {
+         displayedSceneData.scene.remove(airportMesh)
       })
       displayedAirportsGroup.clear()
 
-      if (
-         !displayedAirportsGroup ||
-         displayedSceneData?.camera == null ||
-         !displayedSceneData?.controls == null
-      )
-         return
+      const scale = globeAirportAdjustedScale.current
 
-      const maxDistForAirportVisible: number = clamp(PLANE_MIN_ALLOWED_AIRPORT_DISTANCE_TO_CAMERA * (cameraDistanceToPlanetCenter.current / 20), 1e3, 3e5)
-
-      // @ts-ignore
-      // Remove airports that are out of visible zone.
-      visibleAirports.current = layers.layers[0].featureSet.features.filter((airportData: any): boolean => {
-         const lat = airportData.attributes.latitude_deg
-         const lon = airportData.attributes.longitude_deg
-
-         if (lat == null || lon == null) {
-            return false
-         }
-
-         if (displayedSceneData.type == SceneType.PLANE) {
-            const worldPos: THREE.Vector2 =
-               ThreeGeoUnitsUtils.datumsToSpherical(
-                  lat as number,
-                  lon as number,
-               )
-            airportData.planePosition = new THREE.Vector3(
-               worldPos.x,
-               0,
-               -worldPos.y,
-            )
-
-            const distanceToCamera: number =
-               displayedSceneData.camera.position.distanceTo(
-                  airportData.planePosition,
-               )
-
-            return (
-               distanceToCamera <= maxDistForAirportVisible
-            )
-         } else {
-            return false
-         }
-      })
-
-      displayAirports(visibleAirports.current)
-   }
-
-
-   /**
-    * Display airports.
-    *
-    * @param airports
-    */
-   const displayAirports = (airports: any[]): void => {
-      if (airports.length > 300) {
-         airports.splice(0, airports.length - 300)
-      }
-
-      airports.forEach((airportData: any): void => {
-         // TODO Replace with airport model. / Use GPU Instancing.
-         const airportMesh = new THREE.Mesh(
-            new THREE.BoxGeometry(1, 1, 1, 4, 4, 4),
-            AIRPORT_MATERIAL,
-         )
-
-         airportMesh.scale.set(AIRPORT_SCALE, AIRPORT_SCALE, AIRPORT_SCALE)
-
-         if (airportData && airportData.attributes) {
-            airportMesh.userData = { data: airportData.attributes }
-         }
-
-         if (displayedSceneData.type == SceneType.PLANE) {
-            airportMesh.position.copy(airportData.planePosition)
-            airportMesh.scale.set(
-               globeAirportAdjustedScale.current,
-               globeAirportAdjustedScale.current * 4,
-               globeAirportAdjustedScale.current,
-            )
-         }
-
+      for (const airportData of limitedAirports) {
+         // Reuse shared geometry and material.
+         const airportMesh = new THREE.Mesh(sharedAirportGeometry, AIRPORT_MATERIAL)
+         airportMesh.scale.set(scale, scale * 4, scale)
+         airportMesh.position.copy(airportData.planePosition)
          airportMesh.renderOrder = AIRPORT_RENDER_ORDER
          airportMesh.userData = { data: airportData }
 
          displayedAirportsGroup.add(airportMesh)
+         displayedSceneData.scene.add(airportMesh)
+      }
 
-         if (displayedSceneData.scene) {
-            displayedSceneData.scene.add(airportMesh)
-         }
-      })
+      lastVisibleAirportCount.current = limitedAirports.length
+      lastAirportScale.current = scale
    }
 
-   const cameraDistanceToPlanetCenter = useRef<number>(0)
-   const globeAirportAdjustedScale = useRef<number>(PLANE_SCENE_AIRPORT_MAX_SCALE)
+   /**
+    * Process airports to display only visible airports.
+    * Optimized with early exits and minimal allocations.
+    */
+   const processAirports = (): void => {
+      if (
+         !displayedAirportsGroup ||
+         !displayedSceneData?.camera ||
+         displayedSceneData.type !== SceneType.PLANE
+      ) {
+         return
+      }
+
+      const maxDistForAirportVisible = clamp(
+         PLANE_MIN_ALLOWED_AIRPORT_DISTANCE_TO_CAMERA * (cameraDistanceToPlanetCenter.current / 20),
+         1e3,
+         3e5
+      )
+
+      // Filter visible airports.
+      visibleAirports.current = layers.layers[0].featureSet.features.filter((airportData: any): boolean => {
+         const { latitude_deg: lat, longitude_deg: lon } = airportData.attributes
+         if (lat == null || lon == null) return false
+
+         const worldPos = ThreeGeoUnitsUtils.datumsToSpherical(lat, lon)
+         airportData.planePosition = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
+
+         return displayedSceneData.camera!.position.distanceTo(airportData.planePosition) <= maxDistForAirportVisible
+      })
+
+      // Skip re-render if count hasn't changed significantly.
+      const countChange = Math.abs(visibleAirports.current.length - lastVisibleAirportCount.current)
+      const scaleChange = Math.abs(globeAirportAdjustedScale.current - lastAirportScale.current)
+
+      if (countChange < 10 && scaleChange < LOD_THRESHOLD_CHANGE) {
+         updateAirportScales()
+         return
+      }
+
+      displayAirports(visibleAirports.current)
+   }
 
    /**
-    * Update airports when camera move.
+    * Update scales of existing airports without recreating them.
+    */
+   const updateAirportScales = (): void => {
+      const scale = globeAirportAdjustedScale.current
+      displayedAirportsGroup.forEach((airport): void => {
+         airport.scale.set(scale, scale * 4, scale)
+      })
+      lastAirportScale.current = scale
+   }
+
+   /**
+    * Update airports when camera moves - with threshold-based triggering.
     */
    const onControlsChange = (): void => {
-      cameraDistanceToPlanetCenter.current =
-         displayedSceneData.controls.getDistance()
+      if (!displayedSceneData?.controls) return
 
+      const newDistance = displayedSceneData.controls.getDistance()
+      const distanceChange = Math.abs(newDistance - cameraDistanceToPlanetCenter.current)
+
+      // Only process if distance changed significantly. (threshold-based LOD)
+      if (distanceChange < 500) {
+         // Just update scale for smooth transitions.
+         const oldScale = globeAirportAdjustedScale.current
+         cameraDistanceToPlanetCenter.current = newDistance
+         globeAirportAdjustedScale.current = clamp(
+            newDistance / 10,
+            PLANE_SCENE_AIRPORT_MIN_SCALE,
+            PLANE_SCENE_AIRPORT_MAX_SCALE
+         )
+
+         if (Math.abs(globeAirportAdjustedScale.current - oldScale) >= LOD_THRESHOLD_CHANGE) {
+            updateAirportScales()
+         }
+         return
+      }
+
+      cameraDistanceToPlanetCenter.current = newDistance
       globeAirportAdjustedScale.current = clamp(
-         cameraDistanceToPlanetCenter.current / 10,
+         newDistance / 10,
          PLANE_SCENE_AIRPORT_MIN_SCALE,
-         PLANE_SCENE_AIRPORT_MAX_SCALE,
+         PLANE_SCENE_AIRPORT_MAX_SCALE
       )
 
       processAirports()
    }
 
-   /**
-    * Debounce the onControlsChange function to limit how often it can be called.
-    */
-   const debouncedOnControlsChange = debounce(onControlsChange, 2)
-
-   /**
-    * Remove event listener.
-    */
-   const cleanup = (): void => {
-      displayedSceneData?.controls?.removeEventListener('change', debouncedOnControlsChange)
-   }
-
    useEffect(() => {
-      displayedSceneData?.controls?.addEventListener('change', debouncedOnControlsChange)
+      displayedSceneData?.controls?.addEventListener('change', onControlsChange)
 
-      // Clean up the event listener.
-      return cleanup
+      return () => {
+         displayedSceneData?.controls?.removeEventListener('change', onControlsChange)
+      }
    }, [displayedSceneData])
 
    return null
