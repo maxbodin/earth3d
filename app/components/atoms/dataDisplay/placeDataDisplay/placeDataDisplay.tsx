@@ -1,22 +1,34 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { N_A_VALUE } from '@/app/constants/strings'
-import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { Button } from '@nextui-org/react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
+import React, { useState } from 'react'
 import { EyeIcon } from '@nextui-org/shared-icons'
-import { Feature, FeatureProperties } from '@/app/types/orsTypes'
-import { fetchGeoPhotos } from '@/app/server/services/flickrService'
-import debounce from 'lodash/debounce'
+import { Feature, FeatureProperties, GeocodeResponse } from '@/app/types/orsTypes'
 import { CompassIcon } from 'lucide-react'
+import { reverseORS } from '@/app/server/services/openRouteService'
+import { ObjectType } from '@/app/enums/objectType'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
+import {
+   getAntipodeCoordinates,
+   isFeature,
+   mergeDisplayValues,
+   normalizeDisplayValue,
+   parsePlaceCoordinates,
+} from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeDataDisplay.utils'
+import { PlaceField } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeField'
+import { PlaceImageCarousel, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeImageCarousel'
+import { usePlaceImages, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/usePlaceImages'
+import { PlaceFieldItem } from '@/app/types/placeFieldItem'
 
 export function PlaceDataDisplay(): React.JSX.Element {
-   const { selectedObjectData } = useSelection()
+   const {
+      selectedObjectData,
+      setSelectedObjectData,
+      setSelectedObjectType,
+   } = useSelection()
 
    const { flyToCoordinates, flyToOppositeCoordinates } = CameraFlyController()
 
-   const data: Feature = selectedObjectData as Feature
-
-   if (data == null) {
+   if (!isFeature(selectedObjectData)) {
       return (
          <>
             <h1>Failed to get data.</h1>
@@ -24,182 +36,183 @@ export function PlaceDataDisplay(): React.JSX.Element {
       )
    }
 
+   const data: Feature = selectedObjectData
+
    const properties: FeatureProperties = data.properties
-   const name: string = properties.name?.toString() || N_A_VALUE
-   const label: string = properties.label?.toString() || N_A_VALUE
-   const continent: string = properties.continent?.toString() || N_A_VALUE
-   const country: string = properties.country?.toString() || N_A_VALUE
-   const country_a: string = properties.country_a?.toString() || N_A_VALUE
-   const county: string = properties.county?.toString() || N_A_VALUE
-   const county_a: string = properties.county_a?.toString() || N_A_VALUE
-   const region: string = properties.region?.toString() || N_A_VALUE
+   const name: string = normalizeDisplayValue(properties.name)
+   const label: string = normalizeDisplayValue(properties.label)
+   const continent: string = normalizeDisplayValue(properties.continent)
+   const country: string = normalizeDisplayValue(properties.country)
+   const countryA: string = normalizeDisplayValue(properties.country_a)
+   const county: string = normalizeDisplayValue(properties.county)
+   const countyA: string = normalizeDisplayValue(properties.county_a)
+   const region: string = normalizeDisplayValue(properties.region)
 
-   const latitude: number = data.geometry.coordinates[1]
-   const longitude: number = data.geometry.coordinates[0]
-   const strLatitude: string = latitude.toFixed(3).toString() || N_A_VALUE
-   const strLongitude: string = longitude.toFixed(3).toString() || N_A_VALUE
+   const {
+      hasValidCoordinates,
+      latitude,
+      longitude,
+      strLatitude,
+      strLongitude,
+   } = parsePlaceCoordinates(data)
 
-   const [imageUrls, setImageUrls] = useState<string[]>([])
-   const [imagesLoading, setImagesLoading] = useState<boolean>(true)
+   const { imageUrls, imagesLoading } = usePlaceImages(
+      latitude,
+      longitude,
+      hasValidCoordinates,
+   )
+   const [oppositePointLoading, setOppositePointLoading] = useState<boolean>(false)
+   const [oppositePointError, setOppositePointError] = useState<string>('')
 
-   useEffect((): void => {
-      getPlacesImages()
-   }, [latitude, longitude])
+   const focusOnPlace = (): void => {
+      if (!hasValidCoordinates) return
 
-   const getPlacesImages = useCallback(
-      debounce(async () => {
-         setImagesLoading(true)
-         const newImageUrls = await fetchGeoPhotos(latitude, longitude)
+      flyToCoordinates(latitude, longitude)
+   }
 
-         if (newImageUrls) {
-            // Update state with the new image URLs.
-            setImageUrls(newImageUrls)
+   const focusOnOppositePoint = async (): Promise<void> => {
+      if (!hasValidCoordinates || oppositePointLoading) return
+
+      setOppositePointError('')
+      setOppositePointLoading(true)
+      flyToOppositeCoordinates(latitude, longitude)
+
+      const antipodeCoordinates = getAntipodeCoordinates(
+         latitude,
+         longitude,
+      )
+
+      try {
+         const response: GeocodeResponse = await reverseORS(
+            antipodeCoordinates.longitude,
+            antipodeCoordinates.latitude,
+         )
+
+         const oppositeFeature = response.features?.[0]
+
+         if (oppositeFeature == null) {
+            setOppositePointError('No place found at opposite point.')
+            return
          }
 
-         setImagesLoading(false)
-      }, 300), // Throttle input to 300ms.
-      [latitude, longitude],
-   )
+         setSelectedObjectData(oppositeFeature)
+         setSelectedObjectType(ObjectType.PLACE)
+      } catch {
+         setOppositePointError('Unable to fetch opposite point details.')
+      } finally {
+         setOppositePointLoading(false)
+      }
+   }
+
+   const placeHeadlineFields: PlaceFieldItem[] = [
+      {
+         label: 'Name',
+         value: name,
+         prominent: true,
+      },
+      {
+         label: 'Label',
+         value: label,
+      },
+   ]
+
+   const placeMetadataFields: PlaceFieldItem[] = [
+      {
+         label: 'Continent',
+         value: continent,
+      },
+      {
+         label: 'Country',
+         value: mergeDisplayValues(country, countryA),
+      },
+      {
+         label: 'County',
+         value: mergeDisplayValues(county, countyA),
+      },
+      {
+         label: 'Region',
+         value: region,
+      },
+   ]
+
+   const coordinatesFields: PlaceFieldItem[] = [
+      {
+         label: 'Longitude',
+         value: strLongitude,
+      },
+      {
+         label: 'Latitude',
+         value: strLatitude,
+      },
+   ]
 
    return (
-      <div>
-         {name != N_A_VALUE && (
-            <h2 className="text-white text-2xl font-bold mb-2">
-               Name: {name}{' '}
-            </h2>
-         )}
-         {label != N_A_VALUE && (
-            <h2 className="text-white text-xl font-bold mb-2">
-               Label: {label}{' '}
-            </h2>
-         )}
-         {continent != N_A_VALUE && (
-            <h2 className="text-white text-l font-bold mb-2">
-               Continent: {continent}{' '}
-            </h2>
-         )}
-         {country != N_A_VALUE && (
-            <h2 className="text-white text-l font-bold mb-2">
-               Country: {country}{' '}{country_a}
-            </h2>
-         )}
-         {county != N_A_VALUE && (
-            <h2 className="text-white text-l font-bold mb-2">
-               County: {county}{' '}{county_a}
-            </h2>
-         )}
-         {region != N_A_VALUE && (
-            <h2 className="text-white text-l font-bold mb-2">
-               Region: {region}{' '}
-            </h2>
-         )}
-         <div className="mb-2">
-            <p className="text-gray-300">
-               Longitude: {strLongitude}
-            </p>
-            <p className="text-gray-300">
-               Latitude: {strLatitude}
-            </p>
-         </div>
-         {
-            // Fallback for N/A values here:
-         }
-         {name == N_A_VALUE && (
-            <h2 className="text-gray-400 text-xl font-bold mb-2">
-               Name: {name}{' '}
-            </h2>
-         )}
-         {label == N_A_VALUE && (
-            <h2 className="text-gray-400 text-l font-bold mb-2">
-               Label: {label}{' '}
-            </h2>
-         )}
-         {continent == N_A_VALUE && (
-            <h2 className="text-gray-400 text-l font-bold mb-2">
-               Continent: {continent}{' '}
-            </h2>
-         )}
-         {country == N_A_VALUE && (
-            <h2 className="text-gray-400 text-l font-bold mb-2">
-               Country: {country}{' '}{country_a}
-            </h2>
-         )}
-         {county == N_A_VALUE && (
-            <h2 className="text-gray-400 text-l font-bold mb-2">
-               County: {county}{' '}{county_a}
-            </h2>
-         )}
-         {region == N_A_VALUE && (
-            <h2 className="text-gray-400 text-l font-bold mb-2">
-               Region: {region}{' '}
-            </h2>
-         )}
-         <div className="mb-2 mt-2">
-            {strLongitude == N_A_VALUE && (
-               <p className="text-gray-400">Longitude: {longitude}</p>
-            )}{' '}
-            {strLatitude == N_A_VALUE && (
-               <p className="text-gray-400">Latitude: {latitude}</p>
+      <div className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden">
+         <section className="space-y-1">
+            {placeHeadlineFields.map((field: PlaceFieldItem) => (
+               <PlaceField
+                  key={field.label}
+                  label={field.label}
+                  value={field.value}
+                  prominent={field.prominent}
+               />
+            ))}
+         </section>
+
+         <section className="space-y-1">
+            {placeMetadataFields.map((field: PlaceFieldItem) => (
+               <PlaceField
+                  key={field.label}
+                  label={field.label}
+                  value={field.value}
+               />
+            ))}
+         </section>
+
+         <section className="space-y-1">
+            {coordinatesFields.map((field: PlaceFieldItem) => (
+               <PlaceField
+                  key={field.label}
+                  label={field.label}
+                  value={field.value}
+               />
+            ))}
+         </section>
+
+         <PlaceImageCarousel imageUrls={imageUrls} imagesLoading={imagesLoading} />
+
+         <section className="flex flex-wrap items-center gap-2 pt-1">
+            {hasValidCoordinates && (
+               <Button
+                  variant="bordered"
+                  size="sm"
+                  aria-label="Focus view on place."
+                  className="z-50 bg-black/50"
+                  endContent={<EyeIcon />}
+                  onClick={focusOnPlace}
+               >
+                  Focus view on place
+               </Button>
             )}
-         </div>
-         {
-            // Images carousel :
-         }
-         <div>
-            <h1 className="text-l font-bold mb-2">Images</h1>
-            <div className="overflow-x-auto whitespace-nowrap">
-               <div className="flex space-x-4">
-                  {imagesLoading ? (
-                     <p className="text-gray-400 text-l mb-2">Loading images...</p>
-                  ) : imageUrls.length > 0 ? (
-                     <>
-                        {imageUrls.map((url: string, index: number) => (
-                           <div key={index} className="flex-shrink-0 w-48 h-48">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                 src={url}
-                                 alt={`Image ${index + 1}`}
-                                 className="w-full h-full object-cover"
-                              />
-                           </div>
-                        ))}
-                     </>
-                  ) : (
-                     <p className="text-gray-400 text-l mb-2">No images found.</p>
-                  )}
-               </div>
-            </div>
-         </div>
 
-         {latitude && longitude && <Button
-            variant="bordered"
-            size="sm"
-            aria-label="Focus view on place."
-            className="z-50 bg-black bg-opacity-50"
-            endContent={<EyeIcon />}
-            onClick={(): void => {
-               flyToCoordinates(latitude, longitude)
-            }}>
-            Focus view on place
-         </Button>}
+            {hasValidCoordinates && (
+               <Button
+                  variant="bordered"
+                  size="sm"
+                  aria-label="Get to opposite point on Earth."
+                  className="z-50 bg-black/50"
+                  endContent={<CompassIcon className="h-4 w-4" />}
+                  onClick={focusOnOppositePoint}
+                  isLoading={oppositePointLoading}
+               >
+                  Focus opposite point
+               </Button>
+            )}
+         </section>
 
-         <br />
-
-         {latitude && longitude && <Button
-            variant="bordered"
-            size="sm"
-            aria-label="Get to opposite point on Earth."
-            className="z-50 bg-black bg-opacity-50"
-            endContent={<CompassIcon />}
-            onClick={(): void => {
-               flyToOppositeCoordinates(latitude, longitude)
-
-               // TODO : display data about this point after fly to.
-               // http://www.csgnetwork.com/latlonginfocalc.html
-               // Flyto + set selected date using ORS??
-            }}>
-            Focus view on place
-         </Button>}
+         {oppositePointError.length > 0 && (
+            <p className="text-xs text-rose-300">{oppositePointError}</p>
+         )}
       </div>
    )
 }

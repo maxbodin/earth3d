@@ -1,37 +1,23 @@
 'use client'
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut/fadeInOut'
 import './styles.css'
 import { PanelType } from '@/app/enums/panelType'
 import { useCredit } from '@/app/components/organisms/credit/credit.model'
-import { Button, ButtonGroup, Tooltip } from '@nextui-org/react'
-import { PinIcon } from '@/app/components/icons/pinIcon'
-import { DashboardIcon } from '@/app/components/icons/dashboardIcon'
-import { CreditIcon } from '@/app/components/icons/creditIcon'
-import { DataIcon } from '@/app/components/icons/dataIcon'
+import { Button, Tooltip } from '@nextui-org/react'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { useDataDashboard } from '@/app/components/organisms/dataDashboard/dataDashboard.model'
 import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
-import {
-   AArrowDownIcon,
-   AArrowUpIcon,
-   EarthIcon,
-   GithubIcon,
-   HandIcon,
-   MousePointer2Icon,
-   ShuffleIcon,
-} from 'lucide-react'
+import { GithubIcon, } from 'lucide-react'
 import Link from 'next/link'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
-import { GeocodeResponse } from '@/app/types/orsTypes'
-import { reverseORS } from '@/app/server/services/openRouteService'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
-import { ObjectType } from '@/app/enums/objectType'
 import { CursorModeType } from '@/app/enums/modeType'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
-import { SceneType } from '@/app/enums/sceneType'
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
+import { NavigationBarActionGroup, } from '@/app/components/molecules/navigationBar/navigationBarActionGroup'
+import { useRandomLandPlace, } from '@/app/components/molecules/navigationBar/useRandomLandPlace'
 
 export function NavigationBar() {
    const {
@@ -53,175 +39,102 @@ export function NavigationBar() {
 
    const { trueSize, setTrueSize } = useSolarSystem()
 
-   const openMarkers = (): void => {
+   const { getRandomPlace, isRandomPlaceLoading } = useRandomLandPlace({
+      flyToCoordinates,
+      setSelectedObjectData,
+      setSelectedObjectType,
+   })
+
+   const openPanel = useCallback((panelType: PanelType): void => {
       setIsNavBarDisplayed(false)
-      setOpenedPanelType(PanelType.MARKERS)
-   }
+      setOpenedPanelType(panelType)
+   }, [setIsNavBarDisplayed, setOpenedPanelType])
 
-   const openDashboard = (): void => {
-      setIsNavBarDisplayed(false)
-      setOpenedPanelType(PanelType.DASHBOARD)
-   }
+   const openMarkers = useCallback((): void => {
+      openPanel(PanelType.MARKERS)
+   }, [openPanel])
 
-   const openCredit = (): void => {
-      setIsNavBarDisplayed(false)
-      setOpenedPanelType(PanelType.CREDIT)
-   }
+   const openDashboard = useCallback((): void => {
+      openPanel(PanelType.DASHBOARD)
+   }, [openPanel])
 
-   const openData = (): void => {
-      setIsNavBarDisplayed(false)
-      setOpenedPanelType(PanelType.DATA)
-   }
+   const openCredit = useCallback((): void => {
+      openPanel(PanelType.CREDIT)
+   }, [openPanel])
 
-
-   /**
-    * TODO : Refactor in the right file.
-    */
-   const getRandomPlace = async (): Promise<void> => {
-      const randomLatitude: number = Math.random() * 180 - 90  // Random latitude between -90 and 90.
-      const randomLongitude: number = Math.random() * 360 - 180 // Random longitude between -180 and 180.
-
-      try {
-         // Call server-side function.
-         const data: GeocodeResponse = await reverseORS(randomLongitude, randomLatitude)
-
-         // Display place data.
-         setSelectedObjectData(data.features[0])
-         setSelectedObjectType(ObjectType.PLACE)
-
-         flyToCoordinates(
-            randomLatitude,
-            randomLongitude,
-         )
-
-      } catch (err) {
-         // TODO : Signaler l'erreur.
-      }
-   }
+   const openData = useCallback((): void => {
+      openPanel(PanelType.DATA)
+   }, [openPanel])
 
    useEffect((): void => {
-      // When cursor mode is updated we update the cursor.
-      updateCursorStyle()
+      document.body.style.cursor = cursorMode === CursorModeType.HAND
+         ? 'pointer'
+         : 'default'
    }, [cursorMode])
 
-   /**
-    *
-    */
-   const updateCursorStyle = (): void => {
-      if (cursorMode == CursorModeType.HAND) {
-         // Apply hand cursor.
-         document.body.style.cursor = 'pointer'
-
-      } else {
-         // Apply arrow cursor.
-         document.body.style.cursor = 'default'
-      }
-   }
-
-   /**
-    *
-    */
-   const reverseCursorMode = (): void => {
+   const reverseCursorMode = useCallback((): void => {
       setCursorMode(cursorMode == CursorModeType.HAND ? CursorModeType.POINTER : CursorModeType.HAND)
-   }
+   }, [cursorMode, setCursorMode])
 
-   /**
-    *
-    */
-   const reverseSolarSystemTrueSize = (): void => {
+   const reverseSolarSystemTrueSize = useCallback((): void => {
       setTrueSize((prevState: boolean) => {
          return !prevState
       })
-   }
+   }, [setTrueSize])
+
+   const handleBackToEarth = useCallback((): void => {
+      // TODO : Implement get back to earth scene instantly.
+   }, [])
+
+   const handlePreFadeOut = useCallback((): void => {
+      setIsSearchBarDisplayed(false)
+
+      switch (openedPanelType) {
+         case PanelType.NULL:
+            break
+         case PanelType.MARKERS:
+            setIsMarkersDashboardOpen(true)
+            break
+         case PanelType.DASHBOARD:
+            setIsSettingsDashboardOpen(true)
+            break
+         case PanelType.CREDIT:
+            setIsCreditOpen(true)
+            break
+         case PanelType.DATA:
+            setIsDataDashboardOpen(true)
+            break
+      }
+   }, [
+      openedPanelType,
+      setIsSearchBarDisplayed,
+      setIsMarkersDashboardOpen,
+      setIsSettingsDashboardOpen,
+      setIsCreditOpen,
+      setIsDataDashboardOpen,
+   ])
 
    return (
-      <>
          <FadeInOut
             isVisible={isNavBarDisplayed}
-            preFadeOutCallback={(): void => {
-               // TODO : Refactor in dedicated function.
-               setIsSearchBarDisplayed(false)
-
-               switch (openedPanelType) {
-                  case PanelType.NULL:
-                     break
-                  case PanelType.MARKERS:
-                     setIsMarkersDashboardOpen(true)
-                     break
-                  case PanelType.DASHBOARD:
-                     setIsSettingsDashboardOpen(true)
-                     break
-                  case PanelType.CREDIT:
-                     setIsCreditOpen(true)
-                     break
-                  case PanelType.DATA:
-                     setIsDataDashboardOpen(true)
-                     break
-               }
-            }}
+            preFadeOutCallback={handlePreFadeOut}
          >
             <div
                className="flex flex-row navbaricons absolute right-10 p-4 transform bottom-10 z-40">
-               <ButtonGroup variant="bordered"
-                            className="rounded-2xl bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg">
-
-                  {displayedSceneData && displayedSceneData.type == SceneType.SOLAR_SYSTEM && <><Tooltip
-                     content={trueSize ? 'Switch to Visualization Size' : 'Switch to True Size'}>
-                     <Button size="lg" isIconOnly variant="bordered"
-                             aria-label={trueSize ? 'Switch to Visualization Size' : 'Switch to True Size'}
-                             onClick={reverseSolarSystemTrueSize}>
-                        {trueSize ? <AArrowUpIcon /> : <AArrowDownIcon />}
-                     </Button>
-                  </Tooltip>
-                     <Tooltip
-                        content="Get back to Earth.">
-                        <Button size="lg" isIconOnly variant="bordered"
-                                aria-label="Get back to Earth."
-                                onClick={() => {// TODO : Implement get back to earth scene instantly.
-                                }}>
-                           <EarthIcon />
-                        </Button>
-                     </Tooltip> </>}
-                  {displayedSceneData && displayedSceneData.type != SceneType.SOLAR_SYSTEM &&
-                     <>
-                        <Tooltip
-                           content={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}>
-                           <Button size="lg" isIconOnly variant="bordered"
-                                   aria-label={cursorMode == CursorModeType.POINTER ? 'Switch to Hand Mode' : 'Switch to Select Mode'}
-                                   onClick={reverseCursorMode}>
-                              {cursorMode == CursorModeType.POINTER ? <MousePointer2Icon /> : <HandIcon />}
-                           </Button>
-                        </Tooltip>
-                        <Tooltip content="Open Markers">
-                           <Button size="lg" isIconOnly variant="bordered" aria-label="Open Markers"
-                                   onClick={openMarkers}>
-                              <PinIcon />
-                           </Button>
-                        </Tooltip>
-                     </>}
-                  <Tooltip content="Open Settings">
-                     <Button size="lg" isIconOnly variant="bordered" aria-label="Open Settings" onClick={openDashboard}>
-                        <DashboardIcon />
-                     </Button>
-                  </Tooltip>
-                  <Tooltip content="Open Data">
-                     <Button size="lg" isIconOnly variant="bordered" aria-label="Open Data" onClick={openData}>
-                        <DataIcon />
-                     </Button>
-                  </Tooltip>
-                  <Tooltip content="Open Credit">
-                     <Button size="lg" isIconOnly variant="bordered" aria-label="Open Credit" onClick={openCredit}>
-                        <CreditIcon />
-                     </Button>
-                  </Tooltip>
-                  {displayedSceneData && displayedSceneData.type != SceneType.SOLAR_SYSTEM &&
-                     <Tooltip content="Random Place">
-                        <Button size="lg" isIconOnly variant="bordered" aria-label="Random Place"
-                                onClick={getRandomPlace}>
-                           <ShuffleIcon />
-                        </Button>
-                     </Tooltip>}
-               </ButtonGroup>
+               <NavigationBarActionGroup
+                  displayedSceneType={displayedSceneData?.type ?? null}
+                  cursorMode={cursorMode}
+                  trueSize={trueSize}
+                  isRandomPlaceLoading={isRandomPlaceLoading}
+                  onToggleSolarSystemScale={reverseSolarSystemTrueSize}
+                  onBackToEarth={handleBackToEarth}
+                  onToggleCursorMode={reverseCursorMode}
+                  onOpenMarkers={openMarkers}
+                  onOpenSettings={openDashboard}
+                  onOpenData={openData}
+                  onOpenCredit={openCredit}
+                  onRandomPlace={getRandomPlace}
+               />
                <div className="pl-4">
                   <Tooltip content="GitHub Project">
                      <Button size="lg" isIconOnly variant="bordered" aria-label="Open GitHub Project"
@@ -234,6 +147,5 @@ export function NavigationBar() {
                </div>
             </div>
          </FadeInOut>
-      </>
    )
 }
