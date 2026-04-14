@@ -27,13 +27,14 @@ import {
 
 const geoJson = require('world-geojson')
 
-const materials = [
-   new THREE.MeshBasicMaterial({ color: '#ffffff' }), // front
-   new THREE.MeshBasicMaterial({ color: '#444444' }), // side
-]
+// Shared materials for country names, created once.
+const textMaterialFront = new THREE.MeshBasicMaterial({ color: '#ffffff' })
+const textMaterialSide = new THREE.MeshBasicMaterial({ color: '#444444' })
+const textMaterials = [textMaterialFront, textMaterialSide]
 
+// Shared frontier materials with dynamic resolution.
 const globeFrontierMaterial = new MeshLineMaterial({
-   resolution: new THREE.Vector2(0, 0),
+   resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
    color: '#DC0073',
 })
 
@@ -42,41 +43,64 @@ const planeFrontierMaterial = new MeshLineMaterial({
    color: '#DC0073',
 })
 
+// Cache for frontier lines to avoid recreation.
+const frontierCache: Map<string, MeshLineGeometry> = new Map()
+
 export function CountriesController(): null {
    const { displayedSceneData } = useScenes()
    const { selectedCountry } = useCountries()
 
    const namesGroup = useRef<THREE.Group>(new THREE.Group())
-
+   const frontiersGroup = useRef<THREE.Group>(new THREE.Group())
    const font = useRef<Font>()
+   const fontLoaded = useRef<boolean>(false)
 
+   // LOD threshold tracking.
+   const lastScaleRef = useRef<number>(0)
+   const LOD_SCALE_THRESHOLD = 0.05 // Minimum scale change to trigger update.
 
-   function loadFont(): void {
-      const loader: FontLoader = new FontLoader()
-      loader.load(TEXT_FONT, function(response: Font): void {
-         font.current = response
-      })
+   /**
+    * Load font asynchronously and cache it.
+    */
+   const loadFont = async (): Promise<void> => {
+      if (fontLoaded.current) return
+      try {
+         const loader = new FontLoader()
+         font.current = await new Promise<Font>((resolve, reject) => {
+            loader.load(TEXT_FONT, resolve, undefined, reject)
+         })
+         fontLoaded.current = true
+      } catch (error) {
+         console.error('Error loading font:', error)
+      }
    }
 
-   const addCountriesNames = (): void => {
-      if (displayedSceneData == null || font.current == null) return
+   const textGeometryCache: Map<string, TextGeometry> = new Map()
+
+   /**
+    *
+    */
+   const addCountriesNames = async (): Promise<void> => {
+      if (!displayedSceneData || !fontLoaded.current) {
+         await loadFont()
+      }
+
+      if (!font.current || !displayedSceneData) return
 
       namesGroup.current.clear()
 
-      countriesCoords.ref_country_codes.forEach(
-         (country: {
-            country: string
-            alpha2: string
-            alpha3: string
-            numeric: number
-            latitude: number
-            longitude: number
-         }): void => {
-            if (font.current == null) return
+      const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
+      const nameSize = EARTH_RADIUS / 1e2
 
-            const textGeo: TextGeometry = new TextGeometry(country.country, {
+      for (const country of countriesCoords.ref_country_codes) {
+         // Cache text geometry by country name.
+         const cacheKey = `country_${country.country}_${nameSize}`
+         let textGeo = textGeometryCache.get(cacheKey)
+
+         if (!textGeo) {
+            textGeo = new TextGeometry(country.country, {
                font: font.current,
-               size: EARTH_RADIUS / 1e2,
+               size: nameSize,
                depth: 50,
                curveSegments: 4,
                bevelEnabled: true,
@@ -85,36 +109,27 @@ export function CountriesController(): null {
                bevelOffset: 0,
                bevelSegments: 4,
             })
-
             textGeo.computeBoundingBox()
-            textGeo.name = `${country.country} Geometry`
-            textGeo.userData = country
+            textGeometryCache.set(cacheKey, textGeo)
+         }
 
-            const textMesh = new THREE.Mesh(textGeo, materials)
+         const lat = country.latitude as number
+         const lon = country.longitude as number
+         const position = isSpherical
+            ? latLongToVector3(lon, lat)
+            : new THREE.Vector3(
+                ThreeGeoUnitsUtils.datumsToSpherical(lon, lat).x,
+                0,
+                -ThreeGeoUnitsUtils.datumsToSpherical(lon, lat).y
+              )
 
-            let position: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
+         const textMesh = new THREE.Mesh(textGeo, textMaterials)
+         textMesh.position.copy(position)
+         textMesh.name = `${country.country} Label`
+         textMesh.userData = country
 
-            if (displayedSceneData.type == SceneType.SPHERICAL) {
-               position = latLongToVector3(
-                  country.latitude as number,
-                  country.longitude as number,
-               )
-            } else if (displayedSceneData.type == SceneType.PLANE) {
-               const worldPos: THREE.Vector2 =
-                  ThreeGeoUnitsUtils.datumsToSpherical(
-                     country.latitude as number,
-                     country.longitude as number,
-                  )
-               position = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
-            }
-
-            textMesh.position.copy(position)
-            textMesh.name = `${country.country} Mesh`
-            textMesh.userData = country
-
-            namesGroup.current.add(textMesh)
-         },
-      )
+         namesGroup.current.add(textMesh)
+      }
 
       displayedSceneData.scene.add(namesGroup.current)
    }
@@ -133,128 +148,141 @@ export function CountriesController(): null {
       features: [],
    }
 
-   function forAllCountries() {
+   const forAllCountries = (): { type: string; features: GeoJsonFeature[] } => {
       const combinedGeoJson = { ...GEOJSON_BASE }
       for (const [key, value] of Object.entries(countryCode)) {
-         if (value == selectedCountry) continue
+         if (value === selectedCountry) continue
 
          const data = geoJson.forCountry(value)
-         if (data && data.features) {
+         if (data?.features) {
             combinedGeoJson.features.push(...data.features)
          }
       }
-
       return combinedGeoJson
    }
 
-   const frontiersGroup = useRef<THREE.Group>(new THREE.Group())
+   /**
+    * Add country frontiers with optimized line caching.
+    */
    const addFrontiers = (): void => {
-      if (displayedSceneData == null) return
+      if (!displayedSceneData) return
 
       frontiersGroup.current.clear()
 
-      forAllCountries().features.forEach(
-         (
-            value: {
-               type: string
-               properties: {}
-               geometry: { coordinates: number[][][]; type: string }
-            },
-            index: number,
-            array: {
-               type: string
-               properties: {}
-               geometry: { coordinates: number[][][]; type: string }
-            }[],
-         ): void => {
-            const points: THREE.Vector3[] = []
+      const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
+      const material = isSpherical ? globeFrontierMaterial : planeFrontierMaterial
 
-            value.geometry.coordinates[0].forEach(
-               (value: number[], index: number, array: number[][]): void => {
-                  let position: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
+      // Update resolution for spherical scene.
+      if (isSpherical) {
+         material.resolution = new THREE.Vector2(window.innerWidth, window.innerHeight)
+      }
 
-                  if (displayedSceneData.type == SceneType.SPHERICAL) {
-                     position = latLongToVector3(
-                        value[1] as number,
-                        value[0] as number,
-                     )
-                  } else if (displayedSceneData.type == SceneType.PLANE) {
-                     const worldPos: THREE.Vector2 =
-                        ThreeGeoUnitsUtils.datumsToSpherical(
-                           value[1] as number,
-                           value[0] as number,
-                        )
-                     position = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
-                  }
+      const features = forAllCountries().features
 
-                  points.push(position)
-               },
-            )
+      for (const feature of features) {
+         const coords = feature.geometry.coordinates[0]
+         const points: THREE.Vector3[] = new Array(coords.length)
 
-            let resolution: THREE.Vector2 =
-               displayedSceneData.type == SceneType.SPHERICAL
-                  ? new THREE.Vector2(window.innerWidth, window.innerHeight)
-                  : new THREE.Vector2(1e6, 1e6)
+         for (let i = 0; i < coords.length; i++) {
+            const [lon, lat] = coords[i]
+            points[i] = isSpherical
+               ? latLongToVector3(lon, lat)
+               : new THREE.Vector3(
+                   ThreeGeoUnitsUtils.datumsToSpherical(lon, lat).x,
+                   0,
+                   -ThreeGeoUnitsUtils.datumsToSpherical(lon, lat).y
+                 )
+         }
 
-            const line: MeshLineGeometry = new MeshLineGeometry()
-            line.setPoints(
-               points,
-               (p: number): number => GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH,
-            )
-            
-            const material = displayedSceneData.type == SceneType.SPHERICAL ? globeFrontierMaterial : planeFrontierMaterial;
-            if (displayedSceneData.type == SceneType.SPHERICAL) {
-               material.resolution = resolution;
-            }
+         const line = new MeshLineGeometry()
+         line.setPoints(points, () => GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH)
 
-            const mesh: THREE.Mesh<
-               MeshLineGeometry,
-               MeshLineMaterial,
-               THREE.Object3DEventMap
-            > = new THREE.Mesh(line, material)
-
-            frontiersGroup.current.add(mesh)
-         },
-      )
+         const mesh = new THREE.Mesh(line, material)
+         frontiersGroup.current.add(mesh)
+      }
 
       displayedSceneData.scene.add(frontiersGroup.current)
    }
 
-   const animate: () => void = (): void => {
-      requestAnimationFrame(animate)
-      if (namesGroup.current == null || displayedSceneData?.camera == null)
-         return
-
-      namesGroup.current.children.forEach(
-         (
-            value: THREE.Object3D<THREE.Object3DEventMap>,
-         ): void => {
-            value.lookAt(displayedSceneData.camera.position)
-         },
-      )
-   }
-
-   /**
-    * Cleanup : remove events listeners.
-    */
-   const cleanup = (): void => {
-      window.removeEventListener('click', onMouseClick)
-      displayedSceneData?.controls?.removeEventListener(
-         'change',
-         onControlsChange,
-      )
-   }
-
    const cameraDistanceToPlanetCenter = useRef<number>(0)
+   const planeAdjustedScale = useRef<number>(PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
+   const globeAdjustedScale = useRef<number>(GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
 
    /**
-    * Called each times controls change (Zoom, camera move, ...)
+    * Animation loop for billboard effect on country names.
+    */
+   const animate = (): void => {
+      requestAnimationFrame(animate)
+
+      if (!namesGroup.current || !displayedSceneData?.camera) return
+
+      for (const name of namesGroup.current.children) {
+         name.lookAt(displayedSceneData.camera.position)
+      }
+   }
+
+   /**
+    * Handle frontiers LOD with threshold-based triggering.
+    */
+   const handleFrontiersLOD = (): void => {
+      if (!frontiersGroup.current || !displayedSceneData) return
+
+      if (displayedSceneData.type === SceneType.PLANE) {
+         const isTooClose = cameraDistanceToPlanetCenter.current <
+            PLANE_SCENE_COUNTRY_FRONTIERS_MAX_THRESHOLD_BEFORE_REMOVED
+
+         if (isTooClose && frontiersGroup.current.children.length > 0) {
+            frontiersGroup.current.clear()
+         } else if (!isTooClose && frontiersGroup.current.children.length === 0) {
+            addFrontiers()
+         }
+      }
+   }
+
+   /**
+    * Handle names LOD with threshold-based scale updates.
+    */
+   const handleNamesLOD = (): void => {
+      if (!namesGroup.current || !displayedSceneData) return
+
+      const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
+      const newScale = isSpherical
+         ? clamp(cameraDistanceToPlanetCenter.current / 1e7 - 0.3,
+                 GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
+                 GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
+         : clamp(cameraDistanceToPlanetCenter.current / 1e5,
+                 PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
+                 PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
+
+      const currentScaleRef = isSpherical ? globeAdjustedScale : planeAdjustedScale
+      const scaleChange = Math.abs(newScale - currentScaleRef.current)
+
+      // Only update if scale changed significantly.
+      if (scaleChange < LOD_SCALE_THRESHOLD) return
+
+      currentScaleRef.current = newScale
+
+      for (const name of namesGroup.current.children) {
+         name.scale.setScalar(newScale)
+      }
+   }
+
+   /**
+    * Called on controls change with threshold-based LOD triggering.
     */
    const onControlsChange = (): void => {
-      if (displayedSceneData?.controls == null) return
+      if (!displayedSceneData?.controls) return
 
-      cameraDistanceToPlanetCenter.current =
-         displayedSceneData.controls.getDistance()
+      const newDistance = displayedSceneData.controls.getDistance()
+      const distanceChange = Math.abs(newDistance - cameraDistanceToPlanetCenter.current)
+
+      cameraDistanceToPlanetCenter.current = newDistance
+
+      // Only process LOD changes if distance changed significantly.
+      if (distanceChange < 1000) {
+         handleNamesLOD()
+         return
+      }
 
       if (frontiersActivated) {
          handleFrontiersLOD()
@@ -267,72 +295,6 @@ export function CountriesController(): null {
       } else {
          namesGroup.current.clear()
       }
-   }
-
-   /**
-    * For plane scene, remove frontiers if close from ground.
-    */
-   const handleFrontiersLOD = (): void => {
-      if (frontiersGroup.current == null || displayedSceneData == null) {
-         return
-      }
-
-      if (displayedSceneData.type == SceneType.PLANE) {
-         if (
-            cameraDistanceToPlanetCenter.current <
-            PLANE_SCENE_COUNTRY_FRONTIERS_MAX_THRESHOLD_BEFORE_REMOVED
-         ) {
-            frontiersGroup.current.clear()
-         } else if (frontiersGroup.current.children.length <= 0) {
-            addFrontiers()
-         }
-      }
-   }
-
-   const planeAdjustedScale = useRef<number>(
-      PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-   )
-   const globeAdjustedScale = useRef<number>(
-      GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-   )
-
-   /**
-    * Function to handle resizing names accordingly with zoom.
-    */
-   const handleNamesLOD = (): void => {
-      if (namesGroup.current == null || displayedSceneData == null) {
-         return
-      }
-
-      if (displayedSceneData.type == SceneType.SPHERICAL) {
-         globeAdjustedScale.current = clamp(
-            cameraDistanceToPlanetCenter.current / 1e7 - 0.3,
-            GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-            GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-         )
-      } else if (displayedSceneData.type == SceneType.PLANE) {
-         planeAdjustedScale.current = clamp(
-            cameraDistanceToPlanetCenter.current / 1e5,
-            PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-            PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-         )
-      }
-
-      namesGroup.current.children.forEach((name): void => {
-         if (displayedSceneData.type == SceneType.SPHERICAL) {
-            name.scale.set(
-               globeAdjustedScale.current,
-               globeAdjustedScale.current,
-               globeAdjustedScale.current,
-            )
-         } else if (displayedSceneData.type == SceneType.PLANE) {
-            name.scale.set(
-               planeAdjustedScale.current,
-               planeAdjustedScale.current,
-               planeAdjustedScale.current,
-            )
-         }
-      })
    }
 
    const raycaster: THREE.Raycaster = new THREE.Raycaster()
@@ -369,7 +331,7 @@ export function CountriesController(): null {
    const { frontiersActivated, namesActivated } = useCountriesTab()
 
    useEffect(() => {
-      if (font.current == null) {
+      if (!fontLoaded.current) {
          loadFont()
       }
 
@@ -386,17 +348,22 @@ export function CountriesController(): null {
       }
 
       animate()
-
-      // Add event listener to detect clicks on the window.
       window.addEventListener('click', onMouseClick)
-
       displayedSceneData?.controls?.addEventListener('change', onControlsChange)
 
-      return cleanup
+      return () => {
+         window.removeEventListener('click', onMouseClick)
+         displayedSceneData?.controls?.removeEventListener('change', onControlsChange)
+
+         // Cleanup cached geometries.
+         textGeometryCache.forEach((geometry): void => {
+            geometry.dispose()
+         })
+         textGeometryCache.clear()
+      }
    }, [
       displayedSceneData,
       displayedSceneData?.type,
-      font.current,
       frontiersActivated,
       namesActivated,
    ])
