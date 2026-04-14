@@ -2,8 +2,7 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react'
 import { astres } from '@/app/data/astres'
 import { Astre } from '@/app/types/astre'
-import { DateValue } from '@nextui-org/react'
-import { parseDate } from '@internationalized/date'
+import { DateValue, parseDate } from '@internationalized/date'
 
 interface AstresListContextValue {
    selectedAstre: Astre
