@@ -8,6 +8,9 @@ import { astres } from '@/app/data/astres'
 import { Body } from 'astronomy-engine'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import { Font } from 'three/examples/jsm/loaders/FontLoader.js'
+import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import {
    SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE,
    SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MIN_SCALE,
@@ -21,6 +24,7 @@ import { useAstresList } from '@/app/components/organisms/astresList/astresList.
 import { SolarSystemHelper } from '@/app/components/atoms/three/solarSystem/solarSystem.helper'
 import { SOLAR_SYSTEM_FRAGMENT_SHADER, SOLAR_SYSTEM_VERTEX_SHADER } from '@/app/lib/shaders'
 import { AssetManager } from '@/app/lib/assetManager'
+import { buildTrajectoryPoints } from '@/app/components/atoms/three/solarSystem/solarSystemTrajectories.helper'
 
 // Shared materials for text labels.
 const textMaterialFront = new THREE.MeshBasicMaterial({ color: '#ffffff' })
@@ -31,17 +35,18 @@ const textMaterials = [textMaterialFront, textMaterialSide]
 const solarSystemMaterials: Map<string, THREE.ShaderMaterial> = new Map()
 
 export function SolarSystemController(): null {
-   const { displayedSceneData } = useScenes()
+   const { displayedSceneData, solarSystemScene } = useScenes()
    const { selectedAstre, selectedDate } = useAstresList()
    const { getPlanetPosition, dateValueToDate } = SolarSystemHelper()
 
    const namesGroup = useRef<THREE.Group>(new THREE.Group())
    const astresMeshesGroup = useRef<THREE.Group>(new THREE.Group())
+   const trajectoriesGroup = useRef<THREE.Group>(new THREE.Group())
 
    const font = useRef<Font>()
    const fontLoaded = useRef<boolean>(false)
 
-   const { trueSize } = useSolarSystem()
+   const { trueSize, showTrajectories, trajectoryLineWidth } = useSolarSystem()
 
    /**
     * Load font once and cache it.
@@ -167,6 +172,61 @@ export function SolarSystemController(): null {
             }
          })
       }
+
+   /**
+    *
+    */
+   const createSolarSystemTrajectories = (): void => {
+      clearGroup(trajectoriesGroup.current)
+
+      const referenceDate = dateValueToDate(selectedDate)
+
+      for (const astre of astres) {
+         // Keep trajectory rendering focused on orbiting bodies.
+         // No trajectory for sun.
+         if (astre.body === Body.Sun) continue
+
+         const points = buildTrajectoryPoints({
+            body: astre.body,
+            centerDate: referenceDate,
+            getPlanetPosition,
+            anchorBody: astre.body === Body.Moon ? Body.Earth : undefined,
+         })
+
+         if (points.length < 3) continue
+
+         const linePositions: number[] = []
+         points.forEach((point: THREE.Vector3): void => {
+            linePositions.push(point.x, point.y, point.z)
+         })
+
+         // Close the trajectory loop.
+         linePositions.push(points[0].x, points[0].y, points[0].z)
+
+         const geometry = new LineGeometry()
+         geometry.setPositions(linePositions)
+
+         const material = new LineMaterial({
+            color: astre.color,
+            transparent: true,
+            opacity: 0.35,
+            linewidth: trajectoryLineWidth,
+            worldUnits: false,
+            depthWrite: false,
+            depthTest: true,
+         })
+
+         if (typeof window !== 'undefined') {
+            material.resolution.set(window.innerWidth, window.innerHeight)
+         }
+
+         const trajectory = new Line2(geometry, material)
+         trajectory.computeLineDistances()
+         trajectory.name = `${astre.name} Trajectory`
+
+         trajectoriesGroup.current.add(trajectory)
+      }
+   }
 
    /**
     *
@@ -308,6 +368,66 @@ export function SolarSystemController(): null {
          displayedSceneData.controls.minDistance = (trueSize ? selectedAstre.radius : SUN_RADIUS) * 2
       }
    }, [displayedSceneData, selectedAstre, trueSize])
+
+
+   useEffect((): void => {
+      if (trajectoriesGroup.current.parent !== solarSystemScene) {
+         solarSystemScene.add(trajectoriesGroup.current)
+      }
+   }, [solarSystemScene])
+
+
+   useEffect((): void => {
+      if (displayedSceneData?.type !== SceneType.SOLAR_SYSTEM) {
+         return
+      }
+
+      if (!showTrajectories) {
+         trajectoriesGroup.current.visible = false
+         return
+      }
+
+      createSolarSystemTrajectories()
+      trajectoriesGroup.current.visible = true
+   }, [displayedSceneData, showTrajectories, selectedDate])
+
+
+   useEffect((): void => {
+      trajectoriesGroup.current.children.forEach((trajectory): void => {
+         const material = (trajectory as Line2).material as LineMaterial
+         material.linewidth = trajectoryLineWidth
+         material.needsUpdate = true
+      })
+   }, [trajectoryLineWidth])
+
+
+   useEffect((): (() => void) | void => {
+      if (typeof window === 'undefined') {
+         return
+      }
+
+      const updateTrajectoryResolution = (): void => {
+         trajectoriesGroup.current.children.forEach((trajectory): void => {
+            const material = (trajectory as Line2).material as LineMaterial
+            material.resolution.set(window.innerWidth, window.innerHeight)
+         })
+      }
+
+      updateTrajectoryResolution()
+      window.addEventListener('resize', updateTrajectoryResolution)
+
+      return () => {
+         window.removeEventListener('resize', updateTrajectoryResolution)
+      }
+   }, [])
+
+
+   useEffect(() => {
+      return () => {
+         clearGroup(trajectoriesGroup.current)
+         trajectoriesGroup.current.removeFromParent()
+      }
+   }, [])
 
 
    /**

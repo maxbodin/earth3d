@@ -25,6 +25,9 @@ import {
 import {
    SettingsDashboardTabsExecuteDefaultValues,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/settingsDashboardTabsExecuteDefaultValues'
+import {
+   SolarSystemTabView,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/solarSystemTab/solarSystemTab.view'
 
 export function SettingsDashboardView() {
    const { activeSettingsDashboardTab, isSettingsDashboardOpen, setIsSettingsDashboardOpen } =
@@ -49,6 +52,8 @@ export function SettingsDashboardView() {
             return <OuterSpaceTabView />
          case TabType.COUNTRIES:
             return <CountriesTabView />
+         case TabType.SOLAR_SYSTEM:
+            return <SolarSystemTabView />
       }
    }, [activeSettingsDashboardTab])
 

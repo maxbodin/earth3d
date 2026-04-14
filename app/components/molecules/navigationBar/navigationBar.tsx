@@ -37,7 +37,7 @@ export function NavigationBar() {
    const { flyToCoordinates } = CameraFlyController()
    const { setSelectedObjectType, setSelectedObjectData, cursorMode, setCursorMode } = useSelection()
 
-   const { trueSize, setTrueSize } = useSolarSystem()
+   const { trueSize, setTrueSize, showTrajectories, setShowTrajectories } = useSolarSystem()
 
    const { getRandomPlace, isRandomPlaceLoading } = useRandomLandPlace({
       flyToCoordinates,
@@ -82,6 +82,12 @@ export function NavigationBar() {
       })
    }, [setTrueSize])
 
+   const reverseSolarSystemTrajectories = useCallback((): void => {
+      setShowTrajectories((prevState: boolean) => {
+         return !prevState
+      })
+   }, [setShowTrajectories])
+
    const handleBackToEarth = useCallback((): void => {
       // TODO : Implement get back to earth scene instantly.
    }, [])
@@ -125,8 +131,10 @@ export function NavigationBar() {
                   displayedSceneType={displayedSceneData?.type ?? null}
                   cursorMode={cursorMode}
                   trueSize={trueSize}
+                  showTrajectories={showTrajectories}
                   isRandomPlaceLoading={isRandomPlaceLoading}
                   onToggleSolarSystemScale={reverseSolarSystemTrueSize}
+                  onToggleSolarSystemTrajectories={reverseSolarSystemTrajectories}
                   onBackToEarth={handleBackToEarth}
                   onToggleCursorMode={reverseCursorMode}
                   onOpenMarkers={openMarkers}

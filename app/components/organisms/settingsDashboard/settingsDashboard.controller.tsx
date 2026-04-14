@@ -1,34 +1,22 @@
 import { TAB_TITLES } from '@/app/constants/strings'
 import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
+import { TabType } from '@/app/enums/tabType'
 
 export function SettingsDashboardController() {
    const { setActiveSettingsDashboardTab } = useSettingsDashboard()
 
    /**
-    * // TODO: Refactor as this looks like sh$t.
+    *
     * @param tabName
     */
    function onTabSelection(tabName: string): void {
-      switch (tabName) {
-         case TAB_TITLES[0]:
-            setActiveSettingsDashboardTab(0)
-            break
-         case TAB_TITLES[1]:
-            setActiveSettingsDashboardTab(1)
-            break
-         case TAB_TITLES[2]:
-            setActiveSettingsDashboardTab(2)
-            break
-         case TAB_TITLES[3]:
-            setActiveSettingsDashboardTab(3)
-            break
-         case TAB_TITLES[4]:
-            setActiveSettingsDashboardTab(4)
-            break
-         case TAB_TITLES[5]:
-            setActiveSettingsDashboardTab(5)
-            break
+      const selectedTabIndex = TAB_TITLES.indexOf(tabName)
+
+      if (selectedTabIndex < 0) {
+         return
       }
+
+      setActiveSettingsDashboardTab(selectedTabIndex as TabType)
    }
 
    return {

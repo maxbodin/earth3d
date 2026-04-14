@@ -46,10 +46,10 @@ export default function Home() {
 
    return (
       <PlaneMapProvider>
-         <SettingsDashboardView />
-         <CreditView />
-         <DataDashboardView />
          <SolarSystemProvider>
+            <SettingsDashboardView />
+            <CreditView />
+            <DataDashboardView />
             <ScenesProvider>
                <AstresListProvider>
                   <AstresListView />

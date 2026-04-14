@@ -18,6 +18,7 @@ export const TAB_TITLES: string[] = [
    'Map',
    'Outer Space',
    'Countries',
+   'Solar System',
 ]
 
 /**

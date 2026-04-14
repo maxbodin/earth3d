@@ -10,6 +10,7 @@ import {
    EarthIcon,
    HandIcon,
    MousePointer2Icon,
+   OrbitIcon,
    ShuffleIcon,
 } from 'lucide-react'
 import { CursorModeType } from '@/app/enums/modeType'
@@ -19,8 +20,10 @@ interface NavigationBarActionGroupProps {
    displayedSceneType: SceneType | null
    cursorMode: CursorModeType
    trueSize: boolean
+   showTrajectories: boolean
    isRandomPlaceLoading: boolean
    onToggleSolarSystemScale: () => void
+   onToggleSolarSystemTrajectories: () => void
    onBackToEarth: () => void
    onToggleCursorMode: () => void
    onOpenMarkers: () => void
@@ -34,8 +37,10 @@ export function NavigationBarActionGroup({
                                              displayedSceneType,
                                              cursorMode,
                                              trueSize,
+                                             showTrajectories,
                                              isRandomPlaceLoading,
                                              onToggleSolarSystemScale,
+                                             onToggleSolarSystemTrajectories,
                                              onBackToEarth,
                                              onToggleCursorMode,
                                              onOpenMarkers,
@@ -59,7 +64,7 @@ export function NavigationBarActionGroup({
                      isIconOnly
                      variant="bordered"
                      aria-label={trueSize ? 'Switch to Visualization Size' : 'Switch to True Size'}
-                     onClick={onToggleSolarSystemScale}
+                     onPress={onToggleSolarSystemScale}
                   >
                      {trueSize ? <AArrowUpIcon /> : <AArrowDownIcon />}
                   </Button>
@@ -70,9 +75,21 @@ export function NavigationBarActionGroup({
                      isIconOnly
                      variant="bordered"
                      aria-label="Get back to Earth."
-                     onClick={onBackToEarth}
+                     onPress={onBackToEarth}
                   >
                      <EarthIcon />
+                  </Button>
+               </Tooltip>
+               <Tooltip content={showTrajectories ? 'Hide Planet Trajectories' : 'Show Planet Trajectories'}>
+                  <Button
+                     size="lg"
+                     isIconOnly
+                     variant="bordered"
+                     aria-label={showTrajectories ? 'Hide Planet Trajectories' : 'Show Planet Trajectories'}
+                     onPress={onToggleSolarSystemTrajectories}
+                     className={showTrajectories ? 'bg-white/20' : ''}
+                  >
+                     <OrbitIcon />
                   </Button>
                </Tooltip>
             </>
@@ -96,7 +113,7 @@ export function NavigationBarActionGroup({
                            ? 'Switch to Hand Mode'
                            : 'Switch to Select Mode'
                      }
-                     onClick={onToggleCursorMode}
+                     onPress={onToggleCursorMode}
                   >
                      {cursorMode === CursorModeType.POINTER ? <MousePointer2Icon /> : <HandIcon />}
                   </Button>
@@ -108,7 +125,7 @@ export function NavigationBarActionGroup({
                      isIconOnly
                      variant="bordered"
                      aria-label="Open Markers"
-                     onClick={onOpenMarkers}
+                     onPress={onOpenMarkers}
                   >
                      <PinIcon />
                   </Button>
@@ -122,7 +139,7 @@ export function NavigationBarActionGroup({
                isIconOnly
                variant="bordered"
                aria-label="Open Settings"
-               onClick={onOpenSettings}
+               onPress={onOpenSettings}
             >
                <DashboardIcon />
             </Button>
@@ -134,7 +151,7 @@ export function NavigationBarActionGroup({
                isIconOnly
                variant="bordered"
                aria-label="Open Data"
-               onClick={onOpenData}
+               onPress={onOpenData}
             >
                <DataIcon />
             </Button>
@@ -146,7 +163,7 @@ export function NavigationBarActionGroup({
                isIconOnly
                variant="bordered"
                aria-label="Open Credit"
-               onClick={onOpenCredit}
+               onPress={onOpenCredit}
             >
                <CreditIcon />
             </Button>
@@ -159,7 +176,7 @@ export function NavigationBarActionGroup({
                   isIconOnly
                   variant="bordered"
                   aria-label="Random Place"
-                  onClick={onRandomPlace}
+                  onPress={onRandomPlace}
                   isLoading={isRandomPlaceLoading}
                >
                   <ShuffleIcon />

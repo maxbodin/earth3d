@@ -5,4 +5,5 @@ export enum TabType {
    MAP,
    OUTER_SPACE,
    COUNTRIES,
+   SOLAR_SYSTEM,
 }
