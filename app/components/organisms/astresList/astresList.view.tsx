@@ -38,7 +38,12 @@ export function AstresListView() {
                >
                   <DatePicker variant="bordered"
                               className="rounded-2xl bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg"
-                              value={selectedDate} onChange={setSelectedDate} />
+                              value={selectedDate as any}
+                              onChange={(value): void => {
+                                 if (value != null) {
+                                    setSelectedDate(value as typeof selectedDate)
+                                 }
+                              }} />
                   <Tabs
                      selectedTabIndex={filteredAstres.indexOf(selectedAstre)}
                      tabTitles={filteredAstres.map((astre: Astre) => astre.name)}
