@@ -1,0 +1,194 @@
+[
+   {
+      "id": "nextjs",
+      "title": "Next.js",
+      "description": "App framework used for routing, rendering, and server features.",
+      "tags": ["framework", "frontend"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://nextjs.org"
+         }
+      ]
+   },
+   {
+      "id": "react",
+      "title": "React",
+      "description": "UI library powering the component architecture.",
+      "tags": ["ui", "frontend"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://react.dev"
+         }
+      ]
+   },
+   {
+      "id": "threejs",
+      "title": "Three.js",
+      "description": "3D rendering engine used for globe and scene rendering.",
+      "tags": ["3d", "rendering"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://threejs.org"
+         }
+      ]
+   },
+   {
+      "id": "geo-three",
+      "title": "Geo-Three",
+      "description": "Tile-based geographic rendering utilities inspired map integration.",
+      "tags": ["map", "tiles"],
+      "links": [
+         {
+            "label": "GitHub Repository",
+            "url": "https://github.com/tentone/geo-three"
+         }
+      ]
+   },
+   {
+      "id": "nextui",
+      "title": "NextUI",
+      "description": "Component primitives used across dialogs, inputs, and actions.",
+      "tags": ["ui", "components"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://www.heroui.com"
+         }
+      ]
+   },
+   {
+      "id": "shadcn",
+      "title": "shadcn/ui",
+      "description": "Composable accessible UI building blocks used for overlays and utility controls.",
+      "tags": ["ui", "design-system"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://ui.shadcn.com"
+         }
+      ]
+   },
+   {
+      "id": "vaul",
+      "title": "Vaul",
+      "description": "Drawer foundation behind panel interactions.",
+      "tags": ["drawer", "ux"],
+      "links": [
+         {
+            "label": "GitHub Repository",
+            "url": "https://github.com/emilkowalski/vaul"
+         }
+      ]
+   },
+   {
+      "id": "cmdk",
+      "title": "cmdk",
+      "description": "Command menu primitives used for autocomplete experiences.",
+      "tags": ["search", "autocomplete"],
+      "links": [
+         {
+            "label": "Documentation",
+            "url": "https://cmdk.paco.me"
+         },
+         {
+            "label": "GitHub Repository",
+            "url": "https://github.com/pacocoursey/cmdk"
+         }
+      ]
+   },
+   {
+      "id": "gsap",
+      "title": "GSAP",
+      "description": "Animation engine used for smooth camera and scene transitions.",
+      "tags": ["animation", "motion"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://gsap.com"
+         }
+      ]
+   },
+   {
+      "id": "lucide",
+      "title": "Lucide",
+      "description": "Icon library used across toolbar and dashboard controls.",
+      "tags": ["icons", "ui"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://lucide.dev"
+         }
+      ]
+   },
+   {
+      "id": "astronomy-engine",
+      "title": "Astronomy Engine",
+      "description": "Astronomical calculations used in solar system views.",
+      "tags": ["astronomy", "simulation"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://github.com/cosinekitty/astronomy"
+         }
+      ]
+   },
+   {
+      "id": "openrouteservice",
+      "title": "OpenRouteService Geocoding API",
+      "description": "Reverse geocoding and search for place metadata.",
+      "tags": ["geocoding", "api"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://openrouteservice.org"
+         }
+      ]
+   },
+   {
+      "id": "mapbox",
+      "title": "Mapbox Tiles API",
+      "description": "Basemap tile source for planet and map style rendering.",
+      "tags": ["map", "api"],
+      "links": [
+         {
+            "label": "Official Website",
+            "url": "https://www.mapbox.com"
+         }
+      ]
+   },
+   {
+      "id": "flickr",
+      "title": "Flickr API",
+      "description": "Geo-tagged place imagery used in location details.",
+      "tags": ["images", "api"],
+      "links": [
+         {
+            "label": "API Overview",
+            "url": "https://www.flickr.com/services/api/"
+         },
+         {
+            "label": "flickr.photos.search",
+            "url": "https://www.flickr.com/services/api/flickr.photos.search.html"
+         }
+      ]
+   },
+   {
+      "id": "textures",
+      "title": "Space Texture Sources",
+      "description": "Texture references used for celestial bodies and sky visuals.",
+      "tags": ["assets", "textures"],
+      "links": [
+         {
+            "label": "Solar System Scope Textures",
+            "url": "https://www.solarsystemscope.com/textures/"
+         },
+         {
+            "label": "Planet Pixel Emporium (Pluto)",
+            "url": "https://planetpixelemporium.com/pluto.html"
+         }
+      ]
+   }
+]

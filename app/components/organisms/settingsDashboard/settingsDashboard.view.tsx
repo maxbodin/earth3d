@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 import { Tabs } from '@/app/components/atoms/ui/tabs/tabs'
 import { TAB_TITLES } from '@/app/constants/strings'
@@ -52,12 +52,12 @@ export function SettingsDashboardView() {
       }
    }, [activeSettingsDashboardTab])
 
-   const restoreMainUi = React.useCallback((): void => {
+   const restoreMainUi = useCallback((): void => {
       setIsNavBarDisplayed(true)
       setIsSearchBarDisplayed(true)
    }, [setIsNavBarDisplayed, setIsSearchBarDisplayed])
 
-   const handleSettingsOpenChange = React.useCallback((isOpen: boolean): void => {
+   const handleSettingsOpenChange = useCallback((isOpen: boolean): void => {
       setIsSettingsDashboardOpen(isOpen)
 
       if (!isOpen) {
@@ -65,7 +65,7 @@ export function SettingsDashboardView() {
       }
    }, [setIsSettingsDashboardOpen, restoreMainUi])
 
-   const handleSettingsClose = React.useCallback((): void => {
+   const handleSettingsClose = useCallback((): void => {
       handleSettingsOpenChange(false)
    }, [handleSettingsOpenChange])
 
@@ -77,12 +77,13 @@ export function SettingsDashboardView() {
       <>
          <SettingsDashboardTabsExecuteDefaultValues />
          <Drawer
-            dismissible={false}
+            dismissible
             onOpenChange={handleSettingsOpenChange}
             open={isSettingsDashboardOpen}
             onClose={handleSettingsClose}>
             <DrawerContent
                onInteractOutside={(event): void => {
+                  handleSettingsClose()
                   event.stopPropagation()
                   event.preventDefault()
                }}

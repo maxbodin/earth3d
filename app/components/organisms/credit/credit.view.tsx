@@ -1,17 +1,78 @@
 'use client'
-import React from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 import { useCredit } from '@/app/components/organisms/credit/credit.model'
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
 import { CloseIcon } from '@nextui-org/shared-icons'
-import { Alert, AlertDescription, AlertTitle } from '@/shadcn/ui/alert'
-import Link from 'next/link'
+import { CreditGridSkeleton, } from '@/app/components/organisms/credit/creditGridSkeleton'
+import { CreditItemCard, } from '@/app/components/organisms/credit/creditItemCard'
+import { CreditItem } from '@/app/types/creditItem'
 
 export function CreditView() {
    const { isCreditOpen, setIsCreditOpen } = useCredit()
 
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
+
+   const [creditItems, setCreditItems] = React.useState<CreditItem[]>([])
+   const [isCreditItemsLoading, setIsCreditItemsLoading] = React.useState<boolean>(false)
+   const [creditItemsError, setCreditItemsError] = React.useState<string>('')
+
+   useEffect(() => {
+      if (!isCreditOpen) {
+         return
+      }
+
+      let isCancelled = false
+
+      const loadCreditItems = async (): Promise<void> => {
+         setIsCreditItemsLoading(true)
+         setCreditItemsError('')
+
+         try {
+            const creditItemsModule = await import('@/app/data/creditItems.json')
+            if (isCancelled) return
+
+            const loadedItems = Array.isArray(creditItemsModule.default)
+               ? creditItemsModule.default as CreditItem[]
+               : []
+
+            setCreditItems(loadedItems)
+         } catch {
+            if (isCancelled) return
+
+            setCreditItems([])
+            setCreditItemsError('Unable to load credits at the moment.')
+         } finally {
+            if (!isCancelled) {
+               setIsCreditItemsLoading(false)
+            }
+         }
+      }
+
+      loadCreditItems()
+
+      return (): void => {
+         isCancelled = true
+      }
+   }, [isCreditOpen])
+
+   const restoreMainUi = useCallback((): void => {
+      setIsNavBarDisplayed(true)
+      setIsSearchBarDisplayed(true)
+   }, [setIsNavBarDisplayed, setIsSearchBarDisplayed])
+
+   const handleCreditOpenChange = useCallback((isOpen: boolean): void => {
+      setIsCreditOpen(isOpen)
+
+      if (!isOpen) {
+         restoreMainUi()
+      }
+   }, [setIsCreditOpen, restoreMainUi])
+
+   const handleCreditClose = useCallback((): void => {
+      handleCreditOpenChange(false)
+   }, [handleCreditOpenChange])
 
    if (!isCreditOpen) {
       return null
@@ -19,17 +80,13 @@ export function CreditView() {
 
    return (
       <Drawer
-         dismissible={false}
-         onOpenChange={setIsCreditOpen}
+         dismissible
+         onOpenChange={handleCreditOpenChange}
          open={isCreditOpen}
-         onClose={(): void => {
-            setIsNavBarDisplayed(true)
-            setIsSearchBarDisplayed(true)
-         }}>
+         onClose={handleCreditClose}>
          <DrawerContent
             onInteractOutside={(event): void => {
-               setIsNavBarDisplayed(true)
-               setIsSearchBarDisplayed(true)
+               handleCreditClose()
                event.stopPropagation()
                event.preventDefault()
             }}
@@ -45,69 +102,38 @@ export function CreditView() {
                         isIconOnly
                         size="sm"
                         aria-label="Close"
-                        onClick={(): void => {
-                           setIsCreditOpen(false)
-                        }}
+                        onClick={handleCreditClose}
                         className="absolute top-4 right-4"
                      >
                         <CloseIcon />
                      </Button>
                   </DrawerClose>
                </DrawerHeader>
-               <div className="px-8 overflow-auto max-h-[45vh] min-h-[45vh] space-y-4 border-gray-700">
-                  <Alert>
-                     <AlertTitle>Next.js</AlertTitle>
-                     <AlertDescription className="flex flex-col space-y-2">
-                        <Link href="https://nextjs.org">Next.js</Link>
-                     </AlertDescription>
-                  </Alert>
-                  <Alert>
-                     <AlertTitle>Three.js</AlertTitle>
-                     <AlertDescription className="flex flex-col space-y-2">
-                        <Link href="https://threejs.org">Three.js</Link>
-                     </AlertDescription>
-                  </Alert>
-                  <Alert>
-                     <AlertTitle>Tiles displaying on the planet is inspired by geo-three</AlertTitle>
-                     <AlertDescription className="flex flex-col space-y-2">
-                        <Link href="https://github.com/tentone/geo-three">Geo-Three</Link>
-                     </AlertDescription>
-                  </Alert>
-                  <Alert>
-                     <AlertTitle>Autocomplete</AlertTitle>
-                     <AlertDescription className="flex flex-col space-y-2">
-                        <Link href="https://cmdk.paco.me/">CMDK</Link>
-                        <Link href="https://github.com/pacocoursey/cmdk">CMDK GitHub</Link>
-                     </AlertDescription>
-                  </Alert>
-                  <Alert>
-                     <AlertTitle>Color Picker</AlertTitle>
-                     <AlertDescription>
-                        <Link
-                           href="https://github.com/nightspite/shadcn-color-picker/blob/master/src/components/ui/color-picker.tsx">Color
-                           Picker GitHub</Link>
-                     </AlertDescription>
-                  </Alert>
-                  <Alert>
-                     <AlertTitle>Flickr API</AlertTitle>
-                     <AlertDescription>
-                        <Link
-                           href="https://www.flickr.com/services/api/">Flickr API</Link>
-                        <br />
-                        <Link
-                           href="https://www.flickr.com/services/api/flickr.photos.search.html">Flickr.photos.search</Link>
-                     </AlertDescription>
-                  </Alert>
-                  <Alert>
-                     <AlertTitle>Astres Textures</AlertTitle>
-                     <AlertDescription>
-                        <Link
-                           href="https://www.solarsystemscope.com/textures/">Textures</Link>
-                        <br />
-                        <Link
-                           href="https://planetpixelemporium.com/pluto.html">Pluto Texture</Link>
-                     </AlertDescription>
-                  </Alert>
+               <div className="px-8 overflow-auto max-h-[45vh] min-h-[45vh] pb-4 border-gray-700">
+                  {isCreditItemsLoading && <CreditGridSkeleton />}
+
+                  {!isCreditItemsLoading && creditItemsError.length > 0 && (
+                     <div className="rounded-lg border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-rose-200">
+                        {creditItemsError}
+                     </div>
+                  )}
+
+                  {!isCreditItemsLoading && creditItemsError.length === 0 && creditItems.length === 0 && (
+                     <div className="rounded-lg border border-white/15 bg-white/[0.04] p-4 text-sm text-white/70">
+                        No credit entries configured.
+                     </div>
+                  )}
+
+                  {!isCreditItemsLoading && creditItems.length > 0 && (
+                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {creditItems.map((creditItem: CreditItem) => (
+                           <CreditItemCard
+                              key={creditItem.id}
+                              item={creditItem}
+                           />
+                        ))}
+                     </div>
+                  )}
                </div>
             </div>
          </DrawerContent>

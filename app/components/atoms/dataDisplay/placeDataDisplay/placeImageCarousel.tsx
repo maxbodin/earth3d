@@ -69,7 +69,7 @@ export function PlaceImageCarousel({
                               <ChevronLeft className="h-4 w-4" />
                            </Button>
 
-                           <span className="rounded bg-black/55 px-2 py-0.5 text-[11px] text-white">
+                           <span className="rounded bg-black/55 px-2 py-0.5 text-sm text-white">
                               {activeIndex + 1}/{imageUrls.length}
                            </span>
 

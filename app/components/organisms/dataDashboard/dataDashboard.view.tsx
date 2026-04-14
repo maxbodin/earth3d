@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
@@ -14,23 +14,36 @@ export function DataDashboardView() {
 
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
+   const restoreMainUi = useCallback((): void => {
+      setIsNavBarDisplayed(true)
+      setIsSearchBarDisplayed(true)
+   }, [setIsNavBarDisplayed, setIsSearchBarDisplayed])
+
+   const handleDataDashboardOpenChange = useCallback((isOpen: boolean): void => {
+      setIsDataDashboardOpen(isOpen)
+
+      if (!isOpen) {
+         restoreMainUi()
+      }
+   }, [setIsDataDashboardOpen, restoreMainUi])
+
+   const handleDataDashboardClose = useCallback((): void => {
+      handleDataDashboardOpenChange(false)
+   }, [handleDataDashboardOpenChange])
+
    if (!isDataDashboardOpen) {
       return null
    }
 
    return (
       <Drawer
-         dismissible={false}
-         onOpenChange={setIsDataDashboardOpen}
+         dismissible
+         onOpenChange={handleDataDashboardOpenChange}
          open={isDataDashboardOpen}
-         onClose={(): void => {
-            setIsNavBarDisplayed(true)
-            setIsSearchBarDisplayed(true)
-         }}>
+         onClose={handleDataDashboardClose}>
          <DrawerContent
             onInteractOutside={(event): void => {
-               setIsNavBarDisplayed(true)
-               setIsSearchBarDisplayed(true)
+               handleDataDashboardClose()
                event.stopPropagation()
                event.preventDefault()
             }}
@@ -46,9 +59,7 @@ export function DataDashboardView() {
                         isIconOnly
                         size="sm"
                         aria-label="Close"
-                        onClick={(): void => {
-                           setIsDataDashboardOpen(false)
-                        }}
+                        onClick={handleDataDashboardClose}
                         className="absolute top-4 right-4"
                      >
                         <CloseIcon />

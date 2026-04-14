@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
@@ -31,14 +31,27 @@ import { PUCK_COLOR } from '@/app/constants/colors'
 const columns: string[] = ['Selection', 'Name', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
 
 export function MarkersDashboardView() {
-   const { isMarkersDashboardOpen, setIsMarkersDashboardOpen } =
+   const { isMarkersDashboardOpen, setIsMarkersDashboardOpen, markers } =
       useMarkersDashboard()
 
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
 
-   if (!isMarkersDashboardOpen) {
-      return null
-   }
+   const restoreMainUi = useCallback((): void => {
+      setIsNavBarDisplayed(true)
+      setIsSearchBarDisplayed(true)
+   }, [setIsNavBarDisplayed, setIsSearchBarDisplayed])
+
+   const handleMarkersDashboardOpenChange = useCallback((isOpen: boolean): void => {
+      setIsMarkersDashboardOpen(isOpen)
+
+      if (!isOpen) {
+         restoreMainUi()
+      }
+   }, [setIsMarkersDashboardOpen, restoreMainUi])
+
+   const handleMarkersDashboardClose = useCallback((): void => {
+      handleMarkersDashboardOpenChange(false)
+   }, [handleMarkersDashboardOpenChange])
 
    const { flyToCoordinates } = CameraFlyController()
 
@@ -50,13 +63,10 @@ export function MarkersDashboardView() {
       deleteMarker,
       featureSuggestions,
       autoCompleteLoading,
-      autoCompleteError,
       onSelectionChange,
       onInputChange,
       onCoordsChange,
    } = MarkersDashboardController()
-
-   const { markers } = useMarkersDashboard()
 
    const renderCell = React.useCallback((marker: Marker, cellKey: string, cellValue: string | number, rowIndex: number) => {
       switch (cellKey) {
@@ -184,19 +194,19 @@ export function MarkersDashboardView() {
       }
    }, [featureSuggestions, onInputChange, autoCompleteLoading, selectMarker, updateMarker, onSelectionChange, onCoordsChange, deleteMarker])
 
+   if (!isMarkersDashboardOpen) {
+      return null
+   }
+
    return (
       <Drawer
-         dismissible={false}
-         onOpenChange={setIsMarkersDashboardOpen}
+         dismissible
+         onOpenChange={handleMarkersDashboardOpenChange}
          open={isMarkersDashboardOpen}
-         onClose={(): void => {
-            setIsNavBarDisplayed(true)
-            setIsSearchBarDisplayed(true)
-         }}>
+         onClose={handleMarkersDashboardClose}>
          <DrawerContent
             onInteractOutside={(event): void => {
-               setIsNavBarDisplayed(true)
-               setIsSearchBarDisplayed(true)
+               handleMarkersDashboardClose()
                event.stopPropagation()
                event.preventDefault()
             }}
@@ -212,9 +222,7 @@ export function MarkersDashboardView() {
                         isIconOnly
                         size="sm"
                         aria-label="Close"
-                        onClick={(): void => {
-                           setIsMarkersDashboardOpen(false)
-                        }}
+                        onClick={handleMarkersDashboardClose}
                         className="absolute top-4 right-4"
                      >
                         <CloseIcon />
