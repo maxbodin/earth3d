@@ -36,7 +36,7 @@ export const SPHERE_TO_PLANE_TOGGLE_DISTANCE: number = 1e6
 /**
  * Max astres names scale factor.
  */
-export const SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE: number = 3
+export const SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE: number = 5
 
 /**
  * Min astres names scale factor.
@@ -72,7 +72,7 @@ export const SOLAR_SYSTEM_TO_GLOBE_TOGGLE_DISTANCE: number = EARTH_RADIUS * 2.01
 /**
  * Max distance possible from solar system.
  */
-export const MAX_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS * 1e2
+export const MAX_SOLAR_SYSTEM_DISTANCE: number = SUN_RADIUS * 1e3
 
 
 export const GLOBE_SCENE_ATMOSPHERE_SPHERE_SCALE: number = 1.1
