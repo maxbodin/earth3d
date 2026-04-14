@@ -1,5 +1,3 @@
-'use server'
-
 /**
  * Code inspired by https://github.com/geoglify/geoglify/blob/main/ais/main.js
  */
