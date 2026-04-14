@@ -4,7 +4,7 @@ import { useAstresList } from '@/app/components/organisms/astresList/astresList.
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { astres } from '@/app/data/astres'
-import { CleanTabs } from '@/app/components/atoms/ui/tabs/cleanTabs'
+import { Tabs } from '@/app/components/atoms/ui/tabs/tabs'
 import { Astre } from '@/app/types/astre'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { DatePicker } from '@nextui-org/date-picker'
@@ -39,11 +39,11 @@ export function AstresListView() {
                   <DatePicker variant="bordered"
                               className="rounded-2xl bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg"
                               value={selectedDate} onChange={setSelectedDate} />
-                  <CleanTabs
+                  <Tabs
                      selectedTabIndex={filteredAstres.indexOf(selectedAstre)}
                      tabTitles={filteredAstres.map((astre: Astre) => astre.name)}
-                     onTabClick={(astreName: string): void => {
-                        const selected: Astre | undefined = filteredAstres.find((astre: Astre): boolean => astre.name === astreName)
+                     onTabSelect={(tabIndex: number): void => {
+                        const selected: Astre | undefined = filteredAstres[tabIndex]
                         if (selected) {
                            setSelectedAstre(selected)
                         }

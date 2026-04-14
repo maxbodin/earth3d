@@ -7,7 +7,7 @@ import {
 import { MapTabProvider } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
 import {
    OuterSpaceTabProvider,
-} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/outerSpaceTab.model'
 import {
    CountriesTabProvider,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'

@@ -1,4 +1,3 @@
-import { TAB_TITLES } from '@/app/constants/strings'
 import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
 import { TabType } from '@/app/enums/tabType'
 
@@ -7,16 +6,10 @@ export function SettingsDashboardController() {
 
    /**
     *
-    * @param tabName
+    * @param tabType
     */
-   function onTabSelection(tabName: string): void {
-      const selectedTabIndex = TAB_TITLES.indexOf(tabName)
-
-      if (selectedTabIndex < 0) {
-         return
-      }
-
-      setActiveSettingsDashboardTab(selectedTabIndex as TabType)
+   function onTabSelection(tabType: TabType): void {
+      setActiveSettingsDashboardTab(tabType)
    }
 
    return {

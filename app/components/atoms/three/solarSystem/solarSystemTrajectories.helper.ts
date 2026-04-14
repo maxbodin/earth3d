@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { Vector3 } from 'three'
 
 const DAYS_PER_YEAR = 365.25
+const MILLISECONDS_PER_DAY = 86_400_000
 const MIN_TRAJECTORY_SEGMENTS = 96
 const MAX_TRAJECTORY_SEGMENTS = 720
 const TRAJECTORY_SEGMENTS_PER_YEAR = 180
@@ -57,7 +58,7 @@ export const buildTrajectoryPoints = ({
    }
 
    const segmentCount: number = getTrajectorySegments(orbitalPeriodDays)
-   const startTimestamp: number = centerDate.getTime() - (orbitalPeriodDays * 0.5 * 86_400_000)
+   const startTimestamp: number = centerDate.getTime() - (orbitalPeriodDays * 0.5 * MILLISECONDS_PER_DAY)
    const points: THREE.Vector3[] = []
    const anchorCenterPosition = anchorBody != null
       ? getPlanetPosition(anchorBody, centerDate)
@@ -65,7 +66,7 @@ export const buildTrajectoryPoints = ({
 
    for (let segmentIndex: number = 0; segmentIndex < segmentCount; segmentIndex++) {
       const segmentProgress: number = segmentIndex / segmentCount
-      const sampleTimestamp: number = startTimestamp + segmentProgress * orbitalPeriodDays * 86_400_000
+      const sampleTimestamp: number = startTimestamp + segmentProgress * orbitalPeriodDays * MILLISECONDS_PER_DAY
       const sampleDate: Date = new Date(sampleTimestamp)
       const bodySamplePosition: Vector3 = getPlanetPosition(body, sampleDate)
 

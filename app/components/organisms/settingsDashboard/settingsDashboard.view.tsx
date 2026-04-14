@@ -1,10 +1,10 @@
 'use client'
 import React, { useCallback } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
-import { Tabs } from '@/app/components/atoms/ui/tabs/tabs'
 import { TAB_TITLES } from '@/app/constants/strings'
 import { TabType } from '@/app/enums/tabType'
 import { SettingsDashboardController } from '@/app/components/organisms/settingsDashboard/settingsDashboard.controller'
+import { Tabs } from '@/app/components/atoms/ui/tabs/tabs'
 import { CloseIcon } from '@nextui-org/shared-icons'
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
@@ -18,7 +18,7 @@ import {
 import { MapTabView } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.view'
 import {
    OuterSpaceTabView,
-} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/view'
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/outerSpaceTab.view'
 import {
    CountriesTabView,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.view'
@@ -74,6 +74,10 @@ export function SettingsDashboardView() {
       handleSettingsOpenChange(false)
    }, [handleSettingsOpenChange])
 
+   const handleTabSelection = useCallback((tabIndex: number): void => {
+      onTabSelection(tabIndex as TabType)
+   }, [onTabSelection])
+
    if (!isSettingsDashboardOpen) {
       return null
    }
@@ -111,9 +115,17 @@ export function SettingsDashboardView() {
                         </Button>
                      </DrawerClose>
                   </DrawerHeader>
-                  <div className="px-8 flex flex-row overflow-auto max-h-[45vh] min-h-[45vh]">
-                     <Tabs tabTitles={TAB_TITLES} onTabClick={onTabSelection} />
-                     {renderTab()}
+                  <div className="px-8 pb-6 flex flex-row gap-6 max-h-[45vh] min-h-[45vh]">
+                     <Tabs
+                        selectedTabIndex={activeSettingsDashboardTab}
+                        tabTitles={TAB_TITLES}
+                        className="shrink-0"
+                        onTabSelect={handleTabSelection}
+                     />
+
+                     <div className="flex-1 overflow-auto min-w-0 pr-2">
+                        {renderTab()}
+                     </div>
                   </div>
                </div>
             </DrawerContent>

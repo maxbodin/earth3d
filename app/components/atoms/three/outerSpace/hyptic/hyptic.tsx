@@ -14,7 +14,7 @@ import { HYPTIC_TEXTURE_PNG } from '@/app/constants/paths'
 import { HYPTIC_NAME } from '@/app/constants/strings'
 import {
    useOuterSpaceTab,
-} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/outerSpaceTab.model'
 import { useOuterSpace } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { removeObject3D } from '@/app/helpers/threeHelper'
 

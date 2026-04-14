@@ -1,9 +1,9 @@
 import {
    OuterSpaceTabController,
-} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/controller'
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/outerSpaceTab.controller'
 import {
    useOuterSpaceTab,
-} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/outerSpaceTab.model'
 import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
 
 export function OuterSpaceTabView() {

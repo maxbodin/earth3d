@@ -1,6 +1,6 @@
 import {
    useOuterSpaceTab,
-} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/model'
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/outerSpaceTab.model'
 
 export function OuterSpaceTabController() {
    const {
