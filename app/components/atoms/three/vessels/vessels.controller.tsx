@@ -21,8 +21,10 @@ import { VESSEL_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { gsap } from 'gsap'
-import { Coordinates } from '@/app/types/coordinates'
 import { AssetManager } from '@/app/lib/assetManager'
+
+type VesselCoordinate = [number, number]
+type VesselCoordinatesHistory = VesselCoordinate[]
 
 export function VesselsController(): null {
    const { displayedSceneData } = useScenes()
@@ -117,17 +119,18 @@ export function VesselsController(): null {
       // Filter visible vessels with early exits
       const allVessels = Array.from(registeredVesselsData.current.values())
       visibleVessels.current = allVessels.filter((vesselData: any): boolean => {
-         const coordinates: Coordinates = vesselData.message.location.coordinates as Coordinates
-         if (!coordinates?.[0]) return false
+         const coordinates = vesselData.message.location
+            .coordinates as VesselCoordinatesHistory
+         if (!Array.isArray(coordinates?.[0])) return false
 
-         const [lat, lon] = coordinates[0]
-         if (lat == null || lon == null) return false
+         const [longitude, latitude] = coordinates[0]
+         if (latitude == null || longitude == null) return false
 
          if (displayedSceneData.type === SceneType.SPHERICAL) {
-            vesselData.globePosition = latLongToVector3(lon, lat)
+            vesselData.globePosition = latLongToVector3(longitude, latitude)
             return displayedSceneData.camera.position.distanceTo(vesselData.globePosition) <= GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA
          } else if (isPlaneScene) {
-            const worldPos = ThreeGeoUnitsUtils.datumsToSpherical(lon, lat)
+            const worldPos = ThreeGeoUnitsUtils.datumsToSpherical(longitude, latitude)
             vesselData.planePosition = new THREE.Vector3(worldPos.x, 0, -worldPos.y)
             return displayedSceneData.camera.position.distanceTo(vesselData.planePosition) <= planeMaxDistForVesselVisible
          }
@@ -243,7 +246,8 @@ export function VesselsController(): null {
          const vesselData = registeredVesselsData.current.get(mmsi)
          if (!vesselData) return
 
-         const coordinates: Coordinates = vesselData.message.location.coordinates as Coordinates
+         const coordinates = vesselData.message.location
+            .coordinates as VesselCoordinatesHistory
          // Need at least two coordinates to animate.
          if (coordinates.length <= 1) return
 
@@ -254,9 +258,9 @@ export function VesselsController(): null {
             vesselTimelines.set(mmsi, timeline)
 
             for (let i = 0; i < coordinates.length; i++) {
-               const [lat, lon] = coordinates[i]
+               const [longitude, latitude] = coordinates[i]
                if (displayedSceneData.type === SceneType.PLANE) {
-                  const worldPos = ThreeGeoUnitsUtils.datumsToSpherical(lon, lat)
+                  const worldPos = ThreeGeoUnitsUtils.datumsToSpherical(longitude, latitude)
                   timeline.to(vessel.position, {
                      x: worldPos.x,
                      y: 0,
