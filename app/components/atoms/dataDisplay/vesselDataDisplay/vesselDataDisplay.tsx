@@ -6,6 +6,51 @@ import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyContr
 import { EyeIcon } from '@nextui-org/shared-icons'
 import { Coordinates } from '@/app/types/coordinates'
 
+function parseVesselCoordinates(rawCoordinates: unknown): Coordinates | null {
+   if (rawCoordinates == null) return null
+
+   if (!Array.isArray(rawCoordinates) && typeof rawCoordinates === 'object') {
+      const candidate = rawCoordinates as Partial<Coordinates>
+      if (
+         typeof candidate.latitude === 'number' &&
+         typeof candidate.longitude === 'number'
+      ) {
+         return {
+            latitude: candidate.latitude,
+            longitude: candidate.longitude,
+         }
+      }
+   }
+
+   if (Array.isArray(rawCoordinates)) {
+      if (
+         rawCoordinates.length >= 2 &&
+         typeof rawCoordinates[0] === 'number' &&
+         typeof rawCoordinates[1] === 'number'
+      ) {
+         return {
+            latitude: rawCoordinates[1],
+            longitude: rawCoordinates[0],
+         }
+      }
+
+      const latestCoordinates = rawCoordinates.at(-1)
+      if (
+         Array.isArray(latestCoordinates) &&
+         latestCoordinates.length >= 2 &&
+         typeof latestCoordinates[0] === 'number' &&
+         typeof latestCoordinates[1] === 'number'
+      ) {
+         return {
+            latitude: latestCoordinates[1],
+            longitude: latestCoordinates[0],
+         }
+      }
+   }
+
+   return null
+}
+
 export function VesselDataDisplay(): React.JSX.Element {
    const { selectedObjectData } = useSelection()
 
@@ -34,13 +79,15 @@ export function VesselDataDisplay(): React.JSX.Element {
    const cog: string = message.cog?.toString() || N_A_VALUE
    const sog: string = message.sog?.toString() || N_A_VALUE
    const hdg: string = message.hdg?.toString() || N_A_VALUE
-   const coordinates: Coordinates = message.location?.coordinates as Coordinates
+   const coordinates = parseVesselCoordinates(message.location?.coordinates)
 
-   const latitude: number = coordinates[0][0]
-   const longitude: number = coordinates[0][1]
+   const latitude = coordinates?.latitude
+   const longitude = coordinates?.longitude
 
-   const strLatitude: string = latitude?.toFixed(3).toString() || N_A_VALUE
-   const strLongitude: string = longitude?.toFixed(3).toString() || N_A_VALUE
+   const strLatitude: string =
+      latitude != null ? latitude.toFixed(3) : N_A_VALUE
+   const strLongitude: string =
+      longitude != null ? longitude.toFixed(3) : N_A_VALUE
 
    return (
       <div>
@@ -143,10 +190,10 @@ export function VesselDataDisplay(): React.JSX.Element {
          )}
          <div className="mb-2 mt-2">
             {strLongitude == N_A_VALUE && (
-               <p className="text-gray-400">Longitude: {longitude}</p>
+               <p className="text-gray-400">Longitude: {N_A_VALUE}</p>
             )}{' '}
             {strLatitude == N_A_VALUE && (
-               <p className="text-gray-400">Latitude: {latitude}</p>
+               <p className="text-gray-400">Latitude: {N_A_VALUE}</p>
             )}
             {eta == N_A_VALUE && (
                <p className="text-gray-400">Estimated Time of Arrival: {eta}</p>
@@ -167,7 +214,7 @@ export function VesselDataDisplay(): React.JSX.Element {
             )}
          </div>
 
-         {latitude && longitude && <Button
+         {latitude != null && longitude != null && <Button
             variant="bordered"
             size="sm"
             aria-label="Focus view on vessel"
