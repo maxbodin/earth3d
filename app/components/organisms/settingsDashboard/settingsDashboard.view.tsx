@@ -52,6 +52,23 @@ export function SettingsDashboardView() {
       }
    }, [activeSettingsDashboardTab])
 
+   const restoreMainUi = React.useCallback((): void => {
+      setIsNavBarDisplayed(true)
+      setIsSearchBarDisplayed(true)
+   }, [setIsNavBarDisplayed, setIsSearchBarDisplayed])
+
+   const handleSettingsOpenChange = React.useCallback((isOpen: boolean): void => {
+      setIsSettingsDashboardOpen(isOpen)
+
+      if (!isOpen) {
+         restoreMainUi()
+      }
+   }, [setIsSettingsDashboardOpen, restoreMainUi])
+
+   const handleSettingsClose = React.useCallback((): void => {
+      handleSettingsOpenChange(false)
+   }, [handleSettingsOpenChange])
+
    if (!isSettingsDashboardOpen) {
       return null
    }
@@ -61,16 +78,11 @@ export function SettingsDashboardView() {
          <SettingsDashboardTabsExecuteDefaultValues />
          <Drawer
             dismissible={false}
-            onOpenChange={setIsSettingsDashboardOpen}
+            onOpenChange={handleSettingsOpenChange}
             open={isSettingsDashboardOpen}
-            onClose={(): void => {
-               setIsNavBarDisplayed(true)
-               setIsSearchBarDisplayed(true)
-            }}>
+            onClose={handleSettingsClose}>
             <DrawerContent
                onInteractOutside={(event): void => {
-                  setIsNavBarDisplayed(true)
-                  setIsSearchBarDisplayed(true)
                   event.stopPropagation()
                   event.preventDefault()
                }}
@@ -86,9 +98,7 @@ export function SettingsDashboardView() {
                            isIconOnly
                            size="sm"
                            aria-label="Close"
-                           onClick={(): void => {
-                              setIsSettingsDashboardOpen(false)
-                           }}
+                           onClick={handleSettingsClose}
                            className="absolute top-4 right-4"
                         >
                            <CloseIcon />

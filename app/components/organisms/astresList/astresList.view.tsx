@@ -10,12 +10,14 @@ import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyContr
 import { DatePicker } from '@nextui-org/date-picker'
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 import { Body } from 'astronomy-engine'
+import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
 
 export function AstresListView() {
    const { selectedAstre, setSelectedAstre, selectedDate, setSelectedDate } = useAstresList()
    const { displayedSceneData } = useScenes()
    const { flyToAstre } = CameraFlyController()
    const { trueSize } = useSolarSystem()
+   const { isSettingsDashboardOpen } = useSettingsDashboard()
 
 
    useEffect((): void => {
@@ -29,7 +31,7 @@ export function AstresListView() {
 
    return (
       <>
-         {displayedSceneData && displayedSceneData.type === SceneType.SOLAR_SYSTEM &&
+         {displayedSceneData && displayedSceneData.type === SceneType.SOLAR_SYSTEM && !isSettingsDashboardOpen &&
             <>
                <div
                   className="absolute transform bottom-10 left-10 p-4 z-40 flex flex-col space-y-4"
