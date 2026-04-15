@@ -3,7 +3,7 @@ import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyContr
 import React, { useState } from 'react'
 import { EyeIcon } from '@nextui-org/shared-icons'
 import { Feature, FeatureProperties, GeocodeResponse } from '@/app/types/orsTypes'
-import { CompassIcon } from 'lucide-react'
+import { CompassIcon, PlusIcon } from 'lucide-react'
 import { reverseORS } from '@/app/server/services/openRouteService'
 import { ObjectType } from '@/app/enums/objectType'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
@@ -18,6 +18,8 @@ import { PlaceField } from '@/app/components/atoms/dataDisplay/placeDataDisplay/
 import { PlaceImageCarousel, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeImageCarousel'
 import { usePlaceImages, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/usePlaceImages'
 import { PlaceFieldItem } from '@/app/types/placeFieldItem'
+import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
+import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 
 export function PlaceDataDisplay(): React.JSX.Element {
    const {
@@ -25,6 +27,7 @@ export function PlaceDataDisplay(): React.JSX.Element {
       setSelectedObjectData,
       setSelectedObjectType,
    } = useSelection()
+   const { setMarkers } = useMarkersDashboard()
 
    const { flyToCoordinates, flyToOppositeCoordinates } = CameraFlyController()
 
@@ -68,6 +71,15 @@ export function PlaceDataDisplay(): React.JSX.Element {
       if (!hasValidCoordinates) return
 
       flyToCoordinates(latitude, longitude)
+   }
+
+   const addPlaceToMarkers = (): void => {
+      const marker = createMarkerFromPlaceFeature(data)
+      if (marker == null) return
+
+      setMarkers(prevMarkers => {
+         return [...prevMarkers, marker]
+      })
    }
 
    const focusOnOppositePoint = async (): Promise<void> => {
@@ -189,7 +201,7 @@ export function PlaceDataDisplay(): React.JSX.Element {
                   aria-label="Focus view on place."
                   className="z-50 bg-black/50"
                   endContent={<EyeIcon />}
-                  onClick={focusOnPlace}
+                  onPress={focusOnPlace}
                >
                   Focus view on place
                </Button>
@@ -202,10 +214,23 @@ export function PlaceDataDisplay(): React.JSX.Element {
                   aria-label="Get to opposite point on Earth."
                   className="z-50 bg-black/50"
                   endContent={<CompassIcon className="h-4 w-4" />}
-                  onClick={focusOnOppositePoint}
+                  onPress={focusOnOppositePoint}
                   isLoading={oppositePointLoading}
                >
                   Focus opposite point
+               </Button>
+            )}
+
+            {hasValidCoordinates && (
+               <Button
+                  variant="bordered"
+                  size="sm"
+                  aria-label="Add place to markers"
+                  className="z-50 bg-black/50"
+                  endContent={<PlusIcon className="h-4 w-4" />}
+                  onPress={addPlaceToMarkers}
+               >
+                  Add to markers
                </Button>
             )}
          </section>

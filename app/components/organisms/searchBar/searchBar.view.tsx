@@ -34,6 +34,7 @@ export function SearchBarView() {
       onSubjectSelected,
       onInputChange,
       onSelectionChange,
+      onSearchInputKeyDown,
    } = SearchBarController()
 
    const { isSearchBarDisplayed } = useUi()
@@ -86,6 +87,7 @@ export function SearchBarView() {
                      }}
                      isLoading={autoCompleteLoading}
                      inputProps={{
+                        onKeyDown: onSearchInputKeyDown,
                         classNames: {
                            inputWrapper: 'h-[48px] rounded-l-none bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg',
                         },
@@ -98,7 +100,7 @@ export function SearchBarView() {
                      isInvalid={isInvalid}
                      errorMessage={errorMessage}
                      isRequired
-                     type="search"
+                     type="text"
                      value={searchTerm}
                   >
                      {selectedSubject === SearchSubjectType.PLACE

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { KeyboardEvent, useCallback, useState } from 'react'
 import countriesCoords from '@/app/data/country-codes-lat-long-alpha3.json'
 import debounce from 'lodash/debounce'
 import { SearchSubjectType } from '@/app/enums/SearchSubjectType'
@@ -9,8 +9,16 @@ import { Selection } from '@nextui-org/react'
 import { useSearchBar } from '@/app/components/organisms/searchBar/searchBar.model'
 import { Key } from '@react-types/shared'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
-import { lookupOSM, reverseOSM, searchOSM } from '@/app/server/services/nominatimService'
 import { updateCoordinatesInCurrentUrl } from '@/app/lib/coordinatesSearchParams'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
+import { ObjectType } from '@/app/enums/objectType'
+import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
+import { useScenes } from '@/app/components/templates/scenes/scenes.model'
+import { SceneType } from '@/app/enums/sceneType'
+import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
+
+const PLACE_SEARCH_ZOOM_MULTIPLIER = 0.12
+const PLACE_SEARCH_PLANISPHERE_ZOOM_MULTIPLIER = 0.01
 
 export function SearchBarController() {
    const [searchTerm, setSearchTerm] = useState<string>('')
@@ -29,8 +37,85 @@ export function SearchBarController() {
       useState<boolean>(false)
 
    const { selectedSubject, setSelectedSubject } = useSearchBar()
+   const { setSelectedObjectData, setSelectedObjectType } = useSelection()
+   const { setMarkers } = useMarkersDashboard()
+   const { displayedSceneData } = useScenes()
 
    const { flyToCountryPos, flyToCoordinates } = CameraFlyController()
+
+   const addMarkerFromPlace = useCallback((selectedSuggestion: Feature): void => {
+      const marker = createMarkerFromPlaceFeature(selectedSuggestion)
+      if (marker == null) {
+         return
+      }
+
+      setMarkers(prevMarkers => {
+         return [...prevMarkers, marker]
+      })
+   }, [setMarkers])
+
+   const focusOnPlaceSuggestion = useCallback((selectedSuggestion: Feature): void => {
+      const latitude = selectedSuggestion.geometry.coordinates[1]
+      const longitude = selectedSuggestion.geometry.coordinates[0]
+
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+         setErrorMessage('Invalid place coordinates.')
+         setIsInvalid(true)
+         return
+      }
+
+      setSearchTerm(selectedSuggestion.properties.label)
+      setFeatureSuggestions([])
+
+      setSelectedObjectData(selectedSuggestion)
+      setSelectedObjectType(ObjectType.PLACE)
+      updateCoordinatesInCurrentUrl(latitude, longitude)
+
+      addMarkerFromPlace(selectedSuggestion)
+
+      const zoomMultiplier = displayedSceneData?.type === SceneType.PLANE
+         ? PLACE_SEARCH_PLANISPHERE_ZOOM_MULTIPLIER
+         : PLACE_SEARCH_ZOOM_MULTIPLIER
+
+      flyToCoordinates(latitude, longitude, {
+         zoomMultiplier,
+      })
+   }, [
+      addMarkerFromPlace,
+      displayedSceneData?.type,
+      flyToCoordinates,
+      setSelectedObjectData,
+      setSelectedObjectType,
+   ])
+
+   const selectFirstPlaceSuggestion = useCallback(async (): Promise<void> => {
+      if (selectedSubject !== SearchSubjectType.PLACE) {
+         return
+      }
+
+      let firstSuggestion: Feature | undefined = featureSuggestions[0]
+
+      if (firstSuggestion == null && searchTerm.trim() !== '') {
+         try {
+            const data: GeocodeResponse = await autocompleteORS(searchTerm)
+            const refreshedSuggestions = data.features || []
+            setFeatureSuggestions(refreshedSuggestions)
+            firstSuggestion = refreshedSuggestions[0]
+         } catch (error) {
+            setAutoCompleteError('Error fetching autocomplete results.')
+            return
+         }
+      }
+
+      if (firstSuggestion == null) {
+         setErrorMessage('No place found for this search.')
+         setIsInvalid(true)
+         return
+      }
+
+      setIsInvalid(false)
+      focusOnPlaceSuggestion(firstSuggestion)
+   }, [featureSuggestions, focusOnPlaceSuggestion, searchTerm, selectedSubject])
 
    /**
     * Debounced function to handle input changes.
@@ -51,15 +136,6 @@ export function SearchBarController() {
                // Call server-side function.
                const data: GeocodeResponse = await autocompleteORS(value)
                setFeatureSuggestions(data.features || [])
-
-               const results = await searchOSM(value, { polygon_geojson: '1' })
-               console.log(results)
-
-               const reverseResults = await reverseOSM(52.5487921, -1.8164308)
-               console.log(reverseResults)
-
-               const lookupResults = await lookupOSM('W123,N456')
-               console.log(lookupResults)
 
             } else if (selectedSubject === SearchSubjectType.COUNTRY) {
                // Filter countries based on input value.
@@ -85,10 +161,23 @@ export function SearchBarController() {
     *
     * @param value
     */
-   const onInputChange = (value: string) => {
+   const onInputChange = (value: string): void => {
       resetSelection()
       setSearchTerm(value)
       handleInputChange(value)
+   }
+
+   const onSearchInputKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+      if (event.key !== 'Enter') {
+         return
+      }
+
+      if (selectedSubject !== SearchSubjectType.PLACE) {
+         return
+      }
+
+      event.preventDefault()
+      void selectFirstPlaceSuggestion()
    }
 
    /**
@@ -105,8 +194,6 @@ export function SearchBarController() {
     * @param key
     */
    const onSelectionChange = (key: Key | null): void => {
-      // TODO onSearch(selectedSuggestion.properties.label)
-
       switch (selectedSubject) {
          case SearchSubjectType.PLANE:
             break
@@ -127,18 +214,8 @@ export function SearchBarController() {
                )
 
             if (selectedSuggestion) {
-               setSearchTerm(selectedSuggestion.properties.label)
-               setFeatureSuggestions([])
-
-               const latitude = selectedSuggestion.geometry.coordinates[1]
-               const longitude = selectedSuggestion.geometry.coordinates[0]
-
-               updateCoordinatesInCurrentUrl(latitude, longitude)
-
-               flyToCoordinates(
-                  latitude,
-                  longitude,
-               )
+               setIsInvalid(false)
+               focusOnPlaceSuggestion(selectedSuggestion)
             }
             break
          case SearchSubjectType.VESSEL:
@@ -192,5 +269,6 @@ export function SearchBarController() {
       onSubjectSelected,
       onInputChange,
       onSelectionChange,
+      onSearchInputKeyDown,
    }
 }

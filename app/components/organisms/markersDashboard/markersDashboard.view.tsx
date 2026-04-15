@@ -22,12 +22,14 @@ import { Marker } from '@/app/types/marker'
 import { MarkersDashboardController } from '@/app/components/organisms/markersDashboard/markersDashboard.controller'
 import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
-import { Feature } from '@/app/types/orsTypes'
+import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
 import { CrosshairIcon, PlusIcon } from 'lucide-react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { CursorModeType } from '@/app/enums/modeType'
+import { reverseORS } from '@/app/server/services/openRouteService'
+import { ObjectType } from '@/app/enums/objectType'
 
 
 const columns: string[] = ['Selection', 'Name', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
@@ -98,7 +100,7 @@ export function MarkersDashboardView() {
       useMarkersDashboard()
 
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
-   const { setCursorMode } = useSelection()
+   const { setCursorMode, setSelectedObjectData, setSelectedObjectType } = useSelection()
 
    const [toast, setToast] = useState<MarkerToast | null>(null)
    const [coordinateErrors, setCoordinateErrors] = useState<Record<string, Partial<Record<CoordinateField, string>>>>({})
@@ -267,6 +269,44 @@ export function MarkersDashboardView() {
       setCursorMode,
    ])
 
+   const focusMarkerAndDisplayPlace = useCallback(async (marker: Marker): Promise<void> => {
+      if (!Number.isFinite(marker.latitude) || !Number.isFinite(marker.longitude)) {
+         showToast('Marker coordinates are invalid.', 'danger')
+         return
+      }
+
+      handleMarkersDashboardClose()
+
+      flyToCoordinates(
+         marker.latitude,
+         marker.longitude,
+      )
+
+      try {
+         const data: GeocodeResponse = await reverseORS(
+            marker.longitude,
+            marker.latitude,
+         )
+
+         const placeFeature = data.features?.[0]
+         if (placeFeature == null) {
+            showToast('Unable to resolve place details for this marker.', 'info')
+            return
+         }
+
+         setSelectedObjectData(placeFeature)
+         setSelectedObjectType(ObjectType.PLACE)
+      } catch {
+         showToast('Unable to load place details for this marker.', 'danger')
+      }
+   }, [
+      flyToCoordinates,
+      handleMarkersDashboardClose,
+      setSelectedObjectData,
+      setSelectedObjectType,
+      showToast,
+   ])
+
    const renderCell = React.useCallback((marker: Marker, cellKey: string, cellValue: string | number, rowIndex: number) => {
       const markerId = marker.id
 
@@ -391,10 +431,7 @@ export function MarkersDashboardView() {
                   <Tooltip content="View on map">
                      <span className="text-lg text-default-400 cursor-pointer active:opacity-50">
                         <EyeIcon onClick={(): void => {
-                           flyToCoordinates(
-                              marker.latitude,
-                              marker.longitude,
-                           )
+                           void focusMarkerAndDisplayPlace(marker)
                         }} />
                      </span>
                   </Tooltip>
@@ -431,7 +468,7 @@ export function MarkersDashboardView() {
       coordinateSelectionMarkerId,
       commitCoordinateInput,
       deleteMarker,
-      flyToCoordinates,
+      focusMarkerAndDisplayPlace,
       startMapCoordinateSelection,
    ])
 
@@ -474,7 +511,7 @@ export function MarkersDashboardView() {
                         isIconOnly
                         size="sm"
                         aria-label="Close"
-                        onClick={handleMarkersDashboardClose}
+                        onPress={handleMarkersDashboardClose}
                         className="absolute top-4 right-4"
                      >
                         <CloseIcon />
@@ -495,7 +532,7 @@ export function MarkersDashboardView() {
                      </TableHeader>
                      <TableBody
                         className="h-2" emptyContent={
-                        <Button size="sm" onClick={createNewMarker} startContent={<PlusIcon />}>Create
+                        <Button size="sm" onPress={createNewMarker} startContent={<PlusIcon />}>Create
                            new
                            marker</Button>
                      }>
@@ -513,8 +550,8 @@ export function MarkersDashboardView() {
                      </TableBody>
                   </Table>
                   <div className="pt-4 pb-4 flex flex-row justify-evenly">
-                     {markers.length > 0 && markers.length < 5 &&
-                        <Button variant="bordered" size="sm" onClick={createNewMarker} startContent={<PlusIcon />}>Create
+                     {markers.length > 0 &&
+                        <Button variant="bordered" size="sm" onPress={createNewMarker} startContent={<PlusIcon />}>Create
                            new marker</Button>}
                      <Button variant="bordered" size="sm" isDisabled={selectedRows.length <= 1}>Compute track with
                         selected markers</Button>
