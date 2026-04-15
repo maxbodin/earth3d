@@ -3,6 +3,7 @@
  */
 export const VESSEL_GLB_MODEL: string = '/models/containers.glb'
 export const PLANE_GLB_MODEL: string = '/models/plane.glb'
+export const MARKER_GLB_MODEL: string = '/models/pluck.glb'
 
 /**
  * PNG.

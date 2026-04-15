@@ -7,6 +7,7 @@ import { Option } from '@/shadcn/ui/autocomplete'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { autocompleteORS, reverseORS } from '@/app/server/services/openRouteService'
+import { PUCK_COLOR } from '@/app/constants/colors'
 
 export function MarkersDashboardController() {
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
@@ -48,32 +49,33 @@ export function MarkersDashboardController() {
     * @param longitude
     */
    const updatePuckMarker = (latitude: number, longitude: number): void => {
-      // Find the index of the existing puck marker.
-      const puckIndex: number = markers.findIndex(marker => marker.isPuck)
+      setMarkers(prevMarkers => {
+         const puckIndex = prevMarkers.findIndex(marker => marker.isPuck)
 
-      // If it exists, update its latitude and longitude.
-      if (puckIndex !== -1) {
-         const updatedRows = [...markers]
-         updatedRows[puckIndex] = {
-            ...updatedRows[puckIndex],
-            latitude,
-            longitude,
+         if (puckIndex !== -1) {
+            const updatedRows = [...prevMarkers]
+            updatedRows[puckIndex] = {
+               ...updatedRows[puckIndex],
+               latitude,
+               longitude,
+               color: PUCK_COLOR,
+               isPuck: true,
+            }
+            return updatedRows
          }
-         setMarkers(updatedRows)
-      } else {
-         // If no puck marker exists, create a new one.
-         setMarkers([...markers, {
+
+         return [...prevMarkers, {
             id: generateUniqueId(),
             selection: 'selection',
             name: 'Your position',
             address: '',
             latitude,
             longitude,
-            color: getRandomVibrantColor(),
+            color: PUCK_COLOR,
             actions: 'actions',
             isPuck: true,
-         }])
-      }
+         }]
+      })
    }
 
 

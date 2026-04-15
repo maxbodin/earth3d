@@ -14,6 +14,7 @@ import { SearchBarView } from '@/app/components/organisms/searchBar/searchBar.vi
 import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
 import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
 import { CoordinatesSearchParamsSync } from '@/app/components/atoms/geolocation/coordinatesSearchParamsSync'
+import { MarkersController } from '@/app/components/atoms/three/markers/markers.controller'
 
 export default function Home() {
    return (
@@ -29,6 +30,7 @@ export default function Home() {
                </AstresListProvider>
                <MarkersDashboardView />
                <Geolocation />
+               <MarkersController />
                <CoordinatesSearchParamsSync />
                <div className="w-full items-center justify-between font-mono text-sm lg:flex">
                   <SearchBarView />
