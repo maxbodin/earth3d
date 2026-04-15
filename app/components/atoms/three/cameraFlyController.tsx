@@ -9,6 +9,39 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { Astre } from '@/app/types/astre'
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 
+let activeSphericalFlyTween: gsap.core.Tween | null = null
+let activePlaneTargetTween: gsap.core.Tween | null = null
+let activePlaneCameraTween: gsap.core.Tween | null = null
+
+const MIN_SPHERICAL_PHI = 1e-4
+const MAX_SPHERICAL_PHI = Math.PI - 1e-4
+
+function getShortestThetaTarget(currentTheta: number, targetTheta: number): number {
+   const delta = Math.atan2(
+      Math.sin(targetTheta - currentTheta),
+      Math.cos(targetTheta - currentTheta),
+   )
+
+   return currentTheta + delta
+}
+
+function killActiveFlyTweens(): void {
+   if (activeSphericalFlyTween != null) {
+      activeSphericalFlyTween.kill()
+      activeSphericalFlyTween = null
+   }
+
+   if (activePlaneTargetTween != null) {
+      activePlaneTargetTween.kill()
+      activePlaneTargetTween = null
+   }
+
+   if (activePlaneCameraTween != null) {
+      activePlaneCameraTween.kill()
+      activePlaneCameraTween = null
+   }
+}
+
 export function CameraFlyController() {
    const { displayedSceneData } = useScenes()
    const { trueSize } = useSolarSystem()
@@ -37,6 +70,10 @@ export function CameraFlyController() {
     * @param longitude
     */
    const flyToCoordinates = (latitude: number, longitude: number): void => {
+      if (displayedSceneData == null) return
+
+      killActiveFlyTweens()
+
       let targetPosition: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
 
       // Get current spherical coordinates of the camera relative to the target.
@@ -58,14 +95,25 @@ export function CameraFlyController() {
             targetPosition.clone().sub(target),
          )
 
+         const targetTheta = getShortestThetaTarget(
+            sphericalCurrent.theta,
+            sphericalTarget.theta,
+         )
+
+         const targetPhi = THREE.MathUtils.clamp(
+            sphericalTarget.phi,
+            MIN_SPHERICAL_PHI,
+            MAX_SPHERICAL_PHI,
+         )
+
          // Set a target zoom.
          const targetZoom: number = EARTH_RADIUS * 1.2
 
          // Use GSAP to animate the spherical coordinates.
-         gsap.to(sphericalCurrent, {
+         activeSphericalFlyTween = gsap.to(sphericalCurrent, {
             duration: 2,
-            theta: sphericalTarget.theta,
-            phi: sphericalTarget.phi,
+            theta: targetTheta,
+            phi: targetPhi,
             radius: targetZoom,
             onUpdate: (): void => {
                // Update camera position based on new spherical coordinates.
@@ -76,6 +124,9 @@ export function CameraFlyController() {
                displayedSceneData.camera.lookAt(target)
                displayedSceneData.controls.update()
             },
+            onComplete: (): void => {
+               activeSphericalFlyTween = null
+            },
             ease: 'power2.inOut',
          })
 
@@ -85,26 +136,50 @@ export function CameraFlyController() {
             longitude as number,
          )
 
+         const nextTargetPosition = new THREE.Vector3(
+            worldPos.x,
+            0,
+            -worldPos.y,
+         )
+
+         const currentCameraOffset = displayedSceneData.camera.position
+            .clone()
+            .sub(displayedSceneData.controls.target)
+
+         if (currentCameraOffset.lengthSq() === 0) {
+            currentCameraOffset.set(
+               0,
+               displayedSceneData.controls.getDistance() * 0.2,
+               0,
+            )
+         }
+
+         const nextCameraPosition = nextTargetPosition
+            .clone()
+            .add(currentCameraOffset)
+
          // GSAP animation to zoom the camera.
-         gsap.to(displayedSceneData.controls.target, {
+         activePlaneTargetTween = gsap.to(displayedSceneData.controls.target, {
             duration: 2,
-            x: worldPos.x,
-            y: 0,
-            z: -worldPos.y,
+            x: nextTargetPosition.x,
+            y: nextTargetPosition.y,
+            z: nextTargetPosition.z,
             ease: 'power2.inOut',
             onComplete: (): void => {
+               activePlaneTargetTween = null
                displayedSceneData.controls.update()
             },
          })
 
          // GSAP animation to move the camera.
-         gsap.to(displayedSceneData.camera.position, {
+         activePlaneCameraTween = gsap.to(displayedSceneData.camera.position, {
             duration: 2,
-            x: worldPos.x,
-            y: displayedSceneData.controls.getDistance() * 0.2,
-            z: -worldPos.y,
+            x: nextCameraPosition.x,
+            y: nextCameraPosition.y,
+            z: nextCameraPosition.z,
             ease: 'power2.inOut',
             onComplete: (): void => {
+               activePlaneCameraTween = null
                displayedSceneData.controls.update()
             },
          })
