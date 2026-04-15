@@ -10,6 +10,7 @@ import { useSearchBar } from '@/app/components/organisms/searchBar/searchBar.mod
 import { Key } from '@react-types/shared'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { lookupOSM, reverseOSM, searchOSM } from '@/app/server/services/nominatimService'
+import { updateCoordinatesInCurrentUrl } from '@/app/lib/coordinatesSearchParams'
 
 export function SearchBarController() {
    const [searchTerm, setSearchTerm] = useState<string>('')
@@ -129,9 +130,14 @@ export function SearchBarController() {
                setSearchTerm(selectedSuggestion.properties.label)
                setFeatureSuggestions([])
 
+               const latitude = selectedSuggestion.geometry.coordinates[1]
+               const longitude = selectedSuggestion.geometry.coordinates[0]
+
+               updateCoordinatesInCurrentUrl(latitude, longitude)
+
                flyToCoordinates(
-                  selectedSuggestion.geometry.coordinates[1],
-                  selectedSuggestion.geometry.coordinates[0],
+                  latitude,
+                  longitude,
                )
             }
             break

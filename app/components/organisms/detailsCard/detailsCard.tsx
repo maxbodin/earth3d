@@ -7,6 +7,7 @@ import { VesselDataDisplay } from '@/app/components/atoms/dataDisplay/vesselData
 import { ObjectType } from '@/app/enums/objectType'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { PlaceDataDisplay } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeDataDisplay'
+import { clearCoordinatesFromCurrentUrl } from '@/app/lib/coordinatesSearchParams'
 
 export function DetailsCard() {
    const {
@@ -41,6 +42,10 @@ export function DetailsCard() {
                      )
                   }
                   onClose={(): void => {
+                     if (selectedObjectType === ObjectType.PLACE) {
+                        clearCoordinatesFromCurrentUrl()
+                     }
+
                      setSelectedObjectType(ObjectType.NULL)
                      setSelectedObjectData({})
                   }}

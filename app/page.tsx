@@ -13,37 +13,9 @@ import { MarkersDashboardView } from '@/app/components/organisms/markersDashboar
 import { SearchBarView } from '@/app/components/organisms/searchBar/searchBar.view'
 import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
 import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
+import { CoordinatesSearchParamsSync } from '@/app/components/atoms/geolocation/coordinatesSearchParamsSync'
 
 export default function Home() {
-
-   /**
-
-    const { setSelectedObjectData } = useData();
-
-    const dataToFilter: any = null;
-
-    * Callback function to handle search.
-    * @param searchTerm
-
-    // TODO WIP DEL ?
-    const handleSearch = (searchTerm: string): void => {
-    // Filter data based on search term (assuming data is an array)
-    const filtered = dataToFilter.filter((state: any) =>
-    state[1].includes(searchTerm)
-    );
-
-    setSelectedObjectData(filtered.length > 0 ? { data: filtered[0] } : {});
-
-    if (filtered.length > 0) {
-    setSuccessToastIsDisplayed(true);
-    setDangerToastIsDisplayed(false);
-    } else {
-    setSuccessToastIsDisplayed(false);
-    setDangerToastIsDisplayed(true);
-    }
-    };
-    */
-
    return (
       <PlaneMapProvider>
          <SolarSystemProvider>
@@ -57,6 +29,7 @@ export default function Home() {
                </AstresListProvider>
                <MarkersDashboardView />
                <Geolocation />
+               <CoordinatesSearchParamsSync />
                <div className="w-full items-center justify-between font-mono text-sm lg:flex">
                   <SearchBarView />
                   <DetailsCard />

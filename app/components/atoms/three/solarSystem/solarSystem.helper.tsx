@@ -1,7 +1,7 @@
 'use client'
 import * as THREE from 'three'
 import * as Astronomy from 'astronomy-engine'
-import { DateValue } from '@nextui-org/react'
+import { DateValue } from '@internationalized/date'
 
 export function SolarSystemHelper() {
 

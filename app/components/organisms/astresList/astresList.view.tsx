@@ -11,6 +11,7 @@ import { DatePicker } from '@nextui-org/date-picker'
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 import { Body } from 'astronomy-engine'
 import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
+import { DateValue } from '@internationalized/date'
 
 export function AstresListView() {
    const { selectedAstre, setSelectedAstre, selectedDate, setSelectedDate } = useAstresList()
@@ -41,7 +42,7 @@ export function AstresListView() {
                               value={selectedDate as any}
                               onChange={(value): void => {
                                  if (value != null) {
-                                    setSelectedDate(value as typeof selectedDate)
+                                    setSelectedDate(value as unknown as DateValue)
                                  }
                               }} />
                   <Tabs

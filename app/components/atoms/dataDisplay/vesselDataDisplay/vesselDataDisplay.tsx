@@ -4,52 +4,7 @@ import { useSelection } from '@/app/components/atoms/clickHandler/selectionConte
 import { Button } from '@nextui-org/react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { EyeIcon } from '@nextui-org/shared-icons'
-import { Coordinates } from '@/app/types/coordinates'
-
-function parseVesselCoordinates(rawCoordinates: unknown): Coordinates | null {
-   if (rawCoordinates == null) return null
-
-   if (!Array.isArray(rawCoordinates) && typeof rawCoordinates === 'object') {
-      const candidate = rawCoordinates as Partial<Coordinates>
-      if (
-         typeof candidate.latitude === 'number' &&
-         typeof candidate.longitude === 'number'
-      ) {
-         return {
-            latitude: candidate.latitude,
-            longitude: candidate.longitude,
-         }
-      }
-   }
-
-   if (Array.isArray(rawCoordinates)) {
-      if (
-         rawCoordinates.length >= 2 &&
-         typeof rawCoordinates[0] === 'number' &&
-         typeof rawCoordinates[1] === 'number'
-      ) {
-         return {
-            latitude: rawCoordinates[1],
-            longitude: rawCoordinates[0],
-         }
-      }
-
-      const latestCoordinates = rawCoordinates.at(-1)
-      if (
-         Array.isArray(latestCoordinates) &&
-         latestCoordinates.length >= 2 &&
-         typeof latestCoordinates[0] === 'number' &&
-         typeof latestCoordinates[1] === 'number'
-      ) {
-         return {
-            latitude: latestCoordinates[1],
-            longitude: latestCoordinates[0],
-         }
-      }
-   }
-
-   return null
-}
+import { parseCoordinatesFromUnknown } from '@/app/lib/coordinatesSearchParams'
 
 export function VesselDataDisplay(): React.JSX.Element {
    const { selectedObjectData } = useSelection()
@@ -79,7 +34,7 @@ export function VesselDataDisplay(): React.JSX.Element {
    const cog: string = message.cog?.toString() || N_A_VALUE
    const sog: string = message.sog?.toString() || N_A_VALUE
    const hdg: string = message.hdg?.toString() || N_A_VALUE
-   const coordinates = parseVesselCoordinates(message.location?.coordinates)
+   const coordinates = parseCoordinatesFromUnknown(message.location?.coordinates)
 
    const latitude = coordinates?.latitude
    const longitude = coordinates?.longitude
@@ -221,7 +176,7 @@ export function VesselDataDisplay(): React.JSX.Element {
             className="z-50 bg-black bg-opacity-50"
             endContent={<EyeIcon />}
             onClick={(): void => {
-               flyToCoordinates(longitude, latitude)
+               flyToCoordinates(latitude, longitude)
             }}>
             Focus view on vessel
          </Button>}
