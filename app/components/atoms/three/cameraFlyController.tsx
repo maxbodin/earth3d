@@ -15,6 +15,12 @@ let activePlaneCameraTween: gsap.core.Tween | null = null
 
 const MIN_SPHERICAL_PHI = 1e-4
 const MAX_SPHERICAL_PHI = Math.PI - 1e-4
+const MIN_ZOOM_MULTIPLIER = 0.05
+const MAX_ZOOM_MULTIPLIER = 2
+
+interface FlyToCoordinatesOptions {
+   zoomMultiplier?: number
+}
 
 function getShortestThetaTarget(currentTheta: number, targetTheta: number): number {
    const delta = Math.atan2(
@@ -68,11 +74,22 @@ export function CameraFlyController() {
     *
     * @param latitude
     * @param longitude
+    * @param options
     */
-   const flyToCoordinates = (latitude: number, longitude: number): void => {
+   const flyToCoordinates = (
+      latitude: number,
+      longitude: number,
+      options?: FlyToCoordinatesOptions,
+   ): void => {
       if (displayedSceneData == null) return
 
       killActiveFlyTweens()
+
+      const zoomMultiplier = THREE.MathUtils.clamp(
+         options?.zoomMultiplier ?? 1,
+         MIN_ZOOM_MULTIPLIER,
+         MAX_ZOOM_MULTIPLIER,
+      )
 
       let targetPosition: THREE.Vector3 = new THREE.Vector3(0, 0, 0)
 
@@ -107,7 +124,7 @@ export function CameraFlyController() {
          )
 
          // Set a target zoom.
-         const targetZoom: number = EARTH_RADIUS * 1.2
+         const targetZoom: number = EARTH_RADIUS * 1.2 * zoomMultiplier
 
          // Use GSAP to animate the spherical coordinates.
          activeSphericalFlyTween = gsap.to(sphericalCurrent, {
@@ -149,10 +166,12 @@ export function CameraFlyController() {
          if (currentCameraOffset.lengthSq() === 0) {
             currentCameraOffset.set(
                0,
-               displayedSceneData.controls.getDistance() * 0.2,
+               displayedSceneData.controls.getDistance() * 0.2 * zoomMultiplier,
                0,
             )
          }
+
+         currentCameraOffset.multiplyScalar(zoomMultiplier)
 
          const nextCameraPosition = nextTargetPosition
             .clone()
