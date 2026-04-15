@@ -1,5 +1,5 @@
 'use client'
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
@@ -23,35 +23,150 @@ import { MarkersDashboardController } from '@/app/components/organisms/markersDa
 import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature } from '@/app/types/orsTypes'
-import { PlusIcon } from 'lucide-react'
+import { CrosshairIcon, PlusIcon } from 'lucide-react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { PUCK_COLOR } from '@/app/constants/colors'
+import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
+import { CursorModeType } from '@/app/enums/modeType'
 
 
 const columns: string[] = ['Selection', 'Name', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
 
+type CoordinateField = 'latitude' | 'longitude'
+type ToastTone = 'danger' | 'info'
+
+interface MarkerToast {
+   message: string
+   tone: ToastTone
+}
+
+const MIN_LATITUDE = -90
+const MAX_LATITUDE = 90
+const MIN_LONGITUDE = -180
+const MAX_LONGITUDE = 180
+
+const parseCoordinateInput = (rawValue: string): number | null => {
+   const normalizedValue = rawValue.trim().replace(',', '.')
+
+   if (
+      normalizedValue === ''
+      || normalizedValue === '-'
+      || normalizedValue === '+'
+      || normalizedValue === '.'
+      || normalizedValue === '-.'
+      || normalizedValue === '+.'
+   ) {
+      return null
+   }
+
+   const parsedValue = Number(normalizedValue)
+
+   return Number.isFinite(parsedValue)
+      ? parsedValue
+      : null
+}
+
+const getCoordinateErrorMessage = (
+   field: CoordinateField,
+   value: number | null,
+): string | null => {
+   if (value == null) {
+      return field === 'latitude'
+         ? 'Latitude must be a valid number.'
+         : 'Longitude must be a valid number.'
+   }
+
+   if (field === 'latitude' && (value < MIN_LATITUDE || value > MAX_LATITUDE)) {
+      return 'Latitude must be between -90 and 90.'
+   }
+
+   if (field === 'longitude' && (value < MIN_LONGITUDE || value > MAX_LONGITUDE)) {
+      return 'Longitude must be between -180 and 180.'
+   }
+
+   return null
+}
+
 export function MarkersDashboardView() {
-   const { isMarkersDashboardOpen, setIsMarkersDashboardOpen, markers } =
+   const {
+      isMarkersDashboardOpen,
+      setIsMarkersDashboardOpen,
+      markers,
+      coordinateSelectionMarkerId,
+      setCoordinateSelectionMarkerId,
+   } =
       useMarkersDashboard()
 
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
+   const { setCursorMode } = useSelection()
+
+   const [toast, setToast] = useState<MarkerToast | null>(null)
+   const [coordinateErrors, setCoordinateErrors] = useState<Record<string, Partial<Record<CoordinateField, string>>>>({})
+   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+   const isClosingForCoordinateSelectionRef = useRef<boolean>(false)
 
    const restoreMainUi = useCallback((): void => {
       setIsNavBarDisplayed(true)
       setIsSearchBarDisplayed(true)
    }, [setIsNavBarDisplayed, setIsSearchBarDisplayed])
 
+   const hideMainUi = useCallback((): void => {
+      setIsNavBarDisplayed(false)
+      setIsSearchBarDisplayed(false)
+   }, [setIsNavBarDisplayed, setIsSearchBarDisplayed])
+
+   const clearTransientFormState = useCallback((): void => {
+      setCoordinateErrors({})
+      setToast(null)
+   }, [])
+
    const handleMarkersDashboardOpenChange = useCallback((isOpen: boolean): void => {
       setIsMarkersDashboardOpen(isOpen)
 
       if (!isOpen) {
-         restoreMainUi()
+         if (isClosingForCoordinateSelectionRef.current) {
+            isClosingForCoordinateSelectionRef.current = false
+         } else {
+            restoreMainUi()
+            setCoordinateSelectionMarkerId(null)
+            setCursorMode(CursorModeType.HAND)
+         }
+
+         clearTransientFormState()
+      } else {
+         clearTransientFormState()
       }
-   }, [setIsMarkersDashboardOpen, restoreMainUi])
+   }, [
+      clearTransientFormState,
+      restoreMainUi,
+      setCoordinateSelectionMarkerId,
+      setCursorMode,
+      setIsMarkersDashboardOpen,
+   ])
 
    const handleMarkersDashboardClose = useCallback((): void => {
       handleMarkersDashboardOpenChange(false)
    }, [handleMarkersDashboardOpenChange])
+
+   const showToast = useCallback((message: string, tone: ToastTone = 'danger'): void => {
+      setToast({ message, tone })
+
+      if (toastTimeoutRef.current != null) {
+         clearTimeout(toastTimeoutRef.current)
+      }
+
+      toastTimeoutRef.current = setTimeout(() => {
+         setToast(null)
+      }, 2600)
+   }, [])
+
+   useEffect((): (() => void) => {
+      return (): void => {
+         if (toastTimeoutRef.current != null) {
+            clearTimeout(toastTimeoutRef.current)
+         }
+      }
+   }, [])
 
    const { flyToCoordinates } = CameraFlyController()
 
@@ -66,9 +181,95 @@ export function MarkersDashboardView() {
       onSelectionChange,
       onInputChange,
       onCoordsChange,
+      fillPuckAddressIfMissing,
    } = MarkersDashboardController()
 
+   useEffect(() => {
+      if (!isMarkersDashboardOpen) return
+
+      void fillPuckAddressIfMissing()
+   }, [isMarkersDashboardOpen, fillPuckAddressIfMissing])
+
+   const setCoordinateError = useCallback((
+      markerId: string,
+      field: CoordinateField,
+      errorMessage: string,
+   ): void => {
+      setCoordinateErrors(prevErrors => {
+         return {
+            ...prevErrors,
+            [markerId]: {
+               ...prevErrors[markerId],
+               [field]: errorMessage,
+            },
+         }
+      })
+   }, [])
+
+   const clearCoordinateError = useCallback((markerId: string, field: CoordinateField): void => {
+      setCoordinateErrors(prevErrors => {
+         if (prevErrors[markerId] == null || prevErrors[markerId]?.[field] == null) {
+            return prevErrors
+         }
+
+         const nextMarkerErrors = { ...prevErrors[markerId] }
+         delete nextMarkerErrors[field]
+
+         return {
+            ...prevErrors,
+            [markerId]: nextMarkerErrors,
+         }
+      })
+   }, [])
+
+   const commitCoordinateInput = useCallback((
+      marker: Marker,
+      rowIndex: number,
+      field: CoordinateField,
+      rawValue: string,
+   ): void => {
+      const parsedValue = parseCoordinateInput(rawValue)
+      const errorMessage = getCoordinateErrorMessage(field, parsedValue)
+
+      if (errorMessage != null) {
+         setCoordinateError(marker.id, field, errorMessage)
+         showToast(errorMessage, 'danger')
+         return
+      }
+
+      clearCoordinateError(marker.id, field)
+
+      const updatedMarker: Marker = {
+         ...marker,
+         [field]: parsedValue,
+      }
+
+      updateMarker(rowIndex, updatedMarker)
+      onCoordsChange(updatedMarker)
+   }, [clearCoordinateError, onCoordsChange, setCoordinateError, showToast, updateMarker])
+
+   const startMapCoordinateSelection = useCallback((
+      event: React.MouseEvent<SVGSVGElement>,
+      marker: Marker,
+   ): void => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      isClosingForCoordinateSelectionRef.current = true
+      setCoordinateSelectionMarkerId(marker.id)
+      setCursorMode(CursorModeType.POINTER)
+      hideMainUi()
+      handleMarkersDashboardOpenChange(false)
+   }, [
+      hideMainUi,
+      handleMarkersDashboardOpenChange,
+      setCoordinateSelectionMarkerId,
+      setCursorMode,
+   ])
+
    const renderCell = React.useCallback((marker: Marker, cellKey: string, cellValue: string | number, rowIndex: number) => {
+      const markerId = marker.id
+
       switch (cellKey) {
          case 'selection':
             return (
@@ -93,6 +294,19 @@ export function MarkersDashboardView() {
                />
             )
          case 'address':
+            if (marker.isPuck) {
+               return (
+                  <Input
+                     isDisabled
+                     type="text"
+                     size="sm"
+                     variant="bordered"
+                     placeholder="Resolving your position..."
+                     value={cellValue.toString()}
+                  />
+               )
+            }
+
             const options: Option[] = featureSuggestions.map((feature: Feature) => ({
                label: feature.properties.label,
                value: feature.properties.id,
@@ -100,9 +314,6 @@ export function MarkersDashboardView() {
 
             const value: Option = ({ label: cellValue.toString(), value: cellValue.toString() })
 
-            // TODO console.log(value)
-
-            // TODO IF IS PUCK, SET AUTOMATICALLY ADDRESS AND DISABLE AUTOCOMPLETE
             return (
                <AutoComplete
                   options={options}
@@ -113,47 +324,52 @@ export function MarkersDashboardView() {
                   onSelectionChange={(option: Option) => onSelectionChange(option, marker)}
                   value={value}
                   isLoading={autoCompleteLoading}
+                  disabled={marker.isPuck}
                />
             )
          case 'latitude':
             return (
                <Input
                   isDisabled={marker.isPuck}
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[-0-9.,]+"
                   variant="bordered"
                   placeholder="Enter the marker latitude"
                   size="sm"
-                  value={cellValue.toString()}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                     // Convert string input to number.
-                     const newLatitude: number = parseFloat(event.target.value)
-                     // Ensure the value is a valid number.
-                     if (!isNaN(newLatitude)) {
-                        marker.latitude = newLatitude
-                        updateMarker(rowIndex, marker)
-                        onCoordsChange(marker)
-                     }
-                  }} />
+                  key={`latitude-${markerId}-${cellValue}`}
+                  defaultValue={cellValue.toString()}
+                  isInvalid={coordinateErrors[markerId]?.latitude != null}
+                  errorMessage={coordinateErrors[markerId]?.latitude}
+                  onChange={(): void => {
+                     clearCoordinateError(markerId, 'latitude')
+                  }}
+                  onBlur={(event: React.FocusEvent<HTMLInputElement>): void => {
+                     commitCoordinateInput(marker, rowIndex, 'latitude', event.target.value)
+                  }}
+               />
             )
          case 'longitude':
             return (
                <Input
                   isDisabled={marker.isPuck}
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[-0-9.,]+"
                   variant="bordered"
                   placeholder="Enter the marker longitude"
                   size="sm"
-                  value={cellValue.toString()}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                     // Convert string input to number.
-                     const newLongitude: number = parseFloat(event.target.value)
-                     // Ensure the value is a valid number.
-                     if (!isNaN(newLongitude)) {
-                        marker.longitude = newLongitude
-                        updateMarker(rowIndex, marker)
-                        onCoordsChange(marker)
-                     }
-                  }} />
+                  key={`longitude-${markerId}-${cellValue}`}
+                  defaultValue={cellValue.toString()}
+                  isInvalid={coordinateErrors[markerId]?.longitude != null}
+                  errorMessage={coordinateErrors[markerId]?.longitude}
+                  onChange={(): void => {
+                     clearCoordinateError(markerId, 'longitude')
+                  }}
+                  onBlur={(event: React.FocusEvent<HTMLInputElement>): void => {
+                     commitCoordinateInput(marker, rowIndex, 'longitude', event.target.value)
+                  }}
+               />
             )
          case 'color':
             return (
@@ -168,6 +384,8 @@ export function MarkersDashboardView() {
                />
             )
          case 'actions':
+            const isCoordinateSelectionArmed: boolean = coordinateSelectionMarkerId === markerId
+
             return (
                <div className="relative flex items-center gap-2">
                   <Tooltip content="View on map">
@@ -180,6 +398,16 @@ export function MarkersDashboardView() {
                         }} />
                      </span>
                   </Tooltip>
+                  {!marker.isPuck && <Tooltip
+                     content={isCoordinateSelectionArmed ? 'Coordinate picker enabled' : 'Pick coordinates on map'}>
+                     <span
+                        data-map-pick-ignore="true"
+                        className={`text-lg cursor-pointer active:opacity-50 ${isCoordinateSelectionArmed ? 'text-primary' : 'text-default-400'}`}>
+                        <CrosshairIcon className="h-[1em] w-[1em]" onClick={(event): void => {
+                           startMapCoordinateSelection(event, marker)
+                        }} />
+                     </span>
+                  </Tooltip>}
                   {!marker.isPuck && <Tooltip color="danger" content="Delete marker">
                      <span className="text-lg text-danger cursor-pointer active:opacity-50">
                         <DeleteIcon onClick={(): void => {
@@ -192,7 +420,20 @@ export function MarkersDashboardView() {
          default:
             return cellValue
       }
-   }, [featureSuggestions, onInputChange, autoCompleteLoading, selectMarker, updateMarker, onSelectionChange, onCoordsChange, deleteMarker])
+   }, [
+      featureSuggestions,
+      onInputChange,
+      autoCompleteLoading,
+      selectMarker,
+      onSelectionChange,
+      clearCoordinateError,
+      coordinateErrors,
+      coordinateSelectionMarkerId,
+      commitCoordinateInput,
+      deleteMarker,
+      flyToCoordinates,
+      startMapCoordinateSelection,
+   ])
 
    if (!isMarkersDashboardOpen) {
       return null
@@ -205,6 +446,7 @@ export function MarkersDashboardView() {
          open={isMarkersDashboardOpen}
          onClose={handleMarkersDashboardClose}>
          <DrawerContent
+            data-map-pick-ignore="true"
             onInteractOutside={(event): void => {
                handleMarkersDashboardClose()
                event.stopPropagation()
@@ -212,6 +454,16 @@ export function MarkersDashboardView() {
             }}
          >
             <div className="mx-auto w-full">
+               {toast != null && (
+                  <div className="pointer-events-none fixed inset-x-0 top-6 z-50 flex justify-center px-4">
+                     <div
+                        className={`flex w-full max-w-lg items-center rounded-lg p-4 text-white shadow-lg ring-1 ring-black/5 backdrop-blur-md ${toast.tone === 'danger' ? 'bg-red-700/25' : 'bg-blue-700/25'}`}
+                        role="status"
+                     >
+                        <div className="text-sm font-normal">{toast.message}</div>
+                     </div>
+                  </div>
+               )}
                <DrawerHeader className="flex justify-between items-center">
                   <div>
                      <DrawerTitle>📍 Manage and create markers on Earth</DrawerTitle>
@@ -273,11 +525,3 @@ export function MarkersDashboardView() {
       </Drawer>
    )
 }
-
-// TODO IMPORTANT CREATE MY OWN SYSTEM TO HANDLE ROW SELECTION WITH CHECKBOX ON EACH ROW => IN ORDER TO SOLVE PROBLEM WITH EVENTS ON NEXT.UI ROW SELECTION
-// TODO CUSTOM ROW SELECTION => Allow to creat the track between markers with a specified order => set number in the checkbox
-// TODO ORS call when updating coords and none null
-// TODO When doing a place search, the selected place is added to the markers
-// TODO Credit drawer
-// TODO On searchbar select country, display country name
-// TODO Display place options in autocomplete upper

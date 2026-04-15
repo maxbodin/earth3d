@@ -7,6 +7,7 @@ import { Option } from '@/shadcn/ui/autocomplete'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { autocompleteORS, reverseORS } from '@/app/server/services/openRouteService'
+import { PUCK_COLOR } from '@/app/constants/colors'
 
 export function MarkersDashboardController() {
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
@@ -25,17 +26,19 @@ export function MarkersDashboardController() {
    const { markers, setMarkers } = useMarkersDashboard()
 
    const createNewMarker = (): void => {
-      setMarkers([...markers, {
-         id: generateUniqueId(),
-         selection: 'selection',
-         name: '',
-         address: '',
-         latitude: 0,
-         longitude: 0,
-         color: getRandomVibrantColor(),
-         actions: 'actions',
-         isPuck: false,
-      }])
+      setMarkers(prevMarkers => {
+         return [...prevMarkers, {
+            id: generateUniqueId(),
+            selection: 'selection',
+            name: '',
+            address: '',
+            latitude: 0,
+            longitude: 0,
+            color: getRandomVibrantColor(),
+            actions: 'actions',
+            isPuck: false,
+         }]
+      })
 
 
       // TODO Create marker on map.
@@ -48,33 +51,83 @@ export function MarkersDashboardController() {
     * @param longitude
     */
    const updatePuckMarker = (latitude: number, longitude: number): void => {
-      // Find the index of the existing puck marker.
-      const puckIndex: number = markers.findIndex(marker => marker.isPuck)
+      setMarkers(prevMarkers => {
+         const puckIndex = prevMarkers.findIndex(marker => marker.isPuck)
 
-      // If it exists, update its latitude and longitude.
-      if (puckIndex !== -1) {
-         const updatedRows = [...markers]
-         updatedRows[puckIndex] = {
-            ...updatedRows[puckIndex],
-            latitude,
-            longitude,
+         if (puckIndex !== -1) {
+            const updatedRows = [...prevMarkers]
+            updatedRows[puckIndex] = {
+               ...updatedRows[puckIndex],
+               latitude,
+               longitude,
+               color: PUCK_COLOR,
+               isPuck: true,
+            }
+            return updatedRows
          }
-         setMarkers(updatedRows)
-      } else {
-         // If no puck marker exists, create a new one.
-         setMarkers([...markers, {
+
+         return [...prevMarkers, {
             id: generateUniqueId(),
             selection: 'selection',
             name: 'Your position',
             address: '',
             latitude,
             longitude,
-            color: getRandomVibrantColor(),
+            color: PUCK_COLOR,
             actions: 'actions',
             isPuck: true,
-         }])
-      }
+         }]
+      })
    }
+
+   const applyReverseGeocodingForMarker = useCallback(async (
+      markerId: string,
+      latitude: number,
+      longitude: number,
+   ): Promise<void> => {
+      try {
+         const data: GeocodeResponse = await reverseORS(longitude, latitude)
+         const selectedSuggestion: Feature | undefined = data.features?.[0]
+
+         if (selectedSuggestion == null) {
+            return
+         }
+
+         setMarkers(prevMarkers => {
+            return prevMarkers.map(marker => {
+               if (marker.id !== markerId) {
+                  return marker
+               }
+
+               return {
+                  ...marker,
+                  name: marker.name == ''
+                     ? selectedSuggestion.properties.name
+                     : marker.name,
+                  address: selectedSuggestion.properties.label,
+                  latitude: selectedSuggestion.geometry.coordinates[1],
+                  longitude: selectedSuggestion.geometry.coordinates[0],
+               }
+            })
+         })
+      } catch (error) {
+         setAutoCompleteError('Error fetching reverse geocode results.')
+      }
+   }, [setMarkers])
+
+   const fillPuckAddressIfMissing = useCallback(async (): Promise<void> => {
+      const puckMarker: Marker | undefined = markers.find(marker => marker.isPuck)
+
+      if (puckMarker == null) return
+      if (!Number.isFinite(puckMarker.latitude) || !Number.isFinite(puckMarker.longitude)) return
+      if (puckMarker.address.trim() !== '') return
+
+      await applyReverseGeocodingForMarker(
+         puckMarker.id,
+         puckMarker.latitude,
+         puckMarker.longitude,
+      )
+   }, [markers, applyReverseGeocodingForMarker])
 
 
    const selectMarker = (marker: Marker): void => {
@@ -146,35 +199,21 @@ export function MarkersDashboardController() {
     * @param marker
     */
    const onCoordsChange = (marker: Marker): void => {
-      console.log(`Called with latitude = ${marker.latitude}, longitude = ${marker.longitude}`)
-      if (marker.latitude != null && marker.latitude != 0 && marker.longitude != null && marker.longitude != 0)
-         handleCoordsChange(marker)
+      if (!Number.isFinite(marker.latitude) || !Number.isFinite(marker.longitude)) {
+         return
+      }
+
+      handleCoordsChange(marker.id, marker.latitude, marker.longitude)
    }
 
    /**
     * Debounced function to handle coordinates changes.
     */
    const handleCoordsChange = useCallback(
-      debounce(async (marker: Marker) => {
-         try {
-            // Call server-side function.
-            const data: GeocodeResponse = await reverseORS(marker.latitude, marker.longitude)
-
-            const selectedSuggestion: Feature = data.features[0]
-
-            if (marker.name == '') marker.name = selectedSuggestion.properties.name
-            marker.address = selectedSuggestion.properties.label
-            marker.latitude = selectedSuggestion.geometry.coordinates[1]
-            marker.longitude = selectedSuggestion.geometry.coordinates[0]
-
-            // TODO console.log(marker);
-            // TODO FIX ADDRESS NOT UPDATED
-         } catch (err) {
-            marker.latitude = 0
-            marker.longitude = 0
-         }
+      debounce(async (markerId: string, latitude: number, longitude: number) => {
+         await applyReverseGeocodingForMarker(markerId, latitude, longitude)
       }, 300), // Throttle input to 300ms.
-      [],
+      [applyReverseGeocodingForMarker],
    )
 
    /**
@@ -190,15 +229,31 @@ export function MarkersDashboardController() {
          )
 
       if (selectedSuggestion) {
-         if (marker.name == '') marker.name = selectedSuggestion.properties.name
-         marker.address = selectedSuggestion.properties.label
-         marker.latitude = selectedSuggestion.geometry.coordinates[1]
-         marker.longitude = selectedSuggestion.geometry.coordinates[0]
+         const latitude: number = selectedSuggestion.geometry.coordinates[1]
+         const longitude: number = selectedSuggestion.geometry.coordinates[0]
+
+         setMarkers(prevMarkers => {
+            return prevMarkers.map(existingMarker => {
+               if (existingMarker.id !== marker.id) {
+                  return existingMarker
+               }
+
+               return {
+                  ...existingMarker,
+                  name: existingMarker.name == ''
+                     ? selectedSuggestion.properties.name
+                     : existingMarker.name,
+                  address: selectedSuggestion.properties.label,
+                  latitude,
+                  longitude,
+               }
+            })
+         })
 
          // Fly to new marker.
          flyToCoordinates(
-            marker.latitude,
-            marker.longitude,
+            latitude,
+            longitude,
          )
 
          setFeatureSuggestions([])
@@ -218,5 +273,6 @@ export function MarkersDashboardController() {
       onSelectionChange,
       onInputChange,
       onCoordsChange,
+      fillPuckAddressIfMissing,
    }
 }

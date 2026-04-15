@@ -1,5 +1,5 @@
 'use client'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useUi } from '@/app/context_todo_improve/UIContext'
 import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut/fadeInOut'
 import './styles.css'
@@ -30,7 +30,7 @@ export function NavigationBar() {
 
    const { setIsSettingsDashboardOpen } = useSettingsDashboard()
    const { setIsCreditOpen } = useCredit()
-   const { setIsMarkersDashboardOpen } = useMarkersDashboard()
+   const { setIsMarkersDashboardOpen, markers } = useMarkersDashboard()
    const { setIsDataDashboardOpen } = useDataDashboard()
 
    const { displayedSceneData } = useScenes()
@@ -44,6 +44,12 @@ export function NavigationBar() {
       setSelectedObjectData,
       setSelectedObjectType,
    })
+
+   const userPuckMarker = useMemo(() => {
+      return markers.find(marker => {
+         return marker.isPuck && Number.isFinite(marker.latitude) && Number.isFinite(marker.longitude)
+      })
+   }, [markers])
 
    const openPanel = useCallback((panelType: PanelType): void => {
       setIsNavBarDisplayed(false)
@@ -87,6 +93,12 @@ export function NavigationBar() {
          return !prevState
       })
    }, [setShowTrajectories])
+
+   const focusOnUserPosition = useCallback((): void => {
+      if (userPuckMarker == null) return
+
+      flyToCoordinates(userPuckMarker.latitude, userPuckMarker.longitude)
+   }, [flyToCoordinates, userPuckMarker])
 
    const handleBackToEarth = useCallback((): void => {
       // TODO : Implement get back to earth scene instantly.
@@ -132,10 +144,12 @@ export function NavigationBar() {
                   cursorMode={cursorMode}
                   trueSize={trueSize}
                   showTrajectories={showTrajectories}
+                  canFocusUserPosition={userPuckMarker != null}
                   isRandomPlaceLoading={isRandomPlaceLoading}
                   onToggleSolarSystemScale={reverseSolarSystemTrueSize}
                   onToggleSolarSystemTrajectories={reverseSolarSystemTrajectories}
                   onBackToEarth={handleBackToEarth}
+                  onFocusUserPosition={focusOnUserPosition}
                   onToggleCursorMode={reverseCursorMode}
                   onOpenMarkers={openMarkers}
                   onOpenSettings={openDashboard}

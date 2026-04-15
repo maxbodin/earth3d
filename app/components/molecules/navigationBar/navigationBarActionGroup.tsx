@@ -9,6 +9,7 @@ import {
    AArrowUpIcon,
    EarthIcon,
    HandIcon,
+   LocateFixedIcon,
    MousePointer2Icon,
    OrbitIcon,
    ShuffleIcon,
@@ -21,10 +22,12 @@ interface NavigationBarActionGroupProps {
    cursorMode: CursorModeType
    trueSize: boolean
    showTrajectories: boolean
+   canFocusUserPosition: boolean
    isRandomPlaceLoading: boolean
    onToggleSolarSystemScale: () => void
    onToggleSolarSystemTrajectories: () => void
    onBackToEarth: () => void
+   onFocusUserPosition: () => void
    onToggleCursorMode: () => void
    onOpenMarkers: () => void
    onOpenSettings: () => void
@@ -38,10 +41,12 @@ export function NavigationBarActionGroup({
                                              cursorMode,
                                              trueSize,
                                              showTrajectories,
+                                             canFocusUserPosition,
                                              isRandomPlaceLoading,
                                              onToggleSolarSystemScale,
                                              onToggleSolarSystemTrajectories,
                                              onBackToEarth,
+                                             onFocusUserPosition,
                                              onToggleCursorMode,
                                              onOpenMarkers,
                                              onOpenSettings,
@@ -50,6 +55,8 @@ export function NavigationBarActionGroup({
                                              onRandomPlace,
                                           }: NavigationBarActionGroupProps): React.JSX.Element {
    const isSolarSystemScene = displayedSceneType === SceneType.SOLAR_SYSTEM
+   const isPlanisphereOrSphereScene = displayedSceneType === SceneType.PLANE
+      || displayedSceneType === SceneType.SPHERICAL
 
    return (
       <ButtonGroup
@@ -130,6 +137,20 @@ export function NavigationBarActionGroup({
                      <PinIcon />
                   </Button>
                </Tooltip>
+
+               {isPlanisphereOrSphereScene && canFocusUserPosition && (
+                  <Tooltip content="Focus on Your Position">
+                     <Button
+                        size="lg"
+                        isIconOnly
+                        variant="bordered"
+                        aria-label="Focus on Your Position"
+                        onPress={onFocusUserPosition}
+                     >
+                        <LocateFixedIcon />
+                     </Button>
+                  </Tooltip>
+               )}
             </>
          )}
 

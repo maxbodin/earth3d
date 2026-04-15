@@ -15,6 +15,7 @@ import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyContr
 import { CursorModeType } from '@/app/enums/modeType'
 import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
 import { SceneType } from '@/app/enums/sceneType'
+import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 
 export function ClickHandler(): null {
 
@@ -22,19 +23,87 @@ export function ClickHandler(): null {
    const mouse: THREE.Vector2 = new THREE.Vector2()
 
    const { displayedSceneData } = useScenes()
-   const { setSelectedObjectType, setSelectedObjectData, cursorMode } = useSelection()
+   const { setSelectedObjectType, setSelectedObjectData, cursorMode, setCursorMode } = useSelection()
    const { displayedVesselsGroup } = useVessels()
    const { displayedAirportsGroup } = useAirports()
    const { displayedPlanesGroup } = usePlanes()
    const { planet } = usePlanet()
    const { flyToCoordinates } = CameraFlyController()
    const { planeMap } = usePlaneMap()
+   const {
+      markers,
+      setMarkers,
+      coordinateSelectionMarkerId,
+      setCoordinateSelectionMarkerId,
+      setIsMarkersDashboardOpen,
+   } = useMarkersDashboard()
+
+   const applyPickedCoordinatesToMarker = async (
+      latitude: number,
+      longitude: number,
+   ): Promise<void> => {
+      if (coordinateSelectionMarkerId == null) {
+         return
+      }
+
+      const selectedMarker = markers.find(marker => marker.id === coordinateSelectionMarkerId)
+      if (selectedMarker == null) {
+         setCoordinateSelectionMarkerId(null)
+         return
+      }
+
+      setMarkers(prevMarkers => {
+         return prevMarkers.map(marker => {
+            if (marker.id !== coordinateSelectionMarkerId) {
+               return marker
+            }
+
+            return {
+               ...marker,
+               latitude,
+               longitude,
+            }
+         })
+      })
+
+      try {
+         const data: GeocodeResponse = await reverseORS(longitude, latitude)
+         const selectedSuggestion = data.features?.[0]
+
+         if (selectedSuggestion != null) {
+            setMarkers(prevMarkers => {
+               return prevMarkers.map(marker => {
+                  if (marker.id !== coordinateSelectionMarkerId) {
+                     return marker
+                  }
+
+                  return {
+                     ...marker,
+                     name: marker.name == ''
+                        ? selectedSuggestion.properties.name
+                        : marker.name,
+                     address: selectedSuggestion.properties.label,
+                     latitude: selectedSuggestion.geometry.coordinates[1],
+                     longitude: selectedSuggestion.geometry.coordinates[0],
+                  }
+               })
+            })
+         }
+      } catch (err) {
+         // Keep selected coordinates even if reverse geocoding fails.
+      } finally {
+         setCoordinateSelectionMarkerId(null)
+         setIsMarkersDashboardOpen(true)
+         setCursorMode(CursorModeType.HAND)
+      }
+   }
 
    /**
     * Handle click on planet.
     */
    const clickOnPlanet = async (): Promise<void> => {
-      if (!planet || cursorMode == CursorModeType.HAND) return
+      if (!planet) return
+      if (coordinateSelectionMarkerId == null && cursorMode == CursorModeType.HAND) return
 
       let geolocation: Geolocation | null = null
 
@@ -53,11 +122,23 @@ export function ClickHandler(): null {
             planeMap,
          )
 
+         if (intersectPlaneMap.length === 0) {
+            return
+         }
+
          const selectedPlaneMap: THREE.Intersection<THREE.Object3D<THREE.Object3DEventMap>> = intersectPlaneMap[0]
          geolocation = ThreeGeoUnitsUtils.sphericalToDatums(selectedPlaneMap.point.x, -selectedPlaneMap.point.z)
       }
 
       if (!geolocation) return
+
+      if (coordinateSelectionMarkerId != null) {
+         await applyPickedCoordinatesToMarker(
+            geolocation.latitude,
+            geolocation.longitude,
+         )
+         return
+      }
 
       try {
          // Call server-side function.
@@ -164,14 +245,32 @@ export function ClickHandler(): null {
     * Function to handle click events.
     * @param event
     */
-   const onMouseClick = (event: { clientX: number; clientY: number }): void => {
+   const onMouseClick = (event: MouseEvent): void => {
       if (displayedSceneData == null || displayedSceneData.camera == null)
          return
+
+      const target = event.target as HTMLElement | null
+      const isInteractiveUiClick = target?.closest(
+         '[data-map-pick-ignore="true"],button,a,input,textarea,select,[role="button"],[role="dialog"]',
+      ) != null
+
+      if (coordinateSelectionMarkerId != null && isInteractiveUiClick) {
+         return
+      }
+
+      if (target?.closest('[data-map-pick-ignore="true"]') != null) {
+         return
+      }
 
       // Use mouse position to create a raycast.
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
       raycaster.setFromCamera(mouse, displayedSceneData.camera)
+
+      if (coordinateSelectionMarkerId != null) {
+         void clickOnPlanet()
+         return
+      }
 
       clickOnPlanet()
       clickOnVessel()
@@ -188,7 +287,17 @@ export function ClickHandler(): null {
 
       // Clean up the event listener.
       return cleanup
-   }, [displayedSceneData, cursorMode, planet, displayedVesselsGroup, displayedAirportsGroup, displayedPlanesGroup])
+   }, [
+      displayedSceneData,
+      cursorMode,
+      coordinateSelectionMarkerId,
+      planet,
+      planeMap,
+      markers,
+      displayedVesselsGroup,
+      displayedAirportsGroup,
+      displayedPlanesGroup,
+   ])
 
    return null
 }
