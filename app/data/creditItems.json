@@ -178,9 +178,13 @@
    {
       "id": "textures",
       "title": "Space Texture Sources",
-      "description": "Texture references used for celestial bodies and sky visuals.",
+      "description": "Texture references used for celestial bodies and sky visuals. Milky Way, Hyptic, and Constellation textures are credited to NASA Scientific Visualization Studio.",
       "tags": ["assets", "textures"],
       "links": [
+         {
+            "label": "NASA Scientific Visualization Studio (SVS 4851)",
+            "url": "https://svs.gsfc.nasa.gov/4851"
+         },
          {
             "label": "Solar System Scope Textures",
             "url": "https://www.solarsystemscope.com/textures/"
