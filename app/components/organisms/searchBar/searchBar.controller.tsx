@@ -16,15 +16,20 @@ import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
+import { searchAirports } from '@/app/lib/airportSearch'
+import { AirportSearchSuggestion } from '@/app/types/airport'
 
 const PLACE_SEARCH_ZOOM_MULTIPLIER = 0.12
 const PLACE_SEARCH_PLANISPHERE_ZOOM_MULTIPLIER = 0.01
+const AIRPORT_SEARCH_ZOOM_MULTIPLIER = 0.12
+const AIRPORT_SEARCH_PLANISPHERE_ZOOM_MULTIPLIER = 0.01
 
 export function SearchBarController() {
    const [searchTerm, setSearchTerm] = useState<string>('')
 
    const [featureSuggestions, setFeatureSuggestions] = useState<Feature[]>([])
    const [countrySuggestions, setCountrySuggestions] = useState<Country[]>([])
+   const [airportSuggestions, setAirportSuggestions] = useState<AirportSearchSuggestion[]>([])
 
    const defaultErrorMessage = 'Please provide a valid input.'
    const [errorMessage, setErrorMessage] = useState<string>(defaultErrorMessage)
@@ -88,6 +93,37 @@ export function SearchBarController() {
       setSelectedObjectType,
    ])
 
+   const focusOnAirportSuggestion = useCallback((selectedSuggestion: AirportSearchSuggestion): void => {
+      const latitude = selectedSuggestion.feature.attributes.latitude_deg
+      const longitude = selectedSuggestion.feature.attributes.longitude_deg
+
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+         setErrorMessage('Invalid airport coordinates.')
+         setIsInvalid(true)
+         return
+      }
+
+      setSearchTerm(selectedSuggestion.label)
+      setAirportSuggestions([])
+
+      setSelectedObjectData({ data: selectedSuggestion.feature })
+      setSelectedObjectType(ObjectType.AIRPORT)
+      updateCoordinatesInCurrentUrl(latitude, longitude)
+
+      const zoomMultiplier = displayedSceneData?.type === SceneType.PLANE
+         ? AIRPORT_SEARCH_PLANISPHERE_ZOOM_MULTIPLIER
+         : AIRPORT_SEARCH_ZOOM_MULTIPLIER
+
+      flyToCoordinates(latitude, longitude, {
+         zoomMultiplier,
+      })
+   }, [
+      displayedSceneData?.type,
+      flyToCoordinates,
+      setSelectedObjectData,
+      setSelectedObjectType,
+   ])
+
    const selectFirstPlaceSuggestion = useCallback(async (): Promise<void> => {
       if (selectedSubject !== SearchSubjectType.PLACE) {
          return
@@ -117,6 +153,29 @@ export function SearchBarController() {
       focusOnPlaceSuggestion(firstSuggestion)
    }, [featureSuggestions, focusOnPlaceSuggestion, searchTerm, selectedSubject])
 
+   const selectFirstAirportSuggestion = useCallback(async (): Promise<void> => {
+      if (selectedSubject !== SearchSubjectType.AIRPORT) {
+         return
+      }
+
+      let firstSuggestion: AirportSearchSuggestion | undefined = airportSuggestions[0]
+
+      if (firstSuggestion == null && searchTerm.trim() !== '') {
+         const refreshedSuggestions = searchAirports(searchTerm)
+         setAirportSuggestions(refreshedSuggestions)
+         firstSuggestion = refreshedSuggestions[0]
+      }
+
+      if (firstSuggestion == null) {
+         setErrorMessage('No airport found for this search.')
+         setIsInvalid(true)
+         return
+      }
+
+      setIsInvalid(false)
+      focusOnAirportSuggestion(firstSuggestion)
+   }, [airportSuggestions, focusOnAirportSuggestion, searchTerm, selectedSubject])
+
    /**
     * Debounced function to handle input changes.
     */
@@ -125,6 +184,7 @@ export function SearchBarController() {
          if (value.trim() === '') {
             setFeatureSuggestions([])
             setCountrySuggestions([])
+            setAirportSuggestions([])
             return
          }
 
@@ -147,6 +207,8 @@ export function SearchBarController() {
                   )
 
                setCountrySuggestions(filteredCountries || [])
+            } else if (selectedSubject === SearchSubjectType.AIRPORT) {
+               setAirportSuggestions(searchAirports(value))
             }
          } catch (err) {
             setAutoCompleteError('Error fetching autocompleteORS results.')
@@ -172,12 +234,16 @@ export function SearchBarController() {
          return
       }
 
-      if (selectedSubject !== SearchSubjectType.PLACE) {
+      event.preventDefault()
+
+      if (selectedSubject === SearchSubjectType.PLACE) {
+         void selectFirstPlaceSuggestion()
          return
       }
 
-      event.preventDefault()
-      void selectFirstPlaceSuggestion()
+      if (selectedSubject === SearchSubjectType.AIRPORT) {
+         void selectFirstAirportSuggestion()
+      }
    }
 
    /**
@@ -187,6 +253,9 @@ export function SearchBarController() {
       setIsInvalid(false)
       setErrorMessage(defaultErrorMessage)
       setSearchTerm('')
+      setFeatureSuggestions([])
+      setCountrySuggestions([])
+      setAirportSuggestions([])
    }
 
    /**
@@ -205,6 +274,18 @@ export function SearchBarController() {
                setIsInvalid(true)
             }
             setCountrySuggestions([])
+            break
+         case SearchSubjectType.AIRPORT:
+            const selectedAirportSuggestion = airportSuggestions.find(
+               (suggestion: AirportSearchSuggestion): boolean => {
+                  return suggestion.key === String(key)
+               },
+            )
+
+            if (selectedAirportSuggestion != null) {
+               setIsInvalid(false)
+               focusOnAirportSuggestion(selectedAirportSuggestion)
+            }
             break
          case SearchSubjectType.PLACE:
             const selectedSuggestion: Feature | undefined =
@@ -244,6 +325,9 @@ export function SearchBarController() {
          case SearchSubjectType.COUNTRY:
             setInputLabel('Country Name')
             break
+         case SearchSubjectType.AIRPORT:
+            setInputLabel('Airport (ICAO, IATA, name, location)')
+            break
          case SearchSubjectType.PLACE:
             setInputLabel('Place Name')
             break
@@ -266,6 +350,7 @@ export function SearchBarController() {
       searchTerm,
       featureSuggestions,
       countrySuggestions,
+      airportSuggestions,
       onSubjectSelected,
       onInputChange,
       onSelectionChange,

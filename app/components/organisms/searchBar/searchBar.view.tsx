@@ -18,6 +18,7 @@ import { SearchBarController } from '@/app/components/organisms/searchBar/search
 import { useUi } from '@/app/context_todo_improve/UIContext'
 import { SceneType } from '@/app/enums/sceneType'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
+import { AirportSearchSuggestion } from '@/app/types/airport'
 
 export function SearchBarView() {
    const {
@@ -31,6 +32,7 @@ export function SearchBarView() {
       searchTerm,
       featureSuggestions,
       countrySuggestions,
+      airportSuggestions,
       onSubjectSelected,
       onInputChange,
       onSelectionChange,
@@ -87,6 +89,7 @@ export function SearchBarView() {
                      }}
                      isLoading={autoCompleteLoading}
                      inputProps={{
+                        'data-testid': 'search-input',
                         onKeyDown: onSearchInputKeyDown,
                         classNames: {
                            inputWrapper: 'h-[48px] rounded-l-none bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg',
@@ -124,6 +127,16 @@ export function SearchBarView() {
                                  {country.country}
                               </AutocompleteItem>
                            ))
+                           : selectedSubject === SearchSubjectType.AIRPORT
+                              ? airportSuggestions.map((airport: AirportSearchSuggestion) => (
+                                 <AutocompleteItem
+                                    key={airport.key}
+                                    textValue={airport.label}
+                                    description={airport.description}
+                                 >
+                                    {airport.label}
+                                 </AutocompleteItem>
+                              ))
                            : []}
                   </Autocomplete>
                </div>
