@@ -31,6 +31,7 @@ export function MarkersDashboardController() {
             id: generateUniqueId(),
             selection: 'selection',
             name: '',
+            showTitleOnMap: true,
             address: '',
             latitude: 0,
             longitude: 0,
@@ -58,6 +59,9 @@ export function MarkersDashboardController() {
             const updatedRows = [...prevMarkers]
             updatedRows[puckIndex] = {
                ...updatedRows[puckIndex],
+               name: updatedRows[puckIndex].name.trim() === ''
+                  ? 'Your position'
+                  : updatedRows[puckIndex].name,
                latitude,
                longitude,
                color: PUCK_COLOR,
@@ -70,6 +74,7 @@ export function MarkersDashboardController() {
             id: generateUniqueId(),
             selection: 'selection',
             name: 'Your position',
+            showTitleOnMap: true,
             address: '',
             latitude,
             longitude,

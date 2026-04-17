@@ -8,6 +8,7 @@ import {
    Checkbox,
    getKeyValue,
    Input,
+   Switch,
    Table,
    TableBody,
    TableCell,
@@ -23,7 +24,7 @@ import { MarkersDashboardController } from '@/app/components/organisms/markersDa
 import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
-import { CrosshairIcon, PlusIcon } from 'lucide-react'
+import { CrosshairIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon } from 'lucide-react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
@@ -32,7 +33,7 @@ import { reverseORS } from '@/app/server/services/openRouteService'
 import { ObjectType } from '@/app/enums/objectType'
 
 
-const columns: string[] = ['Selection', 'Name', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
+const columns: string[] = ['Selection', 'Title', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
 
 type CoordinateField = 'latitude' | 'longitude'
 type ToastTone = 'danger' | 'info'
@@ -94,6 +95,8 @@ export function MarkersDashboardView() {
       isMarkersDashboardOpen,
       setIsMarkersDashboardOpen,
       markers,
+      areMarkerTitlesVisible,
+      setAreMarkerTitlesVisible,
       coordinateSelectionMarkerId,
       setCoordinateSelectionMarkerId,
    } =
@@ -307,7 +310,18 @@ export function MarkersDashboardView() {
       showToast,
    ])
 
-   const renderCell = React.useCallback((marker: Marker, cellKey: string, cellValue: string | number, rowIndex: number) => {
+   const patchMarker = useCallback((
+      rowIndex: number,
+      marker: Marker,
+      patch: Partial<Marker>,
+   ): void => {
+      updateMarker(rowIndex, {
+         ...marker,
+         ...patch,
+      })
+   }, [updateMarker])
+
+   const renderCell = React.useCallback((marker: Marker, cellKey: string, cellValue: string | number | boolean, rowIndex: number) => {
       const markerId = marker.id
 
       switch (cellKey) {
@@ -324,12 +338,13 @@ export function MarkersDashboardView() {
                   type="text"
                   size="sm"
                   variant="bordered"
-                  placeholder="Enter the marker name"
-                  aria-label="Enter the marker name"
+                  placeholder="Enter marker title"
+                  aria-label="Enter marker title"
                   value={marker.isPuck ? 'Your position' : cellValue.toString()}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                     marker.name = event.target.value
-                     updateMarker(rowIndex, marker)
+                     patchMarker(rowIndex, marker, {
+                        name: event.target.value,
+                     })
                   }}
                />
             )
@@ -415,9 +430,9 @@ export function MarkersDashboardView() {
             return (
                <ColorPicker
                   onChange={(newColor: string): void => {
-                     marker.color = newColor
-                     updateMarker(rowIndex, marker,
-                     )
+                     patchMarker(rowIndex, marker, {
+                        color: newColor,
+                     })
                   }}
                   isDisabled={marker.isPuck}
                   value={marker.isPuck ? PUCK_COLOR : cellValue.toString()}
@@ -425,6 +440,7 @@ export function MarkersDashboardView() {
             )
          case 'actions':
             const isCoordinateSelectionArmed: boolean = coordinateSelectionMarkerId === markerId
+            const canToggleTitleVisibility = marker.name.trim().length > 0
 
             return (
                <div className="relative flex items-center gap-2">
@@ -445,6 +461,31 @@ export function MarkersDashboardView() {
                         }} />
                      </span>
                   </Tooltip>}
+                  <Tooltip
+                     content={marker.showTitleOnMap ? 'Hide title on map' : 'Show title on map'}>
+                     <button
+                        type="button"
+                        aria-label="Toggle marker title on map"
+                        data-title-visible={marker.showTitleOnMap ? 'true' : 'false'}
+                        disabled={!canToggleTitleVisibility}
+                        className={`text-lg active:opacity-50 ${canToggleTitleVisibility ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} ${marker.showTitleOnMap ? 'text-primary' : 'text-default-400'}`}
+                        onClick={(): void => {
+                           if (!canToggleTitleVisibility) {
+                              return
+                           }
+
+                           patchMarker(rowIndex, marker, {
+                              showTitleOnMap: !marker.showTitleOnMap,
+                           })
+                        }}
+                     >
+                        {marker.showTitleOnMap ? (
+                           <VisibilityOnIcon className="h-[1em] w-[1em]" />
+                        ) : (
+                           <VisibilityOffIcon className="h-[1em] w-[1em]" />
+                        )}
+                     </button>
+                  </Tooltip>
                   {!marker.isPuck && <Tooltip color="danger" content="Delete marker">
                      <span className="text-lg text-danger cursor-pointer active:opacity-50">
                         <DeleteIcon onClick={(): void => {
@@ -469,6 +510,7 @@ export function MarkersDashboardView() {
       commitCoordinateInput,
       deleteMarker,
       focusMarkerAndDisplayPlace,
+      patchMarker,
       startMapCoordinateSelection,
    ])
 
@@ -519,6 +561,17 @@ export function MarkersDashboardView() {
                   </DrawerClose>
                </DrawerHeader>
                <div className="px-8">
+                  <div className="flex flex-wrap items-center justify-end gap-3 pb-3">
+                     <Switch
+                        data-testid="global-marker-titles-toggle"
+                        size="sm"
+                        aria-label="Show all marker titles"
+                        isSelected={areMarkerTitlesVisible}
+                        onValueChange={setAreMarkerTitlesVisible}
+                     >
+                        Show all marker titles
+                     </Switch>
+                  </div>
                   <Table
                      isHeaderSticky
                      className="overflow-auto max-h-[25vh]"
@@ -539,7 +592,7 @@ export function MarkersDashboardView() {
                         {markers.map((row: Marker, rowIndex: number) => (
                            <TableRow key={rowIndex} className="h-4">
                               {Object.keys(row)
-                                 .filter((key: string): boolean => key !== 'id' && key !== 'isPuck') // Filter out the 'id' key and the isPuck key.
+                                 .filter((key: string): boolean => key !== 'id' && key !== 'isPuck' && key !== 'showTitleOnMap') // Filter out non-column fields.
                                  .map((key: string) => (
                                     <TableCell key={key}>
                                        {renderCell(row, key, getKeyValue(row, key), rowIndex)}

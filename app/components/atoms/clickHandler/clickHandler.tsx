@@ -82,6 +82,7 @@ export function ClickHandler(): null {
                      name: marker.name == ''
                         ? selectedSuggestion.properties.name
                         : marker.name,
+                     showTitleOnMap: marker.showTitleOnMap,
                      address: selectedSuggestion.properties.label,
                      latitude: selectedSuggestion.geometry.coordinates[1],
                      longitude: selectedSuggestion.geometry.coordinates[0],

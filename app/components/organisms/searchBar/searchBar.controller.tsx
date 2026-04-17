@@ -94,14 +94,22 @@ export function SearchBarController() {
    ])
 
    const focusOnAirportSuggestion = useCallback((selectedSuggestion: AirportSearchSuggestion): void => {
-      const latitude = selectedSuggestion.feature.attributes.latitude_deg
-      const longitude = selectedSuggestion.feature.attributes.longitude_deg
+      const latitudeRaw = selectedSuggestion.feature.attributes.latitude_deg
+      const longitudeRaw = selectedSuggestion.feature.attributes.longitude_deg
 
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      if (
+         typeof latitudeRaw !== 'number'
+         || !Number.isFinite(latitudeRaw)
+         || typeof longitudeRaw !== 'number'
+         || !Number.isFinite(longitudeRaw)
+      ) {
          setErrorMessage('Invalid airport coordinates.')
          setIsInvalid(true)
          return
       }
+
+      const latitude = latitudeRaw
+      const longitude = longitudeRaw
 
       setSearchTerm(selectedSuggestion.label)
       setAirportSuggestions([])

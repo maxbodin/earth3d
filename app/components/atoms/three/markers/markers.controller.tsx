@@ -1,32 +1,84 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
+import type { Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { AssetManager } from '@/app/lib/assetManager'
-import { MARKER_GLB_MODEL } from '@/app/constants/paths'
+import { MARKER_GLB_MODEL, TEXT_FONT } from '@/app/constants/paths'
 import { Marker } from '@/app/types/marker'
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import {
+   EARTH_RADIUS,
    GLOBE_SCENE_PUCK_MAX_SCALE,
    GLOBE_SCENE_PUCK_MIN_SCALE,
+   GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
    PLANE_SCENE_PUCK_MAX_SCALE,
    PLANE_SCENE_PUCK_MIN_SCALE,
+   PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
 } from '@/app/constants/numbers'
 import { clamp } from '@/app/helpers/numberHelper'
-import { MARKER_RENDER_ORDER } from '@/app/constants/renderOrder'
+import { MARKER_RENDER_ORDER, MARKER_TITLE_RENDER_ORDER } from '@/app/constants/renderOrder'
+import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
+import {
+   createCenteredTextGeometry,
+   computeSceneTextScale,
+   EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+   EARTH_SCENE_TEXT_BASE_DEPTH,
+   EARTH_SCENE_TEXT_BASE_SIZE,
+   getObjectGeometryExtentFromOrigin,
+} from '@/app/lib/threeText3d'
 
 let sharedMarkerTemplate: THREE.Group | null = null
 let markerModelLoadPromise: Promise<THREE.Group> | null = null
+let sharedMarkerTitleFont: Font | null = null
+let markerTitleFontLoadPromise: Promise<Font> | null = null
 
 const UP_AXIS = new THREE.Vector3(0, 1, 0)
 const GLOBE_MARKER_SCALE_MULTIPLIER = 8
 const PLANE_MARKER_SCALE_MULTIPLIER = 10
 const GLOBE_MARKER_SURFACE_LIFT_MULTIPLIER = 0.45
 const PLANE_MARKER_SURFACE_LIFT_MULTIPLIER = 0.1
+const GLOBE_MARKER_TITLE_GAP_BASE = EARTH_RADIUS / 1e5
+const GLOBE_MARKER_TITLE_GAP_SCALE_MULTIPLIER = 0.003
+const PLANE_MARKER_TITLE_GAP_BASE = EARTH_RADIUS / 8e9
+const PLANE_MARKER_TITLE_GAP_SCALE_MULTIPLIER = 0.002
+const MARKER_TITLE_NEAR_CAMERA_DAMPING_SCALE_MULTIPLIER = 3e2
+const GLOBE_MARKER_TITLE_NEAR_CAMERA_MIN_DAMPING = 1.5
+const PLANE_MARKER_TITLE_NEAR_CAMERA_MIN_DAMPING = 0.1
+const MARKER_TITLE_CURVE_SEGMENTS = 4
+
+const getMarkerLiftMultiplier = (sceneType: SceneType): number => {
+   return sceneType === SceneType.SPHERICAL
+      ? GLOBE_MARKER_SURFACE_LIFT_MULTIPLIER
+      : PLANE_MARKER_SURFACE_LIFT_MULTIPLIER
+}
+
+const getMarkerTitleGapScaleMultiplier = (sceneType: SceneType): number => {
+   return sceneType === SceneType.SPHERICAL
+   ? GLOBE_MARKER_TITLE_GAP_SCALE_MULTIPLIER
+   : PLANE_MARKER_TITLE_GAP_SCALE_MULTIPLIER
+}
+
+const getMarkerTitleGapBase = (sceneType: SceneType): number => {
+   return sceneType === SceneType.SPHERICAL
+   ? GLOBE_MARKER_TITLE_GAP_BASE
+   : PLANE_MARKER_TITLE_GAP_BASE
+}
+
+const getMarkerTitleNearCameraMinDamping = (sceneType: SceneType): number => {
+   return sceneType === SceneType.SPHERICAL
+      ? GLOBE_MARKER_TITLE_NEAR_CAMERA_MIN_DAMPING
+      : PLANE_MARKER_TITLE_NEAR_CAMERA_MIN_DAMPING
+}
+
+const interpolate = (from: number, to: number, t: number): number => {
+   return from + (to - from) * t
+}
 
 const hasColorChannel = (material: THREE.Material): material is THREE.Material & { color: THREE.Color } => {
    return 'color' in material
@@ -126,8 +178,23 @@ const hasRenderableCoordinates = (marker: Marker): boolean => {
    if (!hasFiniteCoords) return false
    if (marker.isPuck) return true
 
-   // Skip untouched default markers created at (0, 0).
-   return !(marker.latitude === 0 && marker.longitude === 0)
+   const isUntouchedDefaultMarker = marker.latitude === 0
+      && marker.longitude === 0
+      && marker.name.trim() === ''
+      && marker.address.trim() === ''
+
+   // Keep clean startup behavior while allowing titled/default markers to render.
+   return !isUntouchedDefaultMarker
+}
+
+const shouldRenderMarkerTitle = (
+   marker: Marker,
+   areMarkerTitlesVisible: boolean,
+): boolean => {
+   return areMarkerTitlesVisible
+      && marker.showTitleOnMap
+      && marker.name.trim().length > 0
+      && hasRenderableCoordinates(marker)
 }
 
 async function loadSharedMarkerTemplate(): Promise<THREE.Group> {
@@ -143,16 +210,49 @@ async function loadSharedMarkerTemplate(): Promise<THREE.Group> {
    return markerModelLoadPromise
 }
 
+async function loadSharedMarkerTitleFont(): Promise<Font> {
+   if (sharedMarkerTitleFont != null) return sharedMarkerTitleFont
+   if (markerTitleFontLoadPromise != null) return markerTitleFontLoadPromise
+
+   markerTitleFontLoadPromise = AssetManager.loadFont(TEXT_FONT)
+      .then((loadedFont): Font => {
+         sharedMarkerTitleFont = loadedFont
+         return loadedFont
+      })
+
+   return markerTitleFontLoadPromise
+}
+
+const createMarkerTitleGeometry = (text: string, font: Font): TextGeometry => {
+   const geometry = createCenteredTextGeometry({
+      text,
+      font,
+      size: EARTH_SCENE_TEXT_BASE_SIZE,
+      depth: EARTH_SCENE_TEXT_BASE_DEPTH,
+      curveSegments: MARKER_TITLE_CURVE_SEGMENTS,
+      bevelEnabled: false,
+   })
+
+   return geometry
+}
+
 export function MarkersController(): null {
    const { displayedSceneData } = useScenes()
-   const { markers } = useMarkersDashboard()
+   const { markers, areMarkerTitlesVisible } = useMarkersDashboard()
 
    const markerObjectsRef = useRef<Map<string, THREE.Group>>(new Map())
+   const markerTitleObjectsRef = useRef<Map<string, THREE.Mesh>>(new Map())
+   const markerTitleGeometryCacheRef = useRef<Map<string, TextGeometry>>(new Map())
+   const markerTitleMaterialsRef = useRef<THREE.Material[] | null>(null)
+   const markerTitleFontRef = useRef<Font | null>(null)
    const attachedSceneRef = useRef<THREE.Scene | null>(null)
 
    const cameraDistanceToPlanetCenter = useRef<number>(0)
    const planeMarkerAdjustedScale = useRef<number>(PLANE_SCENE_PUCK_MAX_SCALE)
    const globeMarkerAdjustedScale = useRef<number>(GLOBE_SCENE_PUCK_MAX_SCALE)
+   const planeMarkerTitleAdjustedScale = useRef<number>(PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
+   const globeMarkerTitleAdjustedScale = useRef<number>(GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
+   const titleBillboardAnimationFrameRef = useRef<number | null>(null)
 
    const getCurrentScale = (sceneType: SceneType): number => {
       if (sceneType === SceneType.SPHERICAL) {
@@ -166,15 +266,116 @@ export function MarkersController(): null {
       return 1
    }
 
+   const getMarkerTitleScaleDamping = (sceneType: SceneType): number => {
+      const markerMinScale = sceneType === SceneType.SPHERICAL
+         ? GLOBE_SCENE_PUCK_MIN_SCALE
+         : PLANE_SCENE_PUCK_MIN_SCALE
+
+      const markerAdjustedScale = sceneType === SceneType.SPHERICAL
+         ? globeMarkerAdjustedScale.current
+         : planeMarkerAdjustedScale.current
+
+      const nearCameraDampingThreshold =
+         markerMinScale * MARKER_TITLE_NEAR_CAMERA_DAMPING_SCALE_MULTIPLIER
+
+      if (markerAdjustedScale >= nearCameraDampingThreshold) {
+         return 1
+      }
+
+      const dampingRange = Math.max(
+         nearCameraDampingThreshold - markerMinScale,
+         Number.EPSILON,
+      )
+
+      const normalizedNearCameraScale = clamp(
+         (markerAdjustedScale - markerMinScale) / dampingRange,
+         0,
+         1,
+      )
+
+      return interpolate(
+         getMarkerTitleNearCameraMinDamping(sceneType),
+         1,
+         normalizedNearCameraScale,
+      )
+   }
+
+   const getCurrentTitleScale = (sceneType: SceneType): number => {
+      const markerTitleScaleDamping = getMarkerTitleScaleDamping(sceneType)
+
+      if (sceneType === SceneType.SPHERICAL) {
+         return globeMarkerTitleAdjustedScale.current * markerTitleScaleDamping
+      }
+
+      if (sceneType === SceneType.PLANE) {
+         return planeMarkerTitleAdjustedScale.current * markerTitleScaleDamping
+      }
+
+      return EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.plane.minScale
+   }
+
+   const publishMarkerDebugSnapshotFromCurrentObjects = (): void => {
+      const markerTitleMeshes = Array.from(markerTitleObjectsRef.current.values())
+      const markerTitleTexts = markerTitleMeshes
+         .map(titleMesh => String(titleMesh.userData?.textKey ?? '').trim())
+         .filter((titleText): titleText is string => titleText.length > 0)
+
+      let markerTitleMinVisualSize: number | null = null
+      let markerTitleMinClearanceFromMarkerTop: number | null = null
+
+      markerTitleMeshes.forEach(titleMesh => {
+         const titleVisualSize = titleMesh.scale.x * EARTH_SCENE_TEXT_BASE_SIZE
+         markerTitleMinVisualSize = markerTitleMinVisualSize == null
+            ? titleVisualSize
+            : Math.min(markerTitleMinVisualSize, titleVisualSize)
+
+         const bottomClearanceFromMarkerTop = Number(
+            titleMesh.userData?.bottomClearanceFromMarkerTop,
+         )
+
+         if (Number.isFinite(bottomClearanceFromMarkerTop)) {
+            markerTitleMinClearanceFromMarkerTop = markerTitleMinClearanceFromMarkerTop == null
+               ? bottomClearanceFromMarkerTop
+               : Math.min(
+                  markerTitleMinClearanceFromMarkerTop,
+                  bottomClearanceFromMarkerTop,
+               )
+         }
+      })
+
+      publishThreeSceneDebug({
+         markerObjectsCount: markerObjectsRef.current.size,
+         markerTitlesCount: markerTitleMeshes.length,
+         markerTitleTexts,
+         markerTitleMinVisualSize,
+         markerTitleMinClearanceFromMarkerTop,
+         markerTitleSceneType: displayedSceneData?.type ?? null,
+         markerTitleScaleDamping: displayedSceneData == null
+            ? null
+            : getMarkerTitleScaleDamping(displayedSceneData.type),
+      })
+   }
+
+   const getTitleHalfHeight = (titleMesh: THREE.Mesh): number => {
+      const geometry = titleMesh.geometry as THREE.BufferGeometry
+
+      if (geometry.boundingBox == null) {
+         geometry.computeBoundingBox()
+      }
+
+      const boundingBox = geometry.boundingBox
+      if (boundingBox == null) return 0
+
+      return (boundingBox.max.y - boundingBox.min.y) / 2
+   }
+
    const updateMarkerTransform = (
       markerObject: THREE.Group,
       marker: Marker,
       sceneType: SceneType,
       markerScale: number,
    ): void => {
-      const markerLiftMultiplier = sceneType === SceneType.SPHERICAL
-         ? GLOBE_MARKER_SURFACE_LIFT_MULTIPLIER
-         : PLANE_MARKER_SURFACE_LIFT_MULTIPLIER
+      const markerLiftMultiplier = getMarkerLiftMultiplier(sceneType)
       const markerLift = markerScale * markerLiftMultiplier
 
       if (sceneType === SceneType.SPHERICAL) {
@@ -200,6 +401,121 @@ export function MarkersController(): null {
       }
    }
 
+   const ensureMarkerTitleMaterials = (): THREE.Material[] => {
+      if (markerTitleMaterialsRef.current != null) {
+         return markerTitleMaterialsRef.current
+      }
+
+      markerTitleMaterialsRef.current = [
+         new THREE.MeshBasicMaterial({
+            color: '#f8fafc',
+            toneMapped: false,
+            side: THREE.DoubleSide,
+         }),
+         new THREE.MeshBasicMaterial({
+            color: '#475569',
+            toneMapped: false,
+            side: THREE.DoubleSide,
+         }),
+      ]
+
+      return markerTitleMaterialsRef.current
+   }
+
+   const getOrCreateMarkerTitleGeometry = (title: string): TextGeometry | null => {
+      const normalizedTitle = title.trim()
+      if (normalizedTitle.length === 0) return null
+
+      const cachedGeometry = markerTitleGeometryCacheRef.current.get(normalizedTitle)
+      if (cachedGeometry != null) {
+         return cachedGeometry
+      }
+
+      const titleFont = markerTitleFontRef.current
+      if (titleFont == null) {
+         return null
+      }
+
+      const newGeometry = createMarkerTitleGeometry(normalizedTitle, titleFont)
+      markerTitleGeometryCacheRef.current.set(normalizedTitle, newGeometry)
+
+      return newGeometry
+   }
+
+   const createMarkerTitleMesh = (title: string): THREE.Mesh | undefined => {
+      const titleGeometry = getOrCreateMarkerTitleGeometry(title)
+      if (titleGeometry == null) return undefined
+
+      const titleMesh = new THREE.Mesh(
+         titleGeometry,
+         ensureMarkerTitleMaterials(),
+      )
+
+      titleMesh.renderOrder = MARKER_TITLE_RENDER_ORDER
+      titleMesh.userData = {
+         textKey: title.trim(),
+      }
+
+      return titleMesh
+   }
+
+   const updateMarkerTitleTransform = (
+      titleMesh: THREE.Mesh,
+      marker: Marker,
+      sceneType: SceneType,
+      markerScale: number,
+      markerGeometryExtent: number,
+   ): number => {
+      const markerLift = markerScale * getMarkerLiftMultiplier(sceneType)
+      const markerTopLift = markerLift + markerGeometryExtent * markerScale
+      const titleScale = getCurrentTitleScale(sceneType)
+      const titleHalfHeight = getTitleHalfHeight(titleMesh)
+      const titleGapFromMarkerTop = getMarkerTitleGapBase(sceneType)
+         + markerScale * getMarkerTitleGapScaleMultiplier(sceneType)
+      const titleLift = markerTopLift + titleGapFromMarkerTop + titleHalfHeight * titleScale
+
+      if (sceneType === SceneType.SPHERICAL) {
+         const markerPosition = latLongToVector3(marker.latitude, marker.longitude)
+         const normal = markerPosition.clone().normalize()
+
+         titleMesh.position.copy(
+            markerPosition.add(normal.multiplyScalar(titleLift)),
+         )
+      } else if (sceneType === SceneType.PLANE) {
+         const worldPosition = ThreeGeoUnitsUtils.datumsToSpherical(
+            marker.latitude,
+            marker.longitude,
+         )
+
+         titleMesh.position.set(worldPosition.x, titleLift, -worldPosition.y)
+      }
+
+      titleMesh.scale.setScalar(titleScale)
+
+      if (displayedSceneData?.camera != null) {
+         titleMesh.lookAt(displayedSceneData.camera.position)
+      }
+
+      titleMesh.userData = {
+         ...titleMesh.userData,
+         bottomClearanceFromMarkerTop: titleGapFromMarkerTop,
+      }
+
+      return titleGapFromMarkerTop
+   }
+
+   const animateMarkerTitlesBillboard = (): void => {
+      titleBillboardAnimationFrameRef.current = requestAnimationFrame(animateMarkerTitlesBillboard)
+
+      if (displayedSceneData?.camera == null) {
+         return
+      }
+
+      markerTitleObjectsRef.current.forEach(titleMesh => {
+         titleMesh.lookAt(displayedSceneData.camera.position)
+      })
+   }
+
    const applyScaleToAllMarkers = (): void => {
       if (displayedSceneData == null) return
 
@@ -219,6 +535,26 @@ export function MarkersController(): null {
             )
          }
       })
+
+      markerTitleObjectsRef.current.forEach(titleMesh => {
+         const markerData = titleMesh.userData?.data as Marker | undefined
+         const markerObject = markerData == null
+            ? undefined
+            : markerObjectsRef.current.get(markerData.id)
+         const markerGeometryExtent = Number(markerObject?.userData?.geometryExtent ?? 0)
+
+         if (markerData != null) {
+            updateMarkerTitleTransform(
+               titleMesh,
+               markerData,
+               displayedSceneData.type,
+               markerScale,
+               markerGeometryExtent,
+            )
+         }
+      })
+
+      publishMarkerDebugSnapshotFromCurrentObjects()
    }
 
    const onControlsChange = (): void => {
@@ -234,11 +570,31 @@ export function MarkersController(): null {
             GLOBE_SCENE_PUCK_MIN_SCALE,
             GLOBE_SCENE_PUCK_MAX_SCALE,
          )
+
+         globeMarkerTitleAdjustedScale.current = clamp(
+            computeSceneTextScale(
+               displayedSceneData.type,
+               cameraDistanceToPlanetCenter.current,
+               EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+            ),
+            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.spherical.minScale,
+            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.spherical.maxScale,
+         )
       } else if (displayedSceneData.type === SceneType.PLANE) {
          planeMarkerAdjustedScale.current = clamp(
             cameraDistanceToPlanetCenter.current / 1e2,
             PLANE_SCENE_PUCK_MIN_SCALE,
             PLANE_SCENE_PUCK_MAX_SCALE,
+         )
+
+         planeMarkerTitleAdjustedScale.current = clamp(
+            computeSceneTextScale(
+               displayedSceneData.type,
+               cameraDistanceToPlanetCenter.current,
+               EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+            ),
+            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.plane.minScale,
+            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.plane.maxScale,
          )
       }
 
@@ -247,6 +603,15 @@ export function MarkersController(): null {
 
    const syncMarkerObjects = async (): Promise<void> => {
       if (displayedSceneData == null) {
+         publishThreeSceneDebug({
+            markerObjectsCount: 0,
+            markerTitlesCount: 0,
+            markerTitleTexts: [],
+            markerTitleMinVisualSize: null,
+            markerTitleMinClearanceFromMarkerTop: null,
+            markerTitleSceneType: null,
+            markerTitleScaleDamping: null,
+         })
          return
       }
 
@@ -259,6 +624,11 @@ export function MarkersController(): null {
          markerObjectsRef.current.forEach(markerObject => {
             markerObject.removeFromParent()
          })
+
+         markerTitleObjectsRef.current.forEach(markerTitle => {
+            markerTitle.removeFromParent()
+         })
+
          attachedSceneRef.current = currentScene
       }
 
@@ -266,6 +636,21 @@ export function MarkersController(): null {
          markerObjectsRef.current.forEach(markerObject => {
             markerObject.removeFromParent()
          })
+
+         markerTitleObjectsRef.current.forEach(markerTitle => {
+            markerTitle.removeFromParent()
+         })
+
+         publishThreeSceneDebug({
+            markerObjectsCount: 0,
+            markerTitlesCount: 0,
+            markerTitleTexts: [],
+            markerTitleMinVisualSize: null,
+            markerTitleMinClearanceFromMarkerTop: null,
+            markerTitleSceneType: null,
+            markerTitleScaleDamping: null,
+         })
+
          return
       }
 
@@ -277,7 +662,21 @@ export function MarkersController(): null {
          return
       }
 
+      if (markerTitleFontRef.current == null) {
+         try {
+            markerTitleFontRef.current = await loadSharedMarkerTitleFont()
+         } catch (error) {
+            console.error('Error loading marker title font:', error)
+         }
+      }
+
       const visibleMarkerIds = new Set<string>()
+      const visibleMarkerTitleIds = new Set<string>()
+      const visibleMarkerTitleTexts: string[] = []
+      let markerTitleMinVisualSize: number | null = null
+      let markerTitleMinClearanceFromMarkerTop: number | null = null
+      const markerScale = getCurrentScale(displayedSceneData.type)
+      const markerTitleScaleDamping = getMarkerTitleScaleDamping(displayedSceneData.type)
 
       for (const marker of markers) {
          if (!hasRenderableCoordinates(marker)) continue
@@ -289,11 +688,15 @@ export function MarkersController(): null {
             markerObject = cloneMarkerInstance(markerTemplate)
             markerObject.name = `marker:${marker.id}`
             markerObject.renderOrder = MARKER_RENDER_ORDER
+            markerObject.userData = {
+               geometryExtent: getObjectGeometryExtentFromOrigin(markerObject),
+            }
             markerObjectsRef.current.set(marker.id, markerObject)
          }
 
+         const markerGeometryExtent = Number(markerObject.userData?.geometryExtent ?? 0)
+
          applyMarkerColor(markerObject, markerColor)
-         const markerScale = getCurrentScale(displayedSceneData.type)
 
          markerObject.scale.setScalar(markerScale)
          updateMarkerTransform(
@@ -302,13 +705,65 @@ export function MarkersController(): null {
             displayedSceneData.type,
             markerScale,
          )
-         markerObject.userData = { data: marker }
+         markerObject.userData = {
+            ...markerObject.userData,
+            data: marker,
+         }
 
          if (markerObject.parent !== currentScene) {
             currentScene.add(markerObject)
          }
 
          visibleMarkerIds.add(marker.id)
+
+         if (shouldRenderMarkerTitle(marker, areMarkerTitlesVisible)) {
+            const titleText = marker.name.trim()
+            let titleObject = markerTitleObjectsRef.current.get(marker.id)
+
+            if (titleObject == null || titleObject.userData?.textKey !== titleText) {
+               if (titleObject != null) {
+                  titleObject.removeFromParent()
+               }
+
+               titleObject = createMarkerTitleMesh(titleText)
+               if (titleObject == null) {
+                  continue
+               }
+
+               titleObject.name = `marker-title:${marker.id}`
+               markerTitleObjectsRef.current.set(marker.id, titleObject)
+            }
+
+            titleObject.userData = {
+               ...titleObject.userData,
+               data: marker,
+               textKey: titleText,
+            }
+
+            const titleBottomClearanceFromMarkerTop = updateMarkerTitleTransform(
+               titleObject,
+               marker,
+               displayedSceneData.type,
+               markerScale,
+               markerGeometryExtent,
+            )
+
+            if (titleObject.parent !== currentScene) {
+               currentScene.add(titleObject)
+            }
+
+            visibleMarkerTitleIds.add(marker.id)
+            visibleMarkerTitleTexts.push(titleText)
+
+            const titleVisualSize = titleObject.scale.x * EARTH_SCENE_TEXT_BASE_SIZE
+            markerTitleMinVisualSize = markerTitleMinVisualSize == null
+               ? titleVisualSize
+               : Math.min(markerTitleMinVisualSize, titleVisualSize)
+
+            markerTitleMinClearanceFromMarkerTop = markerTitleMinClearanceFromMarkerTop == null
+               ? titleBottomClearanceFromMarkerTop
+               : Math.min(markerTitleMinClearanceFromMarkerTop, titleBottomClearanceFromMarkerTop)
+         }
       }
 
       for (const [markerId, markerObject] of markerObjectsRef.current.entries()) {
@@ -318,11 +773,28 @@ export function MarkersController(): null {
          disposeMarkerMaterials(markerObject)
          markerObjectsRef.current.delete(markerId)
       }
+
+      for (const [markerId, markerTitleObject] of markerTitleObjectsRef.current.entries()) {
+         if (visibleMarkerTitleIds.has(markerId)) continue
+
+         markerTitleObject.removeFromParent()
+         markerTitleObjectsRef.current.delete(markerId)
+      }
+
+      publishThreeSceneDebug({
+         markerObjectsCount: visibleMarkerIds.size,
+         markerTitlesCount: visibleMarkerTitleIds.size,
+         markerTitleTexts: visibleMarkerTitleTexts,
+         markerTitleMinVisualSize,
+         markerTitleMinClearanceFromMarkerTop,
+         markerTitleSceneType: displayedSceneData.type,
+         markerTitleScaleDamping,
+      })
    }
 
    useEffect(() => {
       void syncMarkerObjects()
-   }, [markers, displayedSceneData])
+   }, [markers, displayedSceneData, areMarkerTitlesVisible])
 
    useEffect(() => {
       if (displayedSceneData?.controls == null) return
@@ -336,13 +808,56 @@ export function MarkersController(): null {
    }, [displayedSceneData])
 
    useEffect(() => {
+      if (titleBillboardAnimationFrameRef.current != null) {
+         cancelAnimationFrame(titleBillboardAnimationFrameRef.current)
+      }
+
+      animateMarkerTitlesBillboard()
+
+      return (): void => {
+         if (titleBillboardAnimationFrameRef.current != null) {
+            cancelAnimationFrame(titleBillboardAnimationFrameRef.current)
+            titleBillboardAnimationFrameRef.current = null
+         }
+      }
+   }, [displayedSceneData])
+
+   useEffect(() => {
       return (): void => {
          markerObjectsRef.current.forEach(markerObject => {
             markerObject.removeFromParent()
             disposeMarkerMaterials(markerObject)
          })
 
+         markerTitleObjectsRef.current.forEach(markerTitleObject => {
+            markerTitleObject.removeFromParent()
+         })
+
+         markerTitleGeometryCacheRef.current.forEach(geometry => {
+            geometry.dispose()
+         })
+
+         markerTitleMaterialsRef.current?.forEach(material => {
+            material.dispose()
+         })
+
          markerObjectsRef.current.clear()
+         markerTitleObjectsRef.current.clear()
+         markerTitleGeometryCacheRef.current.clear()
+         markerTitleMaterialsRef.current = null
+         publishThreeSceneDebug({
+            markerObjectsCount: 0,
+            markerTitlesCount: 0,
+            markerTitleTexts: [],
+            markerTitleMinVisualSize: null,
+            markerTitleMinClearanceFromMarkerTop: null,
+            markerTitleSceneType: null,
+            markerTitleScaleDamping: null,
+         })
+         if (titleBillboardAnimationFrameRef.current != null) {
+            cancelAnimationFrame(titleBillboardAnimationFrameRef.current)
+            titleBillboardAnimationFrameRef.current = null
+         }
          attachedSceneRef.current = null
       }
    }, [])

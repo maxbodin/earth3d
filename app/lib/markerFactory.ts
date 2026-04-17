@@ -24,6 +24,7 @@ export function createMarkerFromPlaceFeature(feature: Feature): Marker | null {
       id: generateMarkerId(),
       selection: 'selection',
       name: feature.properties?.name ?? '',
+      showTitleOnMap: true,
       address: feature.properties?.label ?? '',
       latitude,
       longitude,

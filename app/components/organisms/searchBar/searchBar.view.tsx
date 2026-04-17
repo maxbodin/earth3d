@@ -89,7 +89,7 @@ export function SearchBarView() {
                      }}
                      isLoading={autoCompleteLoading}
                      inputProps={{
-                        'data-testid': 'search-input',
+                        id: 'search-input',
                         onKeyDown: onSearchInputKeyDown,
                         classNames: {
                            inputWrapper: 'h-[48px] rounded-l-none bg-white/10 bg-opacity-10 backdrop-blur-md drop-shadow-lg',
