@@ -8,13 +8,21 @@ import { ObjectType } from '@/app/enums/objectType'
 import { SceneType } from '@/app/enums/sceneType'
 import {
    COORDINATES_SEARCH_PARAMS_UPDATED_EVENT,
+   clearCountryFromCurrentUrl,
    coordinatesToKey,
    normalizeCoordinates,
    parseCoordinatesFromUnknown,
+   readCountryFromCurrentUrl,
    readCoordinatesFromCurrentUrl,
+   updateCountryInCurrentUrl,
    updateCoordinatesInCurrentUrl,
 } from '@/app/lib/coordinatesSearchParams'
 import { Coordinates } from '@/app/types/coordinates'
+import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
+import {
+   findCountryByName,
+   normalizeCountryName,
+} from '@/app/lib/countrySearch'
 
 function extractCoordinatesFromSelection(
    selectedObjectType: ObjectType,
@@ -45,12 +53,35 @@ function extractCoordinatesFromSelection(
    }
 }
 
+function extractCountryFromSelection(
+   selectedObjectType: ObjectType,
+   selectedObjectData: any,
+): string | null {
+   if (selectedObjectType !== ObjectType.COUNTRY) {
+      return null
+   }
+
+   if (typeof selectedObjectData?.country !== 'string') {
+      return null
+   }
+
+   const trimmedCountry = selectedObjectData.country.trim()
+   return trimmedCountry.length > 0 ? trimmedCountry : null
+}
+
 export function CoordinatesSearchParamsSync(): null {
-   const { selectedObjectData, selectedObjectType } = useSelection()
+   const {
+      selectedObjectData,
+      selectedObjectType,
+      setSelectedObjectData,
+      setSelectedObjectType,
+   } = useSelection()
+   const { setSelectedCountry } = useCountries()
    const { displayedSceneData } = useScenes()
    const { flyToCoordinates } = CameraFlyController()
 
    const lastFocusedCoordinatesKeyRef = useRef<string | null>(null)
+   const lastFocusedCountryKeyRef = useRef<string | null>(null)
 
    useEffect((): void => {
       const selectedCoordinates = extractCoordinatesFromSelection(
@@ -67,6 +98,33 @@ export function CoordinatesSearchParamsSync(): null {
    }, [selectedObjectData, selectedObjectType])
 
    useEffect((): void => {
+      const selectedCountry = extractCountryFromSelection(
+         selectedObjectType,
+         selectedObjectData,
+      )
+
+      if (selectedCountry != null) {
+         lastFocusedCountryKeyRef.current = normalizeCountryName(selectedCountry)
+         updateCountryInCurrentUrl(selectedCountry)
+         return
+      }
+
+      if (selectedObjectType !== ObjectType.NULL) {
+         lastFocusedCountryKeyRef.current = null
+         clearCountryFromCurrentUrl()
+      }
+   }, [selectedObjectData, selectedObjectType])
+
+   useEffect((): void => {
+      if (
+         selectedObjectType !== ObjectType.NULL
+         && selectedObjectType !== ObjectType.COUNTRY
+      ) {
+         setSelectedCountry('')
+      }
+   }, [selectedObjectType, setSelectedCountry])
+
+   useEffect((): void => {
       if (displayedSceneData?.type !== SceneType.PLANE) {
          lastFocusedCoordinatesKeyRef.current = null
       }
@@ -77,6 +135,12 @@ export function CoordinatesSearchParamsSync(): null {
 
       const focusCoordinatesFromSearchParams = (): void => {
          const coordinates = readCoordinatesFromCurrentUrl()
+
+         if (readCountryFromCurrentUrl() != null) {
+            lastFocusedCoordinatesKeyRef.current = null
+            return
+         }
+
          if (coordinates == null) {
             lastFocusedCoordinatesKeyRef.current = null
             return
@@ -106,6 +170,59 @@ export function CoordinatesSearchParamsSync(): null {
          )
       }
    }, [displayedSceneData?.type, flyToCoordinates])
+
+   useEffect((): (() => void) | void => {
+      if (displayedSceneData == null) return
+
+      const focusCountryFromSearchParams = (): void => {
+         const countryNameFromSearchParams = readCountryFromCurrentUrl()
+
+         if (countryNameFromSearchParams == null) {
+            lastFocusedCountryKeyRef.current = null
+            return
+         }
+
+         const matchedCountry = findCountryByName(countryNameFromSearchParams)
+         if (matchedCountry == null) {
+            lastFocusedCountryKeyRef.current = null
+            return
+         }
+
+         const normalizedCountryKey = normalizeCountryName(matchedCountry.country)
+         if (lastFocusedCountryKeyRef.current === normalizedCountryKey) {
+            return
+         }
+
+         lastFocusedCountryKeyRef.current = normalizedCountryKey
+
+         setSelectedCountry(matchedCountry.country)
+         setSelectedObjectData(matchedCountry)
+         setSelectedObjectType(ObjectType.COUNTRY)
+         flyToCoordinates(matchedCountry.latitude, matchedCountry.longitude)
+      }
+
+      focusCountryFromSearchParams()
+
+      window.addEventListener('popstate', focusCountryFromSearchParams)
+      window.addEventListener(
+         COORDINATES_SEARCH_PARAMS_UPDATED_EVENT,
+         focusCountryFromSearchParams,
+      )
+
+      return (): void => {
+         window.removeEventListener('popstate', focusCountryFromSearchParams)
+         window.removeEventListener(
+            COORDINATES_SEARCH_PARAMS_UPDATED_EVENT,
+            focusCountryFromSearchParams,
+         )
+      }
+   }, [
+      displayedSceneData,
+      flyToCoordinates,
+      setSelectedCountry,
+      setSelectedObjectData,
+      setSelectedObjectType,
+   ])
 
    return null
 }

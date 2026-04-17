@@ -10,7 +10,6 @@ import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
 import { OuterSpaceController } from '@/app/components/atoms/three/outerSpace/outerSpace.controller'
 import { GLOBE_SCENE_NAME, PLANE_SCENE_NAME, PLANET_NAME, SOLAR_SYSTEM_SCENE_NAME } from '@/app/constants/strings'
 import { VesselsController } from '@/app/components/atoms/three/vessels/vessels.controller'
-import { CountriesProvider } from '@/app/components/atoms/three/countries/countries.model'
 import { CountriesController } from '@/app/components/atoms/three/countries/countries.controller'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import {
@@ -886,9 +885,7 @@ export function ThreeScene() {
                <Atmosphere />
                <PlaneSky />
 
-               <CountriesProvider>
-                  <CountriesController />
-               </CountriesProvider>
+               <CountriesController />
 
                {/*
 // TODO FIX PLANES BEFORE UNCOMMENTING THIS

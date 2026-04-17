@@ -7,7 +7,12 @@ import { VesselDataDisplay } from '@/app/components/atoms/dataDisplay/vesselData
 import { ObjectType } from '@/app/enums/objectType'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { PlaceDataDisplay } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeDataDisplay'
-import { clearCoordinatesFromCurrentUrl } from '@/app/lib/coordinatesSearchParams'
+import {
+   clearCoordinatesFromCurrentUrl,
+   clearCountryFromCurrentUrl,
+} from '@/app/lib/coordinatesSearchParams'
+import { CountryDataDisplay } from '@/app/components/atoms/dataDisplay/countryDataDisplay/countryDataDisplay'
+import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
 
 export function DetailsCard() {
    const {
@@ -16,6 +21,7 @@ export function DetailsCard() {
       selectedObjectData,
       setSelectedObjectData,
    } = useSelection()
+   const { setSelectedCountry } = useCountries()
 
    return (
       <>
@@ -37,6 +43,8 @@ export function DetailsCard() {
                         <VesselDataDisplay />
                      ) : selectedObjectType === ObjectType.PLACE ? (
                         <PlaceDataDisplay />
+                     ) : selectedObjectType === ObjectType.COUNTRY ? (
+                        <CountryDataDisplay />
                      ) : (
                         <></>
                      )
@@ -44,6 +52,11 @@ export function DetailsCard() {
                   onClose={(): void => {
                      if (selectedObjectType === ObjectType.PLACE) {
                         clearCoordinatesFromCurrentUrl()
+                     }
+
+                     if (selectedObjectType === ObjectType.COUNTRY) {
+                        clearCountryFromCurrentUrl()
+                        setSelectedCountry('')
                      }
 
                      setSelectedObjectType(ObjectType.NULL)

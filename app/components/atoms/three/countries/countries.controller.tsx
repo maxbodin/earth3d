@@ -20,8 +20,8 @@ import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
 import {
-   createCenteredTextGeometry,
    computeSceneTextScale,
+   createCenteredTextGeometry,
    EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
    EARTH_SCENE_TEXT_BASE_SIZE,
    getObjectGeometryExtentFromOrigin,
@@ -29,6 +29,7 @@ import {
 import {
    useCountriesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
+import { normalizeCountryName, } from '@/app/lib/countrySearch'
 
 const geoJson = require('world-geojson')
 
@@ -36,6 +37,7 @@ const LOD_SCALE_THRESHOLD = 0.05
 const GLOBE_COUNTRY_NAME_SURFACE_LIFT_BASE = EARTH_RADIUS / 260
 const GLOBE_COUNTRY_NAME_SURFACE_LIFT_SCALE_FACTOR = EARTH_RADIUS / 1800
 const GLOBE_COUNTRY_NAME_GEOMETRY_CLEARANCE_MULTIPLIER = 0.18
+const COUNTRY_FRONTIER_API_BASE_PATH = '/api/country-frontier'
 
 // Shared materials for country names, created once.
 const textMaterialFront = new THREE.MeshBasicMaterial({ color: '#ffffff' })
@@ -53,10 +55,29 @@ const planeFrontierMaterial = new MeshLineMaterial({
    color: '#DC0073',
 })
 
+const countryCodeMap = countryCode as Record<string, string>
+
 type CountryCoordinates = {
    country: string
    latitude: number
    longitude: number
+}
+
+type GeoJsonGeometry = {
+   type: string
+   coordinates?: any
+   geometries?: GeoJsonGeometry[]
+}
+
+type GeoJsonFeature = {
+   type: string
+   properties: { [key: string]: any }
+   geometry: GeoJsonGeometry
+}
+
+type GeoJsonCollection = {
+   type: string
+   features: GeoJsonFeature[]
 }
 
 export function CountriesController(): null {
@@ -66,6 +87,10 @@ export function CountriesController(): null {
 
    const namesGroup = useRef<THREE.Group>(new THREE.Group())
    const frontiersGroup = useRef<THREE.Group>(new THREE.Group())
+   const selectedFrontiersGroup = useRef<THREE.Group>(new THREE.Group())
+   const countryFrontiersCountRef = useRef<number>(0)
+   const selectedCountryFrontiersCountRef = useRef<number>(0)
+   const selectedCountryFrontierRequestRef = useRef<number>(0)
    const font = useRef<Font>()
    const fontLoaded = useRef<boolean>(false)
    const textGeometryCacheRef = useRef<Map<string, TextGeometry>>(new Map())
@@ -112,6 +137,13 @@ export function CountriesController(): null {
          countryNamesCount,
          countryNamesMinDistanceFromCenter,
          countryNamesMinVisualSize,
+      })
+   }
+
+   const publishCountryFrontiersDebugSnapshot = (): void => {
+      publishThreeSceneDebug({
+         countryFrontiersCount: countryFrontiersCountRef.current,
+         selectedCountryFrontiersCount: selectedCountryFrontiersCountRef.current,
       })
    }
 
@@ -162,8 +194,18 @@ export function CountriesController(): null {
       const currentScale = isSpherical
          ? globeAdjustedScale.current
          : planeAdjustedScale.current
+      const selectedCountryNormalized = normalizeCountryName(selectedCountry)
+      const shouldRenderOnlySelectedCountry =
+         !namesActivated && selectedCountryNormalized.length > 0
 
       for (const country of countriesCoords.ref_country_codes) {
+         if (
+            shouldRenderOnlySelectedCountry
+            && normalizeCountryName(country.country) !== selectedCountryNormalized
+         ) {
+            continue
+         }
+
          // Cache text geometry by country name.
          const cacheKey = `country_${country.country}_${nameSize}`
          let textGeo = textGeometryCacheRef.current.get(cacheKey)
@@ -204,35 +246,144 @@ export function CountriesController(): null {
       publishCountryNamesDebugSnapshot()
    }
 
-   type GeoJsonFeature = {
-      type: string
-      properties: { [key: string]: any }
-      geometry: {
-         type: string
-         coordinates: any[]
+   const createGeoJsonCollection = (): GeoJsonCollection => {
+      return {
+         type: 'FeatureCollection',
+         features: [],
       }
    }
 
-   const GEOJSON_BASE: { type: string; features: GeoJsonFeature[] } = {
-      type: 'FeatureCollection',
-      features: [],
-   }
+   const forAllCountries = (): GeoJsonCollection => {
+      const combinedGeoJson = createGeoJsonCollection()
 
-   const forAllCountries = (): { type: string; features: GeoJsonFeature[] } => {
-      const combinedGeoJson = { ...GEOJSON_BASE }
-      for (const [key, value] of Object.entries(countryCode)) {
-         if (value === selectedCountry) continue
-
+      for (const [, value] of Object.entries(countryCodeMap)) {
          const data = geoJson.forCountry(value)
          if (data?.features) {
             combinedGeoJson.features.push(...data.features)
          }
       }
+
       return combinedGeoJson
    }
 
+   const fetchSelectedCountryGeoJson = async (
+      countryName: string,
+   ): Promise<GeoJsonCollection> => {
+      const normalizedCountryName = countryName.trim()
+      if (normalizedCountryName.length === 0) {
+         return createGeoJsonCollection()
+      }
+
+      try {
+         const response = await fetch(
+            `${COUNTRY_FRONTIER_API_BASE_PATH}/${encodeURIComponent(normalizedCountryName)}`,
+            {
+               method: 'GET',
+               cache: 'no-store',
+            },
+         )
+
+         if (!response.ok) {
+            return createGeoJsonCollection()
+         }
+
+         const geoJsonCollection = (await response.json()) as GeoJsonCollection
+         if (!Array.isArray(geoJsonCollection.features)) {
+            return createGeoJsonCollection()
+         }
+
+         return {
+            type: 'FeatureCollection',
+            features: geoJsonCollection.features,
+         }
+      } catch {
+         return createGeoJsonCollection()
+      }
+   }
+
+   const collectCoordinateLines = (geometry: GeoJsonGeometry): number[][][] => {
+      if (geometry.type === 'Polygon') {
+         return (geometry.coordinates as number[][][]) ?? []
+      }
+
+      if (geometry.type === 'MultiPolygon') {
+         return ((geometry.coordinates as number[][][][]) ?? []).flatMap(
+            (polygon: number[][][]): number[][][] => polygon,
+         )
+      }
+
+      if (geometry.type === 'LineString') {
+         return [((geometry.coordinates as number[][]) ?? [])]
+      }
+
+      if (geometry.type === 'MultiLineString') {
+         return (geometry.coordinates as number[][][]) ?? []
+      }
+
+      if (geometry.type === 'GeometryCollection') {
+         return (geometry.geometries ?? []).flatMap((nestedGeometry: GeoJsonGeometry): number[][][] => {
+            return collectCoordinateLines(nestedGeometry)
+         })
+      }
+
+      return []
+   }
+
+   const appendFrontierMeshes = (
+      features: GeoJsonFeature[],
+      targetGroup: THREE.Group,
+      material: MeshLineMaterial,
+      isSpherical: boolean,
+   ): number => {
+      let createdMeshesCount = 0
+
+      for (const feature of features) {
+         const coordinateRings = collectCoordinateLines(feature.geometry)
+
+         for (const ring of coordinateRings) {
+            if (!Array.isArray(ring) || ring.length < 2) {
+               continue
+            }
+
+            const points: THREE.Vector3[] = new Array(ring.length)
+
+            for (let i = 0; i < ring.length; i++) {
+               const [lon, lat] = ring[i]
+               const worldPosition = ThreeGeoUnitsUtils.datumsToSpherical(lat, lon)
+               points[i] = isSpherical
+                  ? latLongToVector3(lat, lon)
+                  : new THREE.Vector3(
+                      worldPosition.x,
+                      0,
+                      -worldPosition.y,
+                    )
+            }
+
+            const line = new MeshLineGeometry()
+            line.setPoints(points, () => GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH)
+
+            targetGroup.add(new THREE.Mesh(line, material))
+            createdMeshesCount += 1
+         }
+      }
+
+      return createdMeshesCount
+   }
+
+   const resolveFrontierMaterial = (
+      isSpherical: boolean,
+   ): MeshLineMaterial => {
+      const material = isSpherical ? globeFrontierMaterial : planeFrontierMaterial
+
+      if (isSpherical) {
+         material.resolution = new THREE.Vector2(window.innerWidth, window.innerHeight)
+      }
+
+      return material
+   }
+
    /**
-    * Add country frontiers with optimized line caching.
+    * Add all countries frontiers with optimized line caching.
     */
    const addFrontiers = (): void => {
       if (!displayedSceneData) return
@@ -240,39 +391,67 @@ export function CountriesController(): null {
       frontiersGroup.current.clear()
 
       const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
-      const material = isSpherical ? globeFrontierMaterial : planeFrontierMaterial
+      const material = resolveFrontierMaterial(isSpherical)
 
-      // Update resolution for spherical scene.
-      if (isSpherical) {
-         material.resolution = new THREE.Vector2(window.innerWidth, window.innerHeight)
-      }
+      const createdMeshesCount = appendFrontierMeshes(
+         forAllCountries().features,
+         frontiersGroup.current,
+         material,
+         isSpherical,
+      )
 
-      const features = forAllCountries().features
-
-      for (const feature of features) {
-         const coords = feature.geometry.coordinates[0]
-         const points: THREE.Vector3[] = new Array(coords.length)
-
-         for (let i = 0; i < coords.length; i++) {
-            const [lon, lat] = coords[i]
-            const worldPosition = ThreeGeoUnitsUtils.datumsToSpherical(lat, lon)
-            points[i] = isSpherical
-               ? latLongToVector3(lat, lon)
-               : new THREE.Vector3(
-                   worldPosition.x,
-                   0,
-                   -worldPosition.y
-                 )
-         }
-
-         const line = new MeshLineGeometry()
-         line.setPoints(points, () => GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH)
-
-         const mesh = new THREE.Mesh(line, material)
-         frontiersGroup.current.add(mesh)
-      }
+      countryFrontiersCountRef.current = createdMeshesCount
 
       displayedSceneData.scene.add(frontiersGroup.current)
+      publishCountryFrontiersDebugSnapshot()
+   }
+
+   /**
+    * Add selected country frontiers as dedicated polyline overlays.
+    */
+   const addSelectedCountryFrontiers = async (): Promise<void> => {
+      if (!displayedSceneData) return
+
+      selectedFrontiersGroup.current.clear()
+
+      const selectedCountryNormalized = normalizeCountryName(selectedCountry)
+      if (selectedCountryNormalized.length === 0) {
+         selectedCountryFrontiersCountRef.current = 0
+         publishCountryFrontiersDebugSnapshot()
+         return
+      }
+
+      const requestId = selectedCountryFrontierRequestRef.current + 1
+      selectedCountryFrontierRequestRef.current = requestId
+
+      const selectedCountryGeoJson = await fetchSelectedCountryGeoJson(
+         selectedCountry,
+      )
+
+      if (
+         selectedCountryFrontierRequestRef.current !== requestId
+         || normalizeCountryName(selectedCountry) !== selectedCountryNormalized
+         || displayedSceneData == null
+      ) {
+         return
+      }
+
+      selectedFrontiersGroup.current.clear()
+
+      const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
+      const material = resolveFrontierMaterial(isSpherical)
+
+      const createdMeshesCount = appendFrontierMeshes(
+         selectedCountryGeoJson.features,
+         selectedFrontiersGroup.current,
+         material,
+         isSpherical,
+      )
+
+      selectedCountryFrontiersCountRef.current = createdMeshesCount
+
+      displayedSceneData.scene.add(selectedFrontiersGroup.current)
+      publishCountryFrontiersDebugSnapshot()
    }
 
    const cameraDistanceToPlanetCenter = useRef<number>(0)
@@ -304,6 +483,8 @@ export function CountriesController(): null {
 
          if (isTooClose && frontiersGroup.current.children.length > 0) {
             frontiersGroup.current.clear()
+            countryFrontiersCountRef.current = 0
+            publishCountryFrontiersDebugSnapshot()
          } else if (!isTooClose && frontiersGroup.current.children.length === 0) {
             addFrontiers()
          }
@@ -355,13 +536,32 @@ export function CountriesController(): null {
          return
       }
 
-      if (frontiersActivated) {
+      const shouldDisplayFrontiers = frontiersActivated
+
+      if (shouldDisplayFrontiers) {
          handleFrontiersLOD()
       } else {
          frontiersGroup.current.clear()
+         countryFrontiersCountRef.current = 0
+         publishCountryFrontiersDebugSnapshot()
       }
 
-      if (namesActivated) {
+      const shouldDisplaySelectedCountryFrontiers =
+         normalizeCountryName(selectedCountry).length > 0
+
+      if (
+         !shouldDisplaySelectedCountryFrontiers
+         && selectedFrontiersGroup.current.children.length > 0
+      ) {
+         selectedFrontiersGroup.current.clear()
+         selectedCountryFrontiersCountRef.current = 0
+         publishCountryFrontiersDebugSnapshot()
+      }
+
+      const shouldDisplayNames =
+         namesActivated || normalizeCountryName(selectedCountry).length > 0
+
+      if (shouldDisplayNames) {
          handleNamesLOD()
       } else {
          namesGroup.current.clear()
@@ -409,9 +609,25 @@ export function CountriesController(): null {
          addFrontiers()
       } else {
          frontiersGroup.current.clear()
+         countryFrontiersCountRef.current = 0
+         publishCountryFrontiersDebugSnapshot()
       }
 
-      if (namesActivated) {
+      const shouldDisplaySelectedCountryFrontiers =
+         normalizeCountryName(selectedCountry).length > 0
+
+      if (shouldDisplaySelectedCountryFrontiers) {
+         void addSelectedCountryFrontiers()
+      } else {
+         selectedFrontiersGroup.current.clear()
+         selectedCountryFrontiersCountRef.current = 0
+         publishCountryFrontiersDebugSnapshot()
+      }
+
+      const shouldDisplayNames =
+         namesActivated || normalizeCountryName(selectedCountry).length > 0
+
+      if (shouldDisplayNames) {
          void addCountriesNames().then(() => {
             handleNamesLOD(true)
          })
@@ -444,11 +660,17 @@ export function CountriesController(): null {
             countryNamesCount: 0,
             countryNamesMinDistanceFromCenter: null,
             countryNamesMinVisualSize: null,
+            countryFrontiersCount: 0,
+            selectedCountryFrontiersCount: 0,
          })
+
+         countryFrontiersCountRef.current = 0
+         selectedCountryFrontiersCountRef.current = 0
       }
    }, [
       displayedSceneData,
       displayedSceneData?.type,
+      selectedCountry,
       frontiersActivated,
       namesActivated,
    ])
