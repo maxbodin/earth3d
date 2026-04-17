@@ -119,4 +119,108 @@ test.describe('Country search', () => {
          return debug.selectedCountryFrontiersCount ?? 0
       }).toBeGreaterThan(0)
    })
+
+   test('country details card renders condensed API countries and worldometer info', async ({ page }) => {
+      await page.route('**/api/country-profile/FR**', async route => {
+         await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+               summary: {
+                  name: 'France',
+                  nativeName: 'France',
+                  alpha2: 'FR',
+                  alpha3: 'FRA',
+                  numericCode: '250',
+                  demonym: 'French',
+                  independent: true,
+                  cioc: 'FRA',
+                  flagPngUrl: 'https://flagcdn.com/w320/fr.png',
+                  flagSvgUrl: 'https://flagcdn.com/fr.svg',
+               },
+               geography: {
+                  capital: 'Paris',
+                  region: 'Europe',
+                  subregion: 'Western Europe',
+                  latitude: 46,
+                  longitude: 2,
+                  areaKm2: 640679,
+                  timezones: ['UTC+01:00', 'UTC+02:00'],
+                  borders: ['AND', 'BEL', 'DEU', 'ITA', 'ESP'],
+                  topLevelDomains: ['.fr'],
+               },
+               demographics: {
+                  population: 67391582,
+                  gini: 32.4,
+                  callingCodes: ['33'],
+                  altSpellings: ['FR', 'French Republic'],
+               },
+               economy: {
+                  currencies: [
+                     {
+                        code: 'EUR',
+                        name: 'Euro',
+                        symbol: '€',
+                     },
+                  ],
+               },
+               culture: {
+                  languages: [
+                     {
+                        iso639_1: 'fr',
+                        iso639_2: 'fra',
+                        name: 'French',
+                        nativeName: 'français',
+                     },
+                  ],
+                  translations: {
+                     en: 'France',
+                     de: 'Frankreich',
+                     es: 'Francia',
+                  },
+                  regionalBlocs: [
+                     {
+                        acronym: 'EU',
+                        name: 'European Union',
+                     },
+                  ],
+               },
+               worldometer: {
+                  source: 'worldometers-via-disease-sh',
+                  updatedAt: 1713379200000,
+                  continent: 'Europe',
+                  population: 67391582,
+                  cases: 1234567,
+                  todayCases: 123,
+                  deaths: 12345,
+                  todayDeaths: 3,
+                  recovered: 1200000,
+                  todayRecovered: 50,
+                  active: 22222,
+                  critical: 15,
+                  tests: 12300000,
+                  casesPerOneMillion: 18318,
+                  deathsPerOneMillion: 183,
+                  testsPerOneMillion: 182512,
+               },
+               meta: {
+                  hasApiCountries: true,
+                  hasWorldometer: true,
+                  fetchedAtIso: '2026-04-17T00:00:00.000Z',
+               },
+            }),
+         })
+      })
+
+      await page.goto('/?country=France')
+
+      await expect(page.getByText(/Country:\s*France/i)).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText(/Capital:\s*Paris/i)).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText(/Region:\s*Europe/i)).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText(/Population:\s*67,391,582/i)).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText(/Currencies:\s*Euro \(EUR, €/i)).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByRole('heading', { name: 'Worldometer (COVID-19)' })).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText(/Cases:\s*1,234,567/i)).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByText(/Deaths:\s*12,345/i)).toBeVisible({ timeout: 15_000 })
+   })
 })
