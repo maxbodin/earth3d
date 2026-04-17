@@ -3,11 +3,16 @@ import { Link } from '@/app/components/atoms/ui/link/link'
 import { getContinentEmoji, getContinentString, getTypeString } from '@/app/helpers/beautifyHelper'
 import { N_A_VALUE } from '@/app/constants/strings'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
+import { Button } from '@nextui-org/react'
+import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
+import { updateCoordinatesInCurrentUrl } from '@/app/lib/coordinatesSearchParams'
 
 const lookup = require('country-data').lookup
+const AIRPORT_DETAILS_FOCUS_ZOOM_MULTIPLIER = 0.06
 
 export function AirportDataDisplay(): React.JSX.Element {
    const { selectedObjectData } = useSelection()
+   const { flyToCoordinates } = CameraFlyController()
 
    const attributes = selectedObjectData?.data?.attributes
 
@@ -18,12 +23,19 @@ export function AirportDataDisplay(): React.JSX.Element {
          </>
       )
 
+   // TODO : Refactor in cleaner archi like I did with place.
    const name = attributes.name || N_A_VALUE
    const type = attributes.type || N_A_VALUE
    const continent = attributes.continent || N_A_VALUE
    const description = attributes.description || N_A_VALUE
-   const latitude_deg = attributes.latitude_deg?.toFixed(3) || N_A_VALUE
-   const longitude_deg = attributes.longitude_deg?.toFixed(3) || N_A_VALUE
+   const latitude = Number.isFinite(attributes.latitude_deg)
+      ? Number(attributes.latitude_deg)
+      : null
+   const longitude = Number.isFinite(attributes.longitude_deg)
+      ? Number(attributes.longitude_deg)
+      : null
+   const latitude_deg = latitude != null ? latitude.toFixed(3) : N_A_VALUE
+   const longitude_deg = longitude != null ? longitude.toFixed(3) : N_A_VALUE
    const elevation_ft = attributes.elevation_ft || N_A_VALUE
    const closed = attributes.closed || N_A_VALUE
    const frequency_mhz = attributes.frequency_mhz || N_A_VALUE
@@ -41,6 +53,18 @@ export function AirportDataDisplay(): React.JSX.Element {
    const surface = attributes.surface || N_A_VALUE
    const width_ft = attributes.width_ft || N_A_VALUE
    const wikipedia_link = attributes.wikipedia_link || N_A_VALUE
+   const canFocusOnAirport = latitude != null && longitude != null
+
+   const focusOnAirport = (): void => {
+      if (!canFocusOnAirport || latitude == null || longitude == null) {
+         return
+      }
+
+      updateCoordinatesInCurrentUrl(latitude, longitude)
+      flyToCoordinates(latitude, longitude, {
+         zoomMultiplier: AIRPORT_DETAILS_FOCUS_ZOOM_MULTIPLIER,
+      })
+   }
 
    return (
       <div>
@@ -54,6 +78,17 @@ export function AirportDataDisplay(): React.JSX.Element {
                Type: {getTypeString(type)}{' '}
             </h2>
          )}
+         <div className="mb-4">
+            <Button
+               size="sm"
+               variant="bordered"
+               aria-label="Focus on airport"
+               isDisabled={!canFocusOnAirport}
+               onPress={focusOnAirport}
+            >
+               Focus on airport
+            </Button>
+         </div>
          <div className="mb-4">
             {continent != N_A_VALUE && (
                <div className="flex items-center">

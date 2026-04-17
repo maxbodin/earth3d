@@ -6,6 +6,8 @@ interface MarkersDashboardContextValue {
    setIsMarkersDashboardOpen: React.Dispatch<React.SetStateAction<boolean>>
    markers: Marker[]
    setMarkers: React.Dispatch<React.SetStateAction<Marker[]>>
+   areMarkerTitlesVisible: boolean
+   setAreMarkerTitlesVisible: React.Dispatch<React.SetStateAction<boolean>>
    coordinateSelectionMarkerId: string | null
    setCoordinateSelectionMarkerId: React.Dispatch<React.SetStateAction<string | null>>
 }
@@ -23,6 +25,7 @@ export function useMarkersDashboard(): MarkersDashboardContextValue {
 export function MarkersDashboardProvider({ children }: { children: ReactNode }) {
    const [isMarkersDashboardOpen, setIsMarkersDashboardOpen] = useState<boolean>(false)
    const [markers, setMarkers] = useState<Marker[]>([])
+   const [areMarkerTitlesVisible, setAreMarkerTitlesVisible] = useState<boolean>(true)
    const [coordinateSelectionMarkerId, setCoordinateSelectionMarkerId] = useState<string | null>(null)
 
    const value: MarkersDashboardContextValue = {
@@ -30,6 +33,8 @@ export function MarkersDashboardProvider({ children }: { children: ReactNode }) 
       setIsMarkersDashboardOpen: setIsMarkersDashboardOpen,
       markers: markers,
       setMarkers: setMarkers,
+      areMarkerTitlesVisible: areMarkerTitlesVisible,
+      setAreMarkerTitlesVisible: setAreMarkerTitlesVisible,
       coordinateSelectionMarkerId: coordinateSelectionMarkerId,
       setCoordinateSelectionMarkerId: setCoordinateSelectionMarkerId,
    }

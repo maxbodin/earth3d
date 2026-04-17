@@ -6,10 +6,8 @@ import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
 import {
    EARTH_RADIUS,
    GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-   GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
    GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH,
    PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-   PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
    PLANE_SCENE_COUNTRY_FRONTIERS_MAX_THRESHOLD_BEFORE_REMOVED,
 } from '@/app/constants/numbers'
 import countryCode from '../../../../data/countryCode.json'
@@ -18,14 +16,26 @@ import { useCountries } from '@/app/components/atoms/three/countries/countries.m
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TEXT_FONT } from '@/app/constants/paths'
-import { clamp } from '@/app/helpers/numberHelper'
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
+import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
+import {
+   createCenteredTextGeometry,
+   computeSceneTextScale,
+   EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+   EARTH_SCENE_TEXT_BASE_SIZE,
+   getObjectGeometryExtentFromOrigin,
+} from '@/app/lib/threeText3d'
 import {
    useCountriesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
 
 const geoJson = require('world-geojson')
+
+const LOD_SCALE_THRESHOLD = 0.05
+const GLOBE_COUNTRY_NAME_SURFACE_LIFT_BASE = EARTH_RADIUS / 260
+const GLOBE_COUNTRY_NAME_SURFACE_LIFT_SCALE_FACTOR = EARTH_RADIUS / 1800
+const GLOBE_COUNTRY_NAME_GEOMETRY_CLEARANCE_MULTIPLIER = 0.18
 
 // Shared materials for country names, created once.
 const textMaterialFront = new THREE.MeshBasicMaterial({ color: '#ffffff' })
@@ -43,21 +53,23 @@ const planeFrontierMaterial = new MeshLineMaterial({
    color: '#DC0073',
 })
 
-// Cache for frontier lines to avoid recreation.
-const frontierCache: Map<string, MeshLineGeometry> = new Map()
+type CountryCoordinates = {
+   country: string
+   latitude: number
+   longitude: number
+}
 
 export function CountriesController(): null {
    const { displayedSceneData } = useScenes()
    const { selectedCountry } = useCountries()
+   const { frontiersActivated, namesActivated } = useCountriesTab()
 
    const namesGroup = useRef<THREE.Group>(new THREE.Group())
    const frontiersGroup = useRef<THREE.Group>(new THREE.Group())
    const font = useRef<Font>()
    const fontLoaded = useRef<boolean>(false)
-
-   // LOD threshold tracking.
-   const lastScaleRef = useRef<number>(0)
-   const LOD_SCALE_THRESHOLD = 0.05 // Minimum scale change to trigger update.
+   const textGeometryCacheRef = useRef<Map<string, TextGeometry>>(new Map())
+   const animationFrameRef = useRef<number | null>(null)
 
    /**
     * Load font asynchronously and cache it.
@@ -75,7 +87,63 @@ export function CountriesController(): null {
       }
    }
 
-   const textGeometryCache: Map<string, TextGeometry> = new Map()
+   const publishCountryNamesDebugSnapshot = (): void => {
+      const countryNamesCount = namesGroup.current.children.length
+      const isSphericalScene = displayedSceneData?.type === SceneType.SPHERICAL
+
+      let countryNamesMinDistanceFromCenter: number | null = null
+      let countryNamesMinVisualSize: number | null = null
+
+      if (isSphericalScene && countryNamesCount > 0) {
+         countryNamesMinDistanceFromCenter = Math.min(
+            ...namesGroup.current.children.map(countryName => countryName.position.length()),
+         )
+      }
+
+      if (countryNamesCount > 0) {
+         countryNamesMinVisualSize = Math.min(
+            ...namesGroup.current.children.map(countryName => {
+               return countryName.scale.x * EARTH_SCENE_TEXT_BASE_SIZE
+            }),
+         )
+      }
+
+      publishThreeSceneDebug({
+         countryNamesCount,
+         countryNamesMinDistanceFromCenter,
+         countryNamesMinVisualSize,
+      })
+   }
+
+   const updateCountryNameTransform = (
+      nameMesh: THREE.Object3D,
+      scale: number,
+      sceneType: SceneType,
+   ): void => {
+      const countryData = nameMesh.userData as CountryCoordinates | undefined
+
+      if (countryData == null) return
+
+      if (sceneType === SceneType.SPHERICAL) {
+         const basePosition = latLongToVector3(countryData.latitude, countryData.longitude)
+         const normal = basePosition.clone().normalize()
+         const geometryClearance = getObjectGeometryExtentFromOrigin(nameMesh)
+         const surfaceLift = GLOBE_COUNTRY_NAME_SURFACE_LIFT_BASE
+            + scale * GLOBE_COUNTRY_NAME_SURFACE_LIFT_SCALE_FACTOR
+            + geometryClearance * scale * GLOBE_COUNTRY_NAME_GEOMETRY_CLEARANCE_MULTIPLIER
+
+         nameMesh.position.copy(basePosition.add(normal.multiplyScalar(surfaceLift)))
+      } else {
+         const worldPosition = ThreeGeoUnitsUtils.datumsToSpherical(
+            countryData.latitude,
+            countryData.longitude,
+         )
+
+         nameMesh.position.set(worldPosition.x, 0, -worldPosition.y)
+      }
+
+      nameMesh.scale.setScalar(scale)
+   }
 
    /**
     *
@@ -90,15 +158,19 @@ export function CountriesController(): null {
       namesGroup.current.clear()
 
       const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
-      const nameSize = EARTH_RADIUS / 1e2
+      const nameSize = EARTH_SCENE_TEXT_BASE_SIZE
+      const currentScale = isSpherical
+         ? globeAdjustedScale.current
+         : planeAdjustedScale.current
 
       for (const country of countriesCoords.ref_country_codes) {
          // Cache text geometry by country name.
          const cacheKey = `country_${country.country}_${nameSize}`
-         let textGeo = textGeometryCache.get(cacheKey)
+         let textGeo = textGeometryCacheRef.current.get(cacheKey)
 
          if (!textGeo) {
-            textGeo = new TextGeometry(country.country, {
+            textGeo = createCenteredTextGeometry({
+               text: country.country,
                font: font.current,
                size: nameSize,
                depth: 50,
@@ -109,29 +181,27 @@ export function CountriesController(): null {
                bevelOffset: 0,
                bevelSegments: 4,
             })
-            textGeo.computeBoundingBox()
-            textGeometryCache.set(cacheKey, textGeo)
+            textGeometryCacheRef.current.set(cacheKey, textGeo)
          }
 
          const lat = country.latitude as number
          const lon = country.longitude as number
-         const position = isSpherical
-            ? latLongToVector3(lon, lat)
-            : new THREE.Vector3(
-                ThreeGeoUnitsUtils.datumsToSpherical(lon, lat).x,
-                0,
-                -ThreeGeoUnitsUtils.datumsToSpherical(lon, lat).y
-              )
 
          const textMesh = new THREE.Mesh(textGeo, textMaterials)
-         textMesh.position.copy(position)
          textMesh.name = `${country.country} Label`
-         textMesh.userData = country
+         textMesh.userData = {
+            country: country.country,
+            latitude: lat,
+            longitude: lon,
+         } satisfies CountryCoordinates
+
+         updateCountryNameTransform(textMesh, currentScale, displayedSceneData.type)
 
          namesGroup.current.add(textMesh)
       }
 
       displayedSceneData.scene.add(namesGroup.current)
+      publishCountryNamesDebugSnapshot()
    }
 
    type GeoJsonFeature = {
@@ -185,12 +255,13 @@ export function CountriesController(): null {
 
          for (let i = 0; i < coords.length; i++) {
             const [lon, lat] = coords[i]
+            const worldPosition = ThreeGeoUnitsUtils.datumsToSpherical(lat, lon)
             points[i] = isSpherical
-               ? latLongToVector3(lon, lat)
+               ? latLongToVector3(lat, lon)
                : new THREE.Vector3(
-                   ThreeGeoUnitsUtils.datumsToSpherical(lon, lat).x,
+                   worldPosition.x,
                    0,
-                   -ThreeGeoUnitsUtils.datumsToSpherical(lon, lat).y
+                   -worldPosition.y
                  )
          }
 
@@ -212,7 +283,7 @@ export function CountriesController(): null {
     * Animation loop for billboard effect on country names.
     */
    const animate = (): void => {
-      requestAnimationFrame(animate)
+      animationFrameRef.current = requestAnimationFrame(animate)
 
       if (!namesGroup.current || !displayedSceneData?.camera) return
 
@@ -242,29 +313,29 @@ export function CountriesController(): null {
    /**
     * Handle names LOD with threshold-based scale updates.
     */
-   const handleNamesLOD = (): void => {
+   const handleNamesLOD = (force = false): void => {
       if (!namesGroup.current || !displayedSceneData) return
 
-      const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
-      const newScale = isSpherical
-         ? clamp(cameraDistanceToPlanetCenter.current / 1e7 - 0.3,
-                 GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-                 GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
-         : clamp(cameraDistanceToPlanetCenter.current / 1e5,
-                 PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-                 PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
+            const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
+            const newScale = computeSceneTextScale(
+          displayedSceneData.type,
+          cameraDistanceToPlanetCenter.current,
+          EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+            )
 
       const currentScaleRef = isSpherical ? globeAdjustedScale : planeAdjustedScale
       const scaleChange = Math.abs(newScale - currentScaleRef.current)
 
       // Only update if scale changed significantly.
-      if (scaleChange < LOD_SCALE_THRESHOLD) return
+      if (!force && scaleChange < LOD_SCALE_THRESHOLD) return
 
       currentScaleRef.current = newScale
 
       for (const name of namesGroup.current.children) {
-         name.scale.setScalar(newScale)
+         updateCountryNameTransform(name, newScale, displayedSceneData.type)
       }
+
+      publishCountryNamesDebugSnapshot()
    }
 
    /**
@@ -294,6 +365,7 @@ export function CountriesController(): null {
          handleNamesLOD()
       } else {
          namesGroup.current.clear()
+         publishCountryNamesDebugSnapshot()
       }
    }
 
@@ -328,8 +400,6 @@ export function CountriesController(): null {
       }
    }
 
-   const { frontiersActivated, namesActivated } = useCountriesTab()
-
    useEffect(() => {
       if (!fontLoaded.current) {
          loadFont()
@@ -342,24 +412,39 @@ export function CountriesController(): null {
       }
 
       if (namesActivated) {
-         addCountriesNames()
+         void addCountriesNames().then(() => {
+            handleNamesLOD(true)
+         })
       } else {
          namesGroup.current.clear()
+         publishCountryNamesDebugSnapshot()
       }
 
       animate()
       window.addEventListener('click', onMouseClick)
       displayedSceneData?.controls?.addEventListener('change', onControlsChange)
+      onControlsChange()
 
       return () => {
          window.removeEventListener('click', onMouseClick)
          displayedSceneData?.controls?.removeEventListener('change', onControlsChange)
 
+         if (animationFrameRef.current != null) {
+            cancelAnimationFrame(animationFrameRef.current)
+            animationFrameRef.current = null
+         }
+
          // Cleanup cached geometries.
-         textGeometryCache.forEach((geometry): void => {
+         textGeometryCacheRef.current.forEach((geometry): void => {
             geometry.dispose()
          })
-         textGeometryCache.clear()
+         textGeometryCacheRef.current.clear()
+
+         publishThreeSceneDebug({
+            countryNamesCount: 0,
+            countryNamesMinDistanceFromCenter: null,
+            countryNamesMinVisualSize: null,
+         })
       }
    }, [
       displayedSceneData,
