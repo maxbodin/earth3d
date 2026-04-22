@@ -1,9 +1,8 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react'
+import React, { createContext, ReactNode, useContext, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 interface PlanesContextValue {
    displayedPlanesGroup: THREE.Group
-   setDisplayedPlanesGroup: React.Dispatch<React.SetStateAction<any>>
 }
 
 const PlanesContext = createContext<PlanesContextValue | null>(null)
@@ -17,13 +16,14 @@ export function usePlanes(): PlanesContextValue {
 }
 
 export function PlanesProvider({ children }: { children: ReactNode }) {
-   const [displayedPlanesGroup, setDisplayedPlanesGroup] =
-      useState<THREE.Group>(new THREE.Group())
+   const displayedPlanesGroupRef = useRef<THREE.Group>(new THREE.Group())
 
-   const value: PlanesContextValue = {
-      displayedPlanesGroup: displayedPlanesGroup,
-      setDisplayedPlanesGroup: setDisplayedPlanesGroup,
-   }
+   const value: PlanesContextValue = useMemo(
+      () => ({
+         displayedPlanesGroup: displayedPlanesGroupRef.current,
+      }),
+      [],
+   )
 
    return (
       <PlanesContext.Provider value={value}>

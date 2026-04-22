@@ -1,17 +1,10 @@
 import { NextResponse } from 'next/server'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { formatCountryName } from '@/lib/format/formatCountryName'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-
-function formatCountryName(countryName: string): string {
-   return countryName
-      .replace(/ /g, '_')
-      .replace(/\./g, '')
-      .replace(/&/g, 'and')
-      .toLowerCase()
-}
 
 function resolveCountryGeoJsonPath(countryName: string): string {
    const formattedCountryName = formatCountryName(countryName)

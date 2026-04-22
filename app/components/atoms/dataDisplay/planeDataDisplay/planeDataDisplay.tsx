@@ -4,6 +4,7 @@ import { useSelection } from '@/app/components/atoms/clickHandler/selectionConte
 
 const lookup = require('country-data').lookup
 
+// TODO : Refactor like place data details.
 export function PlaneDataDisplay(): React.JSX.Element {
    const { selectedObjectData } = useSelection()
 
@@ -28,7 +29,7 @@ export function PlaneDataDisplay(): React.JSX.Element {
    const velocity = selectedPlaneData?.data?.[9] || N_A_VALUE
    const trueTrack = selectedPlaneData?.data?.[10] || N_A_VALUE
    const verticalRate = selectedPlaneData?.data?.[11] || N_A_VALUE
-   const sensors = selectedPlaneData?.[12]?.data?.join(', ') || N_A_VALUE
+   const sensors = selectedPlaneData?.data?.[12]?.join(', ') || N_A_VALUE
    const geoAltitude = selectedPlaneData?.data?.[13] || N_A_VALUE
    const squawk = selectedPlaneData?.data?.[14] || N_A_VALUE
    const spi = selectedPlaneData?.data?.[15] ? 'Yes' : 'No'

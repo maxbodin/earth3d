@@ -36,9 +36,9 @@ import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSy
 import { SceneData } from '@/app/types/sceneData'
 import { OuterSpaceProvider } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
+import { PlanesController } from '@/app/components/atoms/three/planes/planes.controller'
+import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch/planeDataFetch'
 
-// TODO : we want lat and lon in search params.
-// TODO : we want planar, sphere, and solar system.
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
    const renderer = useRef<THREE.WebGLRenderer | null>(null)
@@ -876,26 +876,19 @@ export function ThreeScene() {
                   <ClickHandler />
                   <VesselsController />
                   <AirportsController />
+                  <PlanesController />
                </PlanetProvider>
 
                <OuterSpaceProvider>
                   <OuterSpaceController />
                </OuterSpaceProvider>
 
+               <PlaneDataFetch />
+
                <Atmosphere />
                <PlaneSky />
 
                <CountriesController />
-
-               {/*
-// TODO FIX PLANES BEFORE UNCOMMENTING THIS
-               <PlanesController
-                  scene={globeScene.current}
-                  camera={globeCamera.current}
-               />
-
-               <Polyline /> // TODO POUR TRACER DES LIGNES DE DEPLACEMENTS PAR EXEMPLE
-            */}
             </div>
          </div>
       </>

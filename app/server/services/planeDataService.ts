@@ -1,33 +1,55 @@
-'use server'
-const openSkyNetworkApiBaseUrl: string = 'https://api.opensky-network.org/api'
+import { OpenSkyBoundingBox } from '@/app/types/openSky/openSkyBoundingBox'
+import { OpenSkyStateVector } from '@/app/types/openSky/openSkyStateVector'
+import { PlaneStatesApiResponse } from '@/app/types/plane/planeStatesApiResponse'
+import { OpenSkyTrackResponse } from '@/app/types/openSky/openSkyTrackResponse'
+import { PlaneTrackApiResponse } from '@/app/types/plane/planeTrackApiResponse'
+import { PLANE_STATES_API_PATH, PLANE_TRACK_API_BASE_PATH } from '@/app/constants/strings'
 
-// TODO : Fix it.
-export const fetchPlanesData = async (): Promise<any> => {
-   try {
-      const response: Response = await fetch(
-         `${openSkyNetworkApiBaseUrl}/states/all?lamin=46&lamax=49&lomin=3&lomax=6`,
-      )
-      if (!response.ok) {
-         throw new Error('Failed to fetch data')
-      }
-      return await response.json()
-   } catch (error: any) {
-      throw new Error(`fetchPlanesData: Failed to fetch data ${error.message}`)
-   }
+function buildStatesApiUrl(bbox: OpenSkyBoundingBox): string {
+   const query = new URLSearchParams({
+      lamin: `${bbox.lamin}`,
+      lomin: `${bbox.lomin}`,
+      lamax: `${bbox.lamax}`,
+      lomax: `${bbox.lomax}`,
+      extended: '1',
+   })
+
+   return `${PLANE_STATES_API_PATH}?${query.toString()}`
 }
 
-export const fetchPlaneTrackData = async (icao24: string): Promise<any> => {
-   try {
-      const response: Response = await fetch(
-         `${openSkyNetworkApiBaseUrl}/tracks/all?icao24=${icao24}&time=0`,
-      )
-      if (!response.ok) {
-         throw new Error('Failed to fetch data')
-      }
-      return await response.json()
-   } catch (error: any) {
-      throw new Error(
-         `fetchPlaneTrackData: Failed to fetch data ${error.message}`,
-      )
+export async function fetchPlanesData(
+   bbox: OpenSkyBoundingBox,
+): Promise<OpenSkyStateVector[]> {
+   const response = await fetch(buildStatesApiUrl(bbox), {
+      cache: 'no-store',
+   })
+
+   if (!response.ok) {
+      throw new Error(`fetchPlanesData: Request failed with status ${response.status}.`)
    }
+
+   const payload = (await response.json()) as PlaneStatesApiResponse
+   return payload.states ?? []
+}
+
+// TODO : Add Usage.
+export async function fetchPlaneTrackData(
+   icao24: string,
+): Promise<OpenSkyTrackResponse | null> {
+   const normalizedIcao24 = icao24.trim().toLowerCase()
+   if (normalizedIcao24.length === 0) return null
+
+   const response = await fetch(
+      `${PLANE_TRACK_API_BASE_PATH}/${encodeURIComponent(normalizedIcao24)}?time=0`,
+      {
+         cache: 'no-store',
+      },
+   )
+
+   if (!response.ok) {
+      throw new Error(`fetchPlaneTrackData: Request failed with status ${response.status}.`)
+   }
+
+   const payload = (await response.json()) as PlaneTrackApiResponse
+   return payload.track
 }

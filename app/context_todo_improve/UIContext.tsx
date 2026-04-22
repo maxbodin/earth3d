@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react'
+import React, { createContext, ReactNode, useContext, useMemo, useState } from 'react'
 import { PanelType } from '@/app/enums/panelType'
 
 interface UiContextValue {
@@ -21,21 +21,28 @@ export function useUi(): UiContextValue {
 }
 
 export function UiProvider({ children }: { children: ReactNode }) {
-   const [openedPanelType, setOpenedPanelType] = useState<PanelType>(
-      PanelType.NULL,
-   )
+   const [openedPanelType, setOpenedPanelType] = useState<PanelType>(PanelType.NULL)
    const [isNavBarDisplayed, setIsNavBarDisplayed] = useState<boolean>(true)
-   const [isSearchBarDisplayed, setIsSearchBarDisplayed] =
-      useState<boolean>(true)
+   const [isSearchBarDisplayed, setIsSearchBarDisplayed] = useState<boolean>(true)
 
-   const value: UiContextValue = {
-      openedPanelType: openedPanelType,
-      setOpenedPanelType: setOpenedPanelType,
-      isNavBarDisplayed: isNavBarDisplayed,
-      setIsNavBarDisplayed: setIsNavBarDisplayed,
-      isSearchBarDisplayed: isSearchBarDisplayed,
-      setIsSearchBarDisplayed: setIsSearchBarDisplayed,
-   }
+   const value: UiContextValue = useMemo(
+      () => ({
+         openedPanelType,
+         setOpenedPanelType,
+         isNavBarDisplayed,
+         setIsNavBarDisplayed,
+         isSearchBarDisplayed,
+         setIsSearchBarDisplayed,
+      }),
+      [
+         openedPanelType,
+         isNavBarDisplayed,
+         isSearchBarDisplayed,
+         setOpenedPanelType,
+         setIsNavBarDisplayed,
+         setIsSearchBarDisplayed,
+      ],
+   )
 
    return <UiContext.Provider value={value}>{children}</UiContext.Provider>
 }
