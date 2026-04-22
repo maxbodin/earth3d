@@ -4,6 +4,7 @@ export const LATITUDE_SEARCH_PARAM_KEY = 'lat'
 export const LONGITUDE_SEARCH_PARAM_KEY = 'lon'
 export const LEGACY_LATITUDE_SEARCH_PARAM_KEY = 'latitude'
 export const LEGACY_LONGITUDE_SEARCH_PARAM_KEY = 'longitude'
+export const COUNTRY_SEARCH_PARAM_KEY = 'country'
 export const COORDINATES_SEARCH_PARAMS_UPDATED_EVENT =
    'coordinates-search-params-updated'
 
@@ -37,6 +38,31 @@ function isLongitudeInRange(longitude: number): boolean {
 
 function serializeCoordinate(value: number): string {
    return value.toFixed(SEARCH_PARAM_PRECISION)
+}
+
+function normalizeCountrySearchParam(value: unknown): string | null {
+   if (typeof value !== 'string') return null
+
+   const trimmedValue = value.trim()
+   return trimmedValue.length > 0 ? trimmedValue : null
+}
+
+function replaceCurrentUrlAndDispatchUpdate(
+   currentUrl: URL,
+   detail: unknown,
+): void {
+   const queryString = currentUrl.searchParams.toString()
+   const nextRelativeUrl = `${currentUrl.pathname}${
+      queryString.length > 0 ? `?${queryString}` : ''
+   }${currentUrl.hash}`
+
+   window.history.replaceState(window.history.state, '', nextRelativeUrl)
+
+   window.dispatchEvent(
+      new CustomEvent(COORDINATES_SEARCH_PARAMS_UPDATED_EVENT, {
+         detail,
+      }),
+   )
 }
 
 export function normalizeCoordinates(
@@ -103,6 +129,21 @@ export function readCoordinatesFromCurrentUrl(): Coordinates | null {
    return readCoordinatesFromSearchParams(currentUrl.searchParams)
 }
 
+export function readCountryFromSearchParams(
+   searchParams: URLSearchParams,
+): string | null {
+   return normalizeCountrySearchParam(
+      searchParams.get(COUNTRY_SEARCH_PARAM_KEY),
+   )
+}
+
+export function readCountryFromCurrentUrl(): string | null {
+   if (typeof window === 'undefined') return null
+
+   const currentUrl = new URL(window.location.href)
+   return readCountryFromSearchParams(currentUrl.searchParams)
+}
+
 export function coordinatesToKey(coordinates: Coordinates): string {
    return `${serializeCoordinate(coordinates.latitude)},${serializeCoordinate(
       coordinates.longitude,
@@ -142,18 +183,7 @@ export function updateCoordinatesInCurrentUrl(
    currentUrl.searchParams.delete(LEGACY_LATITUDE_SEARCH_PARAM_KEY)
    currentUrl.searchParams.delete(LEGACY_LONGITUDE_SEARCH_PARAM_KEY)
 
-   const queryString = currentUrl.searchParams.toString()
-   const nextRelativeUrl = `${currentUrl.pathname}${
-      queryString.length > 0 ? `?${queryString}` : ''
-   }${currentUrl.hash}`
-
-   window.history.replaceState(window.history.state, '', nextRelativeUrl)
-
-   window.dispatchEvent(
-      new CustomEvent(COORDINATES_SEARCH_PARAMS_UPDATED_EVENT, {
-         detail: normalizedCoordinates,
-      }),
-   )
+   replaceCurrentUrlAndDispatchUpdate(currentUrl, normalizedCoordinates)
 }
 
 export function clearCoordinatesFromCurrentUrl(): void {
@@ -173,16 +203,41 @@ export function clearCoordinatesFromCurrentUrl(): void {
    currentUrl.searchParams.delete(LEGACY_LATITUDE_SEARCH_PARAM_KEY)
    currentUrl.searchParams.delete(LEGACY_LONGITUDE_SEARCH_PARAM_KEY)
 
-   const queryString = currentUrl.searchParams.toString()
-   const nextRelativeUrl = `${currentUrl.pathname}${
-      queryString.length > 0 ? `?${queryString}` : ''
-   }${currentUrl.hash}`
+   replaceCurrentUrlAndDispatchUpdate(currentUrl, null)
+}
 
-   window.history.replaceState(window.history.state, '', nextRelativeUrl)
+export function updateCountryInCurrentUrl(country: string): void {
+   if (typeof window === 'undefined') return
 
-   window.dispatchEvent(
-      new CustomEvent(COORDINATES_SEARCH_PARAMS_UPDATED_EVENT, {
-         detail: null,
-      }),
-   )
+   const normalizedCountry = normalizeCountrySearchParam(country)
+   if (normalizedCountry == null) return
+
+   const currentUrl = new URL(window.location.href)
+   const currentCountry = readCountryFromSearchParams(currentUrl.searchParams)
+
+   if (currentCountry === normalizedCountry) {
+      return
+   }
+
+   currentUrl.searchParams.set(COUNTRY_SEARCH_PARAM_KEY, normalizedCountry)
+
+   replaceCurrentUrlAndDispatchUpdate(currentUrl, {
+      country: normalizedCountry,
+   })
+}
+
+export function clearCountryFromCurrentUrl(): void {
+   if (typeof window === 'undefined') return
+
+   const currentUrl = new URL(window.location.href)
+   const hasCountrySearchParam =
+      currentUrl.searchParams.has(COUNTRY_SEARCH_PARAM_KEY)
+
+   if (!hasCountrySearchParam) return
+
+   currentUrl.searchParams.delete(COUNTRY_SEARCH_PARAM_KEY)
+
+   replaceCurrentUrlAndDispatchUpdate(currentUrl, {
+      country: null,
+   })
 }

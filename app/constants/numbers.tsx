@@ -139,3 +139,8 @@ export const GLOBE_SCENE_PUCK_MAX_SCALE: number = EARTH_RADIUS * 0.03
  */
 export const PLANE_SCENE_AIRPORT_MIN_SCALE: number = 100
 export const PLANE_SCENE_AIRPORT_MAX_SCALE: number = 3e3
+
+/**
+ *
+ */
+export const MAX_LIST_PREVIEW_COUNT = 6

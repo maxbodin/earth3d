@@ -159,7 +159,7 @@ export function PlaceDataDisplay(): React.JSX.Element {
    ]
 
    return (
-      <div className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden">
+      <div className="w-full min-w-0 max-w-full space-y-2 overflow-x-hidden">
          <section className="space-y-1">
             {placeHeadlineFields.map((field: PlaceFieldItem) => (
                <PlaceField

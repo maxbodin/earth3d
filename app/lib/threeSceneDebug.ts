@@ -9,6 +9,8 @@ type ThreeSceneDebugSnapshot = {
    countryNamesCount?: number
    countryNamesMinDistanceFromCenter?: number | null
    countryNamesMinVisualSize?: number | null
+   countryFrontiersCount?: number
+   selectedCountryFrontiersCount?: number
 }
 
 declare global {

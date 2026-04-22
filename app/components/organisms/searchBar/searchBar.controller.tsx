@@ -1,5 +1,4 @@
-import { KeyboardEvent, useCallback, useState } from 'react'
-import countriesCoords from '@/app/data/country-codes-lat-long-alpha3.json'
+import { KeyboardEvent, useCallback, useEffect, useState } from 'react'
 import debounce from 'lodash/debounce'
 import { SearchSubjectType } from '@/app/enums/SearchSubjectType'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
@@ -9,7 +8,12 @@ import { Selection } from '@nextui-org/react'
 import { useSearchBar } from '@/app/components/organisms/searchBar/searchBar.model'
 import { Key } from '@react-types/shared'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
-import { updateCoordinatesInCurrentUrl } from '@/app/lib/coordinatesSearchParams'
+import {
+   clearCoordinatesFromCurrentUrl,
+   clearCountryFromCurrentUrl,
+   updateCoordinatesInCurrentUrl,
+   updateCountryInCurrentUrl,
+} from '@/app/lib/coordinatesSearchParams'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { ObjectType } from '@/app/enums/objectType'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
@@ -18,6 +22,11 @@ import { SceneType } from '@/app/enums/sceneType'
 import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 import { searchAirports } from '@/app/lib/airportSearch'
 import { AirportSearchSuggestion } from '@/app/types/airport'
+import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
+import {
+   filterCountriesByPrefix,
+   findCountryByName,
+} from '@/app/lib/countrySearch'
 
 const PLACE_SEARCH_ZOOM_MULTIPLIER = 0.12
 const PLACE_SEARCH_PLANISPHERE_ZOOM_MULTIPLIER = 0.01
@@ -45,8 +54,47 @@ export function SearchBarController() {
    const { setSelectedObjectData, setSelectedObjectType } = useSelection()
    const { setMarkers } = useMarkersDashboard()
    const { displayedSceneData } = useScenes()
+   const { selectedCountry, setSelectedCountry } = useCountries()
 
-   const { flyToCountryPos, flyToCoordinates } = CameraFlyController()
+   const { flyToCoordinates } = CameraFlyController()
+
+   useEffect((): void => {
+      if (selectedSubject !== SearchSubjectType.COUNTRY) {
+         return
+      }
+
+      const normalizedSelectedCountry = selectedCountry.trim()
+      if (normalizedSelectedCountry.length === 0) {
+         return
+      }
+
+      setSearchTerm((previousSearchTerm: string): string => {
+         return previousSearchTerm === normalizedSelectedCountry
+            ? previousSearchTerm
+            : normalizedSelectedCountry
+      })
+   }, [selectedCountry, selectedSubject])
+
+   const focusOnCountrySuggestion = useCallback((selectedCountrySuggestion: Country): void => {
+      setSearchTerm(selectedCountrySuggestion.country)
+      setCountrySuggestions([])
+
+      setSelectedCountry(selectedCountrySuggestion.country)
+      setSelectedObjectData(selectedCountrySuggestion)
+      setSelectedObjectType(ObjectType.COUNTRY)
+      clearCoordinatesFromCurrentUrl()
+      updateCountryInCurrentUrl(selectedCountrySuggestion.country)
+
+      flyToCoordinates(
+         selectedCountrySuggestion.latitude,
+         selectedCountrySuggestion.longitude,
+      )
+   }, [
+      flyToCoordinates,
+      setSelectedCountry,
+      setSelectedObjectData,
+      setSelectedObjectType,
+   ])
 
    const addMarkerFromPlace = useCallback((selectedSuggestion: Feature): void => {
       const marker = createMarkerFromPlaceFeature(selectedSuggestion)
@@ -72,8 +120,10 @@ export function SearchBarController() {
       setSearchTerm(selectedSuggestion.properties.label)
       setFeatureSuggestions([])
 
+      setSelectedCountry('')
       setSelectedObjectData(selectedSuggestion)
       setSelectedObjectType(ObjectType.PLACE)
+      clearCountryFromCurrentUrl()
       updateCoordinatesInCurrentUrl(latitude, longitude)
 
       addMarkerFromPlace(selectedSuggestion)
@@ -114,8 +164,10 @@ export function SearchBarController() {
       setSearchTerm(selectedSuggestion.label)
       setAirportSuggestions([])
 
+      setSelectedCountry('')
       setSelectedObjectData({ data: selectedSuggestion.feature })
       setSelectedObjectType(ObjectType.AIRPORT)
+      clearCountryFromCurrentUrl()
       updateCoordinatesInCurrentUrl(latitude, longitude)
 
       const zoomMultiplier = displayedSceneData?.type === SceneType.PLANE
@@ -184,6 +236,35 @@ export function SearchBarController() {
       focusOnAirportSuggestion(firstSuggestion)
    }, [airportSuggestions, focusOnAirportSuggestion, searchTerm, selectedSubject])
 
+   const selectFirstCountrySuggestion = useCallback((): void => {
+      if (selectedSubject !== SearchSubjectType.COUNTRY) {
+         return
+      }
+
+      let firstSuggestion: Country | undefined = countrySuggestions[0]
+
+      if (firstSuggestion == null && searchTerm.trim() !== '') {
+         const refreshedSuggestions = filterCountriesByPrefix(searchTerm)
+         setCountrySuggestions(refreshedSuggestions)
+         firstSuggestion = refreshedSuggestions[0]
+      }
+
+      if (firstSuggestion == null) {
+         setErrorMessage('No country found for this search.')
+         setIsInvalid(true)
+         return
+      }
+
+      setIsInvalid(false)
+      focusOnCountrySuggestion(firstSuggestion)
+   }, [
+      countrySuggestions,
+      filterCountriesByPrefix,
+      focusOnCountrySuggestion,
+      searchTerm,
+      selectedSubject,
+   ])
+
    /**
     * Debounced function to handle input changes.
     */
@@ -206,15 +287,7 @@ export function SearchBarController() {
                setFeatureSuggestions(data.features || [])
 
             } else if (selectedSubject === SearchSubjectType.COUNTRY) {
-               // Filter countries based on input value.
-               const filteredCountries =
-                  countriesCoords.ref_country_codes.filter((country: Country) =>
-                     country.country
-                        .toLowerCase()
-                        .startsWith(value.toLowerCase()),
-                  )
-
-               setCountrySuggestions(filteredCountries || [])
+               setCountrySuggestions(filterCountriesByPrefix(value))
             } else if (selectedSubject === SearchSubjectType.AIRPORT) {
                setAirportSuggestions(searchAirports(value))
             }
@@ -243,6 +316,11 @@ export function SearchBarController() {
       }
 
       event.preventDefault()
+
+      if (selectedSubject === SearchSubjectType.COUNTRY) {
+         selectFirstCountrySuggestion()
+         return
+      }
 
       if (selectedSubject === SearchSubjectType.PLACE) {
          void selectFirstPlaceSuggestion()
@@ -275,8 +353,11 @@ export function SearchBarController() {
          case SearchSubjectType.PLANE:
             break
          case SearchSubjectType.COUNTRY:
-            if (flyToCountryPos(key as string)) {
+            const selectedCountrySuggestion = findCountryByName(String(key ?? ''))
+
+            if (selectedCountrySuggestion != null) {
                setIsInvalid(false)
+               focusOnCountrySuggestion(selectedCountrySuggestion)
             } else {
                setErrorMessage('Invalid Country Name.')
                setIsInvalid(true)
@@ -325,6 +406,11 @@ export function SearchBarController() {
          keys,
       )[0] as string as SearchSubjectType
       setSelectedSubject(selectedKey)
+
+      if (selectedKey !== SearchSubjectType.COUNTRY) {
+         setSelectedCountry('')
+         clearCountryFromCurrentUrl()
+      }
 
       switch (selectedKey) {
          case SearchSubjectType.PLANE:

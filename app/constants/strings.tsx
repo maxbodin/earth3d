@@ -44,3 +44,5 @@ export const N_A_VALUE: string = 'N/A'
 /**
  * // TODO ADD URLs
  */
+
+export const COUNTRY_PROFILE_API_BASE_PATH = '/api/country-profile'
