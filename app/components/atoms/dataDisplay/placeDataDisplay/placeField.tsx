@@ -13,7 +13,7 @@ export function PlaceField({
    return (
       <p
          className={cn(
-            prominent ? 'text-lg font-semibold' : 'text-sm font-medium',
+            prominent ? 'text-md font-semibold' : 'text-sm font-medium',
             hasValue ? 'text-white/90' : 'text-gray-400',
          )}
       >

@@ -45,7 +45,7 @@ function ProfileSection({
 }): React.JSX.Element {
    return (
       <section className="space-y-1 rounded-lg border border-white/10 bg-black/20 p-3">
-         <h2 className="text-sm font-semibold text-white/80">{title}</h2>
+         <h2 className="text-lg font-semibold text-white/80">{title}</h2><br/>
          {fields.map((field: PlaceFieldItem) => (
             <PlaceField
                key={`${title}-${field.label}`}
@@ -342,14 +342,7 @@ export function CountryDataDisplay(): React.JSX.Element {
                   className="h-8 w-12 rounded border border-white/20 object-cover"
                   referrerPolicy="no-referrer"
                />
-               <div className="text-xs text-white/70">
-                  <p>
-                     API Countries: {countryProfile?.meta.hasApiCountries ? 'connected' : 'unavailable'}
-                  </p>
-                  <p>
-                     Worldometer Disease: {countryProfile?.meta.hasWorldometer ? 'connected' : 'unavailable'}
-                  </p>
-               </div>
+               <h1 className="text-xl font-bold text-white/80">{identityFields.at(0)?.value}</h1><br/>
             </div>
 
             {isProfileLoading && (
@@ -365,7 +358,7 @@ export function CountryDataDisplay(): React.JSX.Element {
          <ProfileSection title="Geography" fields={geographyFields} />
          <ProfileSection title="Demographics" fields={demographicsFields} />
          <ProfileSection title="Economy & Culture" fields={economyAndCultureFields} />
-         <ProfileSection title="Worldometer (COVID-19)" fields={worldometerFields} />
+         <ProfileSection title="Worldometer - Disease (COVID-19)" fields={worldometerFields} />
 
          <section className="flex flex-wrap items-center gap-2 pt-2">
             <Button
