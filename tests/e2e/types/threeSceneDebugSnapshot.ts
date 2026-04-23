@@ -6,6 +6,7 @@ export type ThreeSceneDebugSnapshot = {
    markerTitleMinVisualSize?: number | null
    displayedPlanesCount?: number
    planesSceneType?: number | null
+   displayedPlanesMinAltitudeMeters?: number | null
    markerTitlesCount?: number
    markerTitleMinClearanceFromMarkerTop?: number | null
    markerTitleSceneType?: number | null

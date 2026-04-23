@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { fetchPlanesData } from '@/app/server/services/planeDataService'
-import { useData } from '@/app/context_todo_improve/dataContext'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { clamp } from '@/app/helpers/numberHelper'
@@ -8,6 +7,10 @@ import { DEFAULT_BBOX, EARTH_RADIUS } from '@/app/constants/numbers'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { OpenSkyBoundingBox } from '@/app/types/openSky/openSkyBoundingBox'
 import { toBoundingBox } from '@/lib/to/toBoundingBox'
+import {
+   usePlanesTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.model'
+import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
 
 const PLANES_FETCH_INTERVAL_MS = 30_000
 
@@ -52,11 +55,20 @@ function getPlanesBBoxForCurrentView(
 }
 
 export function PlaneDataFetch(): null {
-   const { setPlanesData } = useData()
+   const { setPlanesData, setOpenSkyRemainingTokens } = usePlanes()
    const { displayedSceneData } = useScenes()
+   const { planesActivated } = usePlanesTab()
 
    useEffect(() => {
       let cancelled = false
+
+      if (!planesActivated) {
+         setPlanesData([])
+
+         return (): void => {
+            cancelled = true
+         }
+      }
 
       const fetchAndStorePlanes = async (): Promise<void> => {
          if (document.visibilityState !== 'visible') {
@@ -68,12 +80,13 @@ export function PlaneDataFetch(): null {
          }
 
          try {
-            const planes = await fetchPlanesData(
+            const planesResponse = await fetchPlanesData(
                getPlanesBBoxForCurrentView(displayedSceneData),
             )
 
             if (!cancelled) {
-               setPlanesData(planes)
+               setPlanesData(planesResponse.states ?? [])
+               setOpenSkyRemainingTokens(planesResponse.meta.remainingTokens)
             }
          } catch (error) {
             console.error('PlaneDataFetch failed:', error)
@@ -99,7 +112,7 @@ export function PlaneDataFetch(): null {
          window.clearInterval(intervalId)
          document.removeEventListener('visibilitychange', onVisibilityChange)
       }
-   }, [displayedSceneData, setPlanesData])
+   }, [displayedSceneData, planesActivated, setOpenSkyRemainingTokens, setPlanesData])
 
    return null
 }

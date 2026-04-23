@@ -1,5 +1,4 @@
 import { OpenSkyBoundingBox } from '@/app/types/openSky/openSkyBoundingBox'
-import { OpenSkyStateVector } from '@/app/types/openSky/openSkyStateVector'
 import { PlaneStatesApiResponse } from '@/app/types/plane/planeStatesApiResponse'
 import { OpenSkyTrackResponse } from '@/app/types/openSky/openSkyTrackResponse'
 import { PlaneTrackApiResponse } from '@/app/types/plane/planeTrackApiResponse'
@@ -19,7 +18,7 @@ function buildStatesApiUrl(bbox: OpenSkyBoundingBox): string {
 
 export async function fetchPlanesData(
    bbox: OpenSkyBoundingBox,
-): Promise<OpenSkyStateVector[]> {
+): Promise<PlaneStatesApiResponse> {
    const response = await fetch(buildStatesApiUrl(bbox), {
       cache: 'no-store',
    })
@@ -27,9 +26,8 @@ export async function fetchPlanesData(
    if (!response.ok) {
       throw new Error(`fetchPlanesData: Request failed with status ${response.status}.`)
    }
-
-   const payload = (await response.json()) as PlaneStatesApiResponse
-   return payload.states ?? []
+   
+   return (await response.json()) as PlaneStatesApiResponse
 }
 
 // TODO : Add Usage.

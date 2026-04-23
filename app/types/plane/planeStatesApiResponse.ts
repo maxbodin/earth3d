@@ -5,11 +5,12 @@ export type PlaneStatesApiResponse = {
    time: number
    states: OpenSkyStateVector[]
    meta: {
-      source: 'live' | 'cache' | 'stale-cache'
+      source: 'live' | 'cache' | 'stale-cache' | 'fallback'
       fetchedAt: number
       ttlMs: number
       retryAfterSeconds: number | null
       authenticated: boolean
+      remainingTokens: number | null
       requestCost: number
       normalizedBBox: OpenSkyBoundingBox
    }

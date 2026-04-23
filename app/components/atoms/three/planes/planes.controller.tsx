@@ -2,7 +2,6 @@
 import * as THREE from 'three'
 import { useCallback, useEffect, useRef } from 'react'
 import { latLongToVector3 } from '@/app/helpers/latLongHelper'
-import { useData } from '@/app/context_todo_improve/dataContext'
 import { PLANE_MATERIAL } from '@/app/constants/materials'
 import { PLANE_GLB_MODEL } from '@/app/constants/paths'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
@@ -26,6 +25,9 @@ import {
 import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
 import { OpenSkyStateVector } from '@/app/types/openSky/openSkyStateVector'
 import { RenderablePlane } from '@/app/types/plane/renderablePlane'
+import {
+   usePlanesTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.model'
 
 let sharedPlaneTemplate: THREE.Group | null = null
 let sharedPlaneLoadPromise: Promise<THREE.Group> | null = null
@@ -65,6 +67,10 @@ function extractPlaneCoordinates(
    }
 }
 
+function extractPlaneAltitudeMeters(state: OpenSkyStateVector): number {
+   return Math.max(state[13] ?? state[7] ?? 0, 0)
+}
+
 function getHeadingRadians(state: OpenSkyStateVector): number | null {
    const trueTrack = state[10]
    if (trueTrack == null) return null
@@ -89,9 +95,10 @@ function getPlaneScale(sceneType: SceneType, cameraDistance: number): number {
 }
 
 export function PlanesController(): null {
-   const { planesData } = useData()
+   const { planesData } = usePlanes()
    const { displayedSceneData } = useScenes()
    const { displayedPlanesGroup } = usePlanes()
+   const { planesActivated } = usePlanesTab()
    const animationFrameIdRef = useRef<number | null>(null)
    const isUnmountedRef = useRef<boolean>(false)
 
@@ -131,6 +138,8 @@ export function PlanesController(): null {
       const coordinates = extractPlaneCoordinates(state)
       if (coordinates == null) return null
 
+      const altitudeMeters = extractPlaneAltitudeMeters(state)
+
       if (sceneType === SceneType.PLANE) {
          const worldPosition = ThreeGeoUnitsUtils.datumsToSpherical(
             coordinates.latitude,
@@ -139,13 +148,12 @@ export function PlanesController(): null {
 
          return {
             state,
-            position: new THREE.Vector3(worldPosition.x, 0, -worldPosition.y),
+            position: new THREE.Vector3(worldPosition.x, altitudeMeters, -worldPosition.y),
             headingRad: getHeadingRadians(state),
          }
       }
 
       const position = latLongToVector3(coordinates.latitude, coordinates.longitude)
-      const altitudeMeters = Math.max(state[13] ?? state[7] ?? 0, 0)
       const normal = position.clone().normalize()
 
       position.add(normal.multiplyScalar(altitudeMeters + GLOBE_ALTITUDE_OFFSET_METERS))
@@ -191,13 +199,14 @@ export function PlanesController(): null {
    const renderPlanes = useCallback(async (): Promise<void> => {
       const sceneData = displayedSceneData
 
-      if (sceneData == null || sceneData.type === SceneType.SOLAR_SYSTEM) {
+      if (!planesActivated || sceneData == null || sceneData.type === SceneType.SOLAR_SYSTEM) {
          clearDisplayedPlanes(displayedPlanesGroup)
          displayedPlanesGroup.parent?.remove(displayedPlanesGroup)
 
          publishThreeSceneDebug({
             displayedPlanesCount: 0,
             planesSceneType: sceneData?.type ?? null,
+            displayedPlanesMinAltitudeMeters: null,
          })
          return
       }
@@ -212,6 +221,7 @@ export function PlanesController(): null {
          publishThreeSceneDebug({
             displayedPlanesCount: 0,
             planesSceneType: sceneData.type,
+            displayedPlanesMinAltitudeMeters: null,
          })
          return
       }
@@ -241,9 +251,14 @@ export function PlanesController(): null {
          displayedPlanesGroup.add(plane)
       }
 
+      const displayedPlanesMinAltitudeMeters = sceneData.type === SceneType.PLANE
+         ? Math.min(...renderablePlanes.map(renderablePlane => renderablePlane.position.y))
+         : null
+
       publishThreeSceneDebug({
          displayedPlanesCount: displayedPlanesGroup.children.length,
          planesSceneType: sceneData.type,
+         displayedPlanesMinAltitudeMeters,
       })
    }, [
       applyPlaneTransform,
@@ -252,6 +267,7 @@ export function PlanesController(): null {
       displayedSceneData,
       getPlaneInstance,
       loadPlaneModel,
+      planesActivated,
       planesData,
    ])
 
@@ -283,14 +299,14 @@ export function PlanesController(): null {
 
    useEffect(() => {
       const controls = displayedSceneData?.controls
-      if (controls == null) return
+      if (controls == null || !planesActivated) return
 
       controls.addEventListener('change', scheduleRender)
 
       return () => {
          controls.removeEventListener('change', scheduleRender)
       }
-   }, [displayedSceneData, scheduleRender])
+   }, [displayedSceneData, planesActivated, scheduleRender])
 
    return null
 }

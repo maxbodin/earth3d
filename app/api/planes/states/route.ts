@@ -19,6 +19,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
          ttlMs,
          retryAfterSeconds,
          authenticated,
+         remainingTokens,
          requestCost,
          normalizedBBox,
       } = await getOpenSkyStates({
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             ttlMs,
             retryAfterSeconds,
             authenticated,
+            remainingTokens,
             requestCost,
             normalizedBBox,
          },

@@ -14,6 +14,9 @@ import {
 import {
    AirportsTabProvider,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/airportsTab/airportsTab.model'
+import {
+   PlanesTabProvider,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.model'
 
 /**
  * Hell. x2
@@ -30,7 +33,9 @@ export function DashboardTabsProviders({
          <OuterSpaceTabProvider>
             <VesselsTabProvider>
                <CountriesTabProvider>
-                  <AirportsTabProvider>{children}</AirportsTabProvider>
+                  <PlanesTabProvider>
+                     <AirportsTabProvider>{children}</AirportsTabProvider>
+                  </PlanesTabProvider>
                </CountriesTabProvider>
             </VesselsTabProvider>
          </OuterSpaceTabProvider>

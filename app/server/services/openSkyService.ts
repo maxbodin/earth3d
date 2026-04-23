@@ -2,23 +2,26 @@ import 'server-only'
 import { OpenSkyBoundingBox } from '@/app/types/openSky/openSkyBoundingBox'
 import { OpenSkyStatesResponse } from '@/app/types/openSky/openSkyStatesResponse'
 import { OpenSkyTrackResponse } from '@/app/types/openSky/openSkyTrackResponse'
-import { OpenSkyStateVector } from '@/app/types/openSky/openSkyStateVector'
 import { OpenSkyTokenCache } from '@/app/types/openSky/openSkyTokenCache'
 import { CacheEntry } from '@/app/types/cacheEntry'
 import { OPEN_SKY_API_BASE_URL, OPEN_SKY_TOKEN_URL } from '@/app/constants/strings'
-import { parseNumber } from '@/lib/parse/parseNumber'
-import { parseBoolean } from '@/lib/parse/parseBoolean'
-import { parseSensors } from '@/lib/parse/parseSensors'
-import { clamp } from '@/lib/clamp'
-import { DEFAULT_BBOX, MAX_LATITUDE, MAX_LATITUDE_SPAN, MAX_LONGITUDE, MAX_LONGITUDE_SPAN, MIN_LATITUDE, MIN_LONGITUDE,
-   STATES_TTL_ANONYMOUS_MS, STATES_TTL_AUTHENTICATED_MS, TRACK_TTL_MS
-} from '@/app/constants/numbers'
+import { STATES_TTL_ANONYMOUS_MS, STATES_TTL_AUTHENTICATED_MS, TRACK_TTL_MS } from '@/app/constants/numbers'
 import { getFreshCacheEntry } from '@/lib/cache/getFreshCacheEntry'
 import { getStaleCacheEntry } from '@/lib/cache/getStaleCacheEntry'
 import { toCacheEntry } from '@/lib/cache/toCacheEntry'
+import { OpenSkyStatesRequestResult } from '@/app/types/openSky/openSkyStatesRequestResult'
+import { normalizeBBox } from '@/lib/normalize/normalizeBBox'
+import { normalizeTrack } from '@/lib/normalize/normalizeTrack'
+import { normalizeStatesResponse } from '@/lib/normalize/normalizeStatesResponse'
 
 const statesCache = new Map<string, CacheEntry<OpenSkyStatesResponse>>()
-const statesInFlight = new Map<string, Promise<OpenSkyStatesResponse>>()
+
+// TODO : refactor in constants.
+const OPEN_SKY_REQUEST_TIMEOUT_MS = 5_000
+const STATES_FALLBACK_TTL_MS = 60_000
+
+const statesInFlight = new Map<string, Promise<OpenSkyStatesRequestResult>>()
+const statesRemainingTokensCache = new Map<string, number | null>()
 
 const trackCache = new Map<string, CacheEntry<OpenSkyTrackResponse | null>>()
 const trackInFlight = new Map<string, Promise<OpenSkyTrackResponse | null>>()
@@ -28,126 +31,63 @@ const tokenCache: OpenSkyTokenCache = {
    expiresAt: 0,
 }
 
-function nowMs(): number {
-   return Date.now()
+function getOpenSkyApiBaseUrl(): string {
+   return process.env.OPENSKY_API_BASE_URL?.trim() || OPEN_SKY_API_BASE_URL
 }
 
-function normalizeTrack(rawTrack: unknown): OpenSkyTrackResponse | null {
-   if (rawTrack == null || typeof rawTrack !== 'object') return null
+function isOpenSkyTimeoutError(error: unknown): boolean {
+   if (error == null || typeof error !== 'object') return false
 
-   const candidate = rawTrack as Record<string, unknown>
-   const icao24 =
-      typeof candidate.icao24 === 'string'
-         ? candidate.icao24.toLowerCase()
-         : null
-
-   const startTime = parseNumber(candidate.startTime)
-   const endTime = parseNumber(candidate.endTime)
-
-   if (icao24 == null || startTime == null || endTime == null) {
-      return null
+   const candidate = error as {
+      name?: unknown
+      code?: unknown
+      cause?: { code?: unknown } | null
    }
 
-   const path = Array.isArray(candidate.path)
-      ? candidate.path
-           .map((point): OpenSkyTrackResponse['path'][number] | null => {
-              if (!Array.isArray(point)) return null
+   return candidate.name === 'AbortError'
+      || candidate.name === 'TimeoutError'
+      || candidate.code === 'UND_ERR_CONNECT_TIMEOUT'
+      || candidate.cause?.code === 'UND_ERR_CONNECT_TIMEOUT'
+}
 
-              const time = parseNumber(point[0])
-              if (time == null) return null
+function createOpenSkyTimeoutError(authenticated: boolean): Error {
+   return Object.assign(
+      new Error(`OpenSky request timed out after ${OPEN_SKY_REQUEST_TIMEOUT_MS}ms.`),
+      {
+         retryAfterSeconds: null,
+         authenticated,
+         remainingTokens: null,
+      },
+   )
+}
 
-              return [
-                 time,
-                 parseNumber(point[1]),
-                 parseNumber(point[2]),
-                 parseNumber(point[3]),
-                 parseNumber(point[4]),
-                 parseBoolean(point[5]),
-              ]
-           })
-           .filter((point): point is OpenSkyTrackResponse['path'][number] => point != null)
-      : []
+async function fetchOpenSkyWithTimeout(
+   url: string,
+   headers: HeadersInit,
+   authenticated: boolean,
+): Promise<Response> {
+   const controller = new AbortController()
+   const timeoutId = setTimeout(() => {
+      controller.abort()
+   }, OPEN_SKY_REQUEST_TIMEOUT_MS)
 
-   return {
-      icao24,
-      startTime,
-      endTime,
-      callsign: typeof candidate.callsign === 'string' ? candidate.callsign : null,
-      path,
+   try {
+      return await fetch(url, {
+         cache: 'no-store',
+         headers,
+         signal: controller.signal,
+      })
+   } catch (error) {
+      if (isOpenSkyTimeoutError(error)) {
+         throw createOpenSkyTimeoutError(authenticated)
+      }
+
+      throw error
+   } finally {
+      clearTimeout(timeoutId)
    }
 }
 
-function normalizeStateVector(rawState: unknown): OpenSkyStateVector | null {
-   if (!Array.isArray(rawState) || rawState.length < 17) {
-      return null
-   }
-
-   const icao24 =
-      typeof rawState[0] === 'string'
-         ? rawState[0].trim().toLowerCase()
-         : null
-
-   const originCountry =
-      typeof rawState[2] === 'string'
-         ? rawState[2].trim()
-         : null
-
-   if (icao24 == null || icao24.length === 0 || originCountry == null) {
-      return null
-   }
-
-   const callsignRaw = rawState[1]
-   const callsign =
-      typeof callsignRaw === 'string' && callsignRaw.trim().length > 0
-         ? callsignRaw.trim()
-         : null
-
-   return [
-      icao24,
-      callsign,
-      originCountry,
-      parseNumber(rawState[3]),
-      parseNumber(rawState[4]),
-      parseNumber(rawState[5]),
-      parseNumber(rawState[6]),
-      parseNumber(rawState[7]),
-      parseBoolean(rawState[8]),
-      parseNumber(rawState[9]),
-      parseNumber(rawState[10]),
-      parseNumber(rawState[11]),
-      parseSensors(rawState[12]),
-      parseNumber(rawState[13]),
-      typeof rawState[14] === 'string' ? rawState[14] : null,
-      parseBoolean(rawState[15]),
-      parseNumber(rawState[16]),
-      parseNumber(rawState[17]),
-   ]
-}
-
-function normalizeStatesResponse(rawResponse: unknown): OpenSkyStatesResponse {
-   const fallbackResponse: OpenSkyStatesResponse = {
-      time: Math.floor(nowMs() / 1000),
-      states: [],
-   }
-
-   if (rawResponse == null || typeof rawResponse !== 'object') {
-      return fallbackResponse
-   }
-
-   const candidate = rawResponse as Record<string, unknown>
-   const time = parseNumber(candidate.time)
-
-   const states = Array.isArray(candidate.states)
-      ? candidate.states
-           .map((stateValue) => normalizeStateVector(stateValue))
-           .filter((stateValue): stateValue is OpenSkyStateVector => stateValue != null)
-      : []
-
-   return {
-      time: time ?? fallbackResponse.time,
-      states,
-   }
-}
 
 function buildBboxCacheKey(bbox: OpenSkyBoundingBox, extended: boolean): string {
    return [
@@ -170,52 +110,6 @@ function computeStatesRequestCost(normalizedBBox: OpenSkyBoundingBox): number {
    return 4
 }
 
-function normalizeBBox(rawBBox: Partial<OpenSkyBoundingBox> | null | undefined): OpenSkyBoundingBox {
-   const lamin = parseNumber(rawBBox?.lamin)
-   const lomin = parseNumber(rawBBox?.lomin)
-   const lamax = parseNumber(rawBBox?.lamax)
-   const lomax = parseNumber(rawBBox?.lomax)
-
-   if (lamin == null || lomin == null || lamax == null || lomax == null) {
-      return DEFAULT_BBOX
-   }
-
-   const rawMinLat = clamp(Math.min(lamin, lamax), MIN_LATITUDE, MAX_LATITUDE)
-   const rawMaxLat = clamp(Math.max(lamin, lamax), MIN_LATITUDE, MAX_LATITUDE)
-   const rawMinLon = clamp(Math.min(lomin, lomax), MIN_LONGITUDE, MAX_LONGITUDE)
-   const rawMaxLon = clamp(Math.max(lomin, lomax), MIN_LONGITUDE, MAX_LONGITUDE)
-
-   const latitudeSpan = Math.max(rawMaxLat - rawMinLat, 0.1)
-   const longitudeSpan = Math.max(rawMaxLon - rawMinLon, 0.1)
-
-   const latitudeScale = Math.min(1, MAX_LATITUDE_SPAN / latitudeSpan)
-   const longitudeScale = Math.min(1, MAX_LONGITUDE_SPAN / longitudeSpan)
-
-   const scale = Math.min(latitudeScale, longitudeScale)
-
-   if (scale >= 1) {
-      return {
-         lamin: rawMinLat,
-         lomin: rawMinLon,
-         lamax: rawMaxLat,
-         lomax: rawMaxLon,
-      }
-   }
-
-   const centerLat = (rawMinLat + rawMaxLat) / 2
-   const centerLon = (rawMinLon + rawMaxLon) / 2
-
-   const halfLatSpan = (latitudeSpan * scale) / 2
-   const halfLonSpan = (longitudeSpan * scale) / 2
-
-   return {
-      lamin: clamp(centerLat - halfLatSpan, MIN_LATITUDE, MAX_LATITUDE),
-      lomin: clamp(centerLon - halfLonSpan, MIN_LONGITUDE, MAX_LONGITUDE),
-      lamax: clamp(centerLat + halfLatSpan, MIN_LATITUDE, MAX_LATITUDE),
-      lomax: clamp(centerLon + halfLonSpan, MIN_LONGITUDE, MAX_LONGITUDE),
-   }
-}
-
 async function getOpenSkyAccessToken(): Promise<string | null> {
    const clientId = process.env.OPENSKY_CLIENT_ID?.trim()
    const clientSecret = process.env.OPENSKY_CLIENT_SECRET?.trim()
@@ -224,7 +118,7 @@ async function getOpenSkyAccessToken(): Promise<string | null> {
       return null
    }
 
-   if (tokenCache.token != null && tokenCache.expiresAt > nowMs()) {
+   if (tokenCache.token != null && tokenCache.expiresAt > Date.now()) {
       return tokenCache.token
    }
 
@@ -260,7 +154,7 @@ async function getOpenSkyAccessToken(): Promise<string | null> {
    const refreshMarginMs = 30_000
 
    tokenCache.token = tokenResponse.access_token
-   tokenCache.expiresAt = nowMs() + expiresInMs - refreshMarginMs
+   tokenCache.expiresAt = Date.now() + expiresInMs - refreshMarginMs
 
    return tokenCache.token
 }
@@ -278,10 +172,7 @@ async function fetchOpenSky(
       headers.Authorization = `Bearer ${token}`
    }
 
-   const response = await fetch(url, {
-      cache: 'no-store',
-      headers,
-   })
+   const response = await fetchOpenSkyWithTimeout(url, headers, token != null)
 
    if (response.status !== 401 || token == null) {
       return { response, authenticated: token != null }
@@ -296,10 +187,7 @@ async function fetchOpenSky(
       Authorization: `Bearer ${refreshedToken}`,
    }
 
-   const retryResponse = await fetch(url, {
-      cache: 'no-store',
-      headers: retryHeaders,
-   })
+   const retryResponse = await fetchOpenSkyWithTimeout(url, retryHeaders, true)
 
    return { response: retryResponse, authenticated: true }
 }
@@ -314,22 +202,39 @@ function readRetryAfterSeconds(response: Response): number | null {
       : null
 }
 
+function readRemainingTokens(response: Response): number | null {
+   const remainingTokensHeader = response.headers.get('x-rate-limit-remaining')
+   if (remainingTokensHeader == null) return null
+
+   const remainingTokens = Number(remainingTokensHeader)
+   return Number.isFinite(remainingTokens) && remainingTokens >= 0
+      ? remainingTokens
+      : null
+}
+
 function extractRequestErrorMetadata(error: unknown): {
    retryAfterSeconds: number | null
    authenticated: boolean
+   remainingTokens: number | null
 } {
    const candidate = error as {
       retryAfterSeconds?: unknown
       authenticated?: unknown
+      remainingTokens?: unknown
    }
 
    const retryAfterSeconds = typeof candidate?.retryAfterSeconds === 'number'
       ? (candidate.retryAfterSeconds ?? null)
       : null
 
+   const remainingTokens = typeof candidate?.remainingTokens === 'number'
+      ? (candidate.remainingTokens ?? null)
+      : null
+
    return {
       retryAfterSeconds,
       authenticated: Boolean(candidate?.authenticated),
+      remainingTokens,
    }
 }
 
@@ -338,11 +243,12 @@ export async function getOpenSkyStates(options: {
    extended?: boolean
 }): Promise<{
    response: OpenSkyStatesResponse
-   source: 'live' | 'cache' | 'stale-cache'
+   source: 'live' | 'cache' | 'stale-cache' | 'fallback'
    fetchedAt: number
    ttlMs: number
    retryAfterSeconds: number | null
    authenticated: boolean
+   remainingTokens: number | null
    requestCost: number
    normalizedBBox: OpenSkyBoundingBox
 }> {
@@ -359,6 +265,7 @@ export async function getOpenSkyStates(options: {
          ttlMs: freshCacheEntry.ttlMs,
          retryAfterSeconds: null,
          authenticated: false,
+         remainingTokens: statesRemainingTokensCache.get(cacheKey) ?? null,
          requestCost: computeStatesRequestCost(normalizedBBox),
          normalizedBBox,
       }
@@ -366,21 +273,22 @@ export async function getOpenSkyStates(options: {
 
    const pendingRequest = statesInFlight.get(cacheKey)
    if (pendingRequest != null) {
-      const response = await pendingRequest
+      const pendingResponse = await pendingRequest
       const cacheEntry = statesCache.get(cacheKey)
       return {
-         response,
+         response: pendingResponse.response,
          source: 'cache',
-         fetchedAt: cacheEntry?.fetchedAt ?? nowMs(),
-         ttlMs: cacheEntry?.ttlMs ?? STATES_TTL_ANONYMOUS_MS,
+         fetchedAt: cacheEntry?.fetchedAt ?? Date.now(),
+         ttlMs: cacheEntry?.ttlMs ?? pendingResponse.ttlMs,
          retryAfterSeconds: null,
-         authenticated: false,
+         authenticated: pendingResponse.authenticated,
+         remainingTokens: pendingResponse.remainingTokens,
          requestCost: computeStatesRequestCost(normalizedBBox),
          normalizedBBox,
       }
    }
 
-   const requestPromise = (async (): Promise<OpenSkyStatesResponse> => {
+   const requestPromise = (async (): Promise<OpenSkyStatesRequestResult> => {
       const query = new URLSearchParams({
          lamin: normalizedBBox.lamin.toString(),
          lomin: normalizedBBox.lomin.toString(),
@@ -393,7 +301,7 @@ export async function getOpenSkyStates(options: {
       }
 
       const { response, authenticated } = await fetchOpenSky(
-         `${OPEN_SKY_API_BASE_URL}/states/all?${query.toString()}`,
+         `${getOpenSkyApiBaseUrl()}/states/all?${query.toString()}`,
       )
 
       if (!response.ok) {
@@ -401,39 +309,47 @@ export async function getOpenSkyStates(options: {
             status: response.status,
             retryAfterSeconds: readRetryAfterSeconds(response),
             authenticated,
+            remainingTokens: readRemainingTokens(response),
          })
       }
 
+      const remainingTokens = readRemainingTokens(response)
       const payload = normalizeStatesResponse(await response.json())
       const ttlMs = authenticated
          ? STATES_TTL_AUTHENTICATED_MS
          : STATES_TTL_ANONYMOUS_MS
 
       statesCache.set(cacheKey, toCacheEntry(payload, ttlMs))
+      statesRemainingTokensCache.set(cacheKey, remainingTokens)
 
-      return payload
+      return {
+         response: payload,
+         authenticated,
+         ttlMs,
+         remainingTokens,
+      }
    })()
 
    statesInFlight.set(cacheKey, requestPromise)
 
    try {
-      const response = await requestPromise
+      const requestResult = await requestPromise
       const cacheEntry = statesCache.get(cacheKey)
       return {
-         response,
+         response: requestResult.response,
          source: 'live',
-         fetchedAt: cacheEntry?.fetchedAt ?? nowMs(),
-         ttlMs: cacheEntry?.ttlMs ?? STATES_TTL_ANONYMOUS_MS,
+         fetchedAt: cacheEntry?.fetchedAt ?? Date.now(),
+         ttlMs: cacheEntry?.ttlMs ?? requestResult.ttlMs,
          retryAfterSeconds: null,
-         authenticated: false,
+         authenticated: requestResult.authenticated,
+         remainingTokens: requestResult.remainingTokens,
          requestCost: computeStatesRequestCost(normalizedBBox),
          normalizedBBox,
       }
    } catch (error) {
+      const requestErrorMetadata = extractRequestErrorMetadata(error)
       const staleCacheEntry = getStaleCacheEntry(statesCache, cacheKey)
       if (staleCacheEntry != null) {
-         const requestErrorMetadata = extractRequestErrorMetadata(error)
-
          return {
             response: staleCacheEntry.payload,
             source: 'stale-cache',
@@ -441,12 +357,37 @@ export async function getOpenSkyStates(options: {
             ttlMs: staleCacheEntry.ttlMs,
             retryAfterSeconds: requestErrorMetadata.retryAfterSeconds,
             authenticated: requestErrorMetadata.authenticated,
+            remainingTokens:
+               requestErrorMetadata.remainingTokens
+               ?? statesRemainingTokensCache.get(cacheKey)
+               ?? null,
             requestCost: computeStatesRequestCost(normalizedBBox),
             normalizedBBox,
          }
       }
 
-      throw error
+      const fallbackResponse: OpenSkyStatesResponse = {
+         time: Math.floor(Date.now() / 1000),
+         states: [],
+      }
+      const fallbackTtlMs = requestErrorMetadata.retryAfterSeconds != null
+         ? Math.max(requestErrorMetadata.retryAfterSeconds * 1000, 5_000)
+         : STATES_FALLBACK_TTL_MS
+
+      statesCache.set(cacheKey, toCacheEntry(fallbackResponse, fallbackTtlMs))
+      statesRemainingTokensCache.set(cacheKey, requestErrorMetadata.remainingTokens)
+
+      return {
+         response: fallbackResponse,
+         source: 'fallback',
+         fetchedAt: Date.now(),
+         ttlMs: fallbackTtlMs,
+         retryAfterSeconds: requestErrorMetadata.retryAfterSeconds,
+         authenticated: requestErrorMetadata.authenticated,
+         remainingTokens: requestErrorMetadata.remainingTokens,
+         requestCost: computeStatesRequestCost(normalizedBBox),
+         normalizedBBox,
+      }
    } finally {
       statesInFlight.delete(cacheKey)
    }
@@ -486,7 +427,7 @@ export async function getOpenSkyTrack(options: {
       return {
          track,
          source: 'cache',
-         fetchedAt: cacheEntry?.fetchedAt ?? nowMs(),
+         fetchedAt: cacheEntry?.fetchedAt ?? Date.now(),
          ttlMs: cacheEntry?.ttlMs ?? TRACK_TTL_MS,
          retryAfterSeconds: null,
          authenticated: false,
@@ -500,7 +441,7 @@ export async function getOpenSkyTrack(options: {
       })
 
       const { response, authenticated } = await fetchOpenSky(
-         `${OPEN_SKY_API_BASE_URL}/tracks/all?${query.toString()}`,
+         `${getOpenSkyApiBaseUrl()}/tracks/all?${query.toString()}`,
       )
 
       if (!response.ok) {
@@ -524,7 +465,7 @@ export async function getOpenSkyTrack(options: {
       return {
          track,
          source: 'live',
-         fetchedAt: cacheEntry?.fetchedAt ?? nowMs(),
+         fetchedAt: cacheEntry?.fetchedAt ?? Date.now(),
          ttlMs: cacheEntry?.ttlMs ?? TRACK_TTL_MS,
          retryAfterSeconds: null,
          authenticated: false,

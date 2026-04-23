@@ -16,6 +16,7 @@ import { CursorModeType } from '@/app/enums/modeType'
 import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
 import { SceneType } from '@/app/enums/sceneType'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
+import { parseSelectedPlaneStateVector } from '@/lib/parse/parseSelectedPlaneStateVector'
 
 export function ClickHandler(): null {
 
@@ -197,6 +198,24 @@ export function ClickHandler(): null {
       }
    }
 
+
+   const resolvePlaneSelectionData = (
+      intersectedObject: THREE.Object3D<THREE.Object3DEventMap>,
+   ): Record<string, unknown> | null => {
+      let currentObject: THREE.Object3D<THREE.Object3DEventMap> | null = intersectedObject
+
+      while (currentObject != null) {
+         const candidateUserData = currentObject.userData as Record<string, unknown>
+         if (parseSelectedPlaneStateVector(candidateUserData) != null) {
+            return candidateUserData
+         }
+
+         currentObject = currentObject.parent
+      }
+
+      return null
+   }
+
    /**
     * Handle click on plane.
     */
@@ -208,37 +227,13 @@ export function ClickHandler(): null {
       )
 
       if (intersects.length > 0) {
-         setSelectedObjectData(intersects[0].object.userData)
+         const selectedPlaneData = resolvePlaneSelectionData(intersects[0].object)
+         if (selectedPlaneData == null) {
+            return
+         }
+
+         setSelectedObjectData(selectedPlaneData)
          setSelectedObjectType(ObjectType.PLANE)
-
-
-         /*
-         // TODO WORK IN PROGRESS PROCESS CLICK ON PLANE
-
-            // Function to handle click events.
-            const selectedPlane = useRef<THREE.Object3D<THREE.Object3DEventMap> | null>(
-               null,
-            )
-
-          if (selectedPlane.current) {
-                     // Reset mesh material to yellow.
-                     selectedPlane.current.traverse((child) => {
-                        if (child instanceof THREE.Mesh) {
-                           child.material = PLANE_MATERIAL
-                        }
-                     })
-                  }
-
-                  selectedPlane.current = intersects[0].object.parent!
-
-                  // Apply blue material to all meshes in the plane model, this is the selected plane.
-                  intersects[0].object.parent!.traverse((child): void => {
-                     if (child instanceof THREE.Mesh) {
-                        child.material = SELECTED_PLANE_MATERIAL
-                     }
-                  })
-
-                  onPlaneSelected(intersects[0].object.parent!.userData)*/
       }
    }
 

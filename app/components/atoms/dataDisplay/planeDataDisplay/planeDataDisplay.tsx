@@ -1,6 +1,9 @@
 import React from 'react'
 import { N_A_VALUE } from '@/app/constants/strings'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
+import { parseSelectedPlaneStateVector } from '@/lib/parse/parseSelectedPlaneStateVector'
+import { formatTimestamp } from '@/lib/format/formatTimestamp'
+import { formatValue } from '@/lib/format/formatValue'
 
 const lookup = require('country-data').lookup
 
@@ -8,9 +11,9 @@ const lookup = require('country-data').lookup
 export function PlaneDataDisplay(): React.JSX.Element {
    const { selectedObjectData } = useSelection()
 
-   const selectedPlaneData = selectedObjectData
+   const selectedPlaneState = parseSelectedPlaneStateVector(selectedObjectData)
 
-   if (selectedPlaneData == null) {
+   if (selectedPlaneState == null) {
       return (
          <>
             <h1>Failed to get data.</h1>
@@ -18,39 +21,43 @@ export function PlaneDataDisplay(): React.JSX.Element {
       )
    }
 
-   const callsign = selectedPlaneData?.data?.[1] || N_A_VALUE
-   const originCountry = selectedPlaneData?.data?.[2] || N_A_VALUE
-   const timePosition = selectedPlaneData?.data?.[3] || N_A_VALUE
-   const lastContact = selectedPlaneData?.data?.[4] || N_A_VALUE
-   const longitude = selectedPlaneData?.data?.[5] || N_A_VALUE
-   const latitude = selectedPlaneData?.data?.[6] || N_A_VALUE
-   const baroAltitude = selectedPlaneData?.data?.[7] || N_A_VALUE
-   const onGround = selectedPlaneData?.data?.[8] ? 'Yes' : 'No'
-   const velocity = selectedPlaneData?.data?.[9] || N_A_VALUE
-   const trueTrack = selectedPlaneData?.data?.[10] || N_A_VALUE
-   const verticalRate = selectedPlaneData?.data?.[11] || N_A_VALUE
-   const sensors = selectedPlaneData?.data?.[12]?.join(', ') || N_A_VALUE
-   const geoAltitude = selectedPlaneData?.data?.[13] || N_A_VALUE
-   const squawk = selectedPlaneData?.data?.[14] || N_A_VALUE
-   const spi = selectedPlaneData?.data?.[15] ? 'Yes' : 'No'
-   const positionSource = selectedPlaneData?.data?.[16] || N_A_VALUE
-   const category = selectedPlaneData?.data?.[17] || N_A_VALUE
+   const icao24 = selectedPlaneState[0]
+   const callsign = selectedPlaneState[1]
+   const originCountry = selectedPlaneState[2]
+   const timePosition = selectedPlaneState[3]
+   const lastContact = selectedPlaneState[4]
+   const longitude = selectedPlaneState[5]
+   const latitude = selectedPlaneState[6]
+   const baroAltitude = selectedPlaneState[7]
+   const onGround = selectedPlaneState[8]
+   const velocity = selectedPlaneState[9]
+   const trueTrack = selectedPlaneState[10]
+   const verticalRate = selectedPlaneState[11]
+   const sensors = selectedPlaneState[12]
+   const geoAltitude = selectedPlaneState[13]
+   const squawk = selectedPlaneState[14]
+   const spi = selectedPlaneState[15]
+   const positionSource = selectedPlaneState[16]
+   const category = selectedPlaneState[17]
 
-   const formattedTimePosition: string = timePosition
-      ? new Date(timePosition * 1000).toLocaleString()
-      : N_A_VALUE
-   const formattedLastContact: string = lastContact
-      ? new Date(lastContact * 1000).toLocaleString()
-      : N_A_VALUE
+   const displayedPlaneName = callsign ?? icao24 ?? N_A_VALUE
+   const formattedTimePosition = formatTimestamp(timePosition)
+   const formattedLastContact = formatTimestamp(lastContact)
+   const formattedSensors = sensors == null || sensors.length === 0
+      ? N_A_VALUE
+      : sensors.join(', ')
+   const originCountryEmoji = originCountry == null
+      ? ''
+      : lookup?.countries({ name: originCountry })[0]?.emoji ?? ''
 
    // TODO ADD FALLBACK FOR N/A VALUES
    return (
       <>
-         <h2 className="text-white text-4xl font-bold mb-4">{callsign} </h2>
+         <h2 className="text-white text-4xl font-bold mb-4">{displayedPlaneName} </h2>
          <div className="flex items-center mb-4">
             <h3 className="text-white text-lg font-bold">
-               Origin country: {originCountry}{' '}
-               {lookup?.countries({ name: originCountry })[0]?.emoji}
+               Origin country: {formatValue(originCountry)}{' '}
+               {originCountryEmoji}
             </h3>
          </div>
          <div className="mb-4">
@@ -62,21 +69,21 @@ export function PlaneDataDisplay(): React.JSX.Element {
             </p>
          </div>
          <p className="text-gray-300 mb-2">
-            Longitude: {longitude} Latitude: {latitude}
+            Longitude: {formatValue(longitude)} Latitude: {formatValue(latitude)}
          </p>
          <p className="text-gray-300 mb-2">
-            Barometric Altitude: {baroAltitude}
+            Barometric Altitude: {formatValue(baroAltitude)}
          </p>
-         <p className="text-gray-300 mb-2">On Ground: {onGround}</p>
-         <p className="text-gray-300 mb-2">Velocity: {velocity}</p>
-         <p className="text-gray-300 mb-2">True Track: {trueTrack}</p>
-         <p className="text-gray-300 mb-2">Vertical Rate: {verticalRate}</p>
-         <p className="text-gray-300 mb-2">Sensors: {sensors}</p>
-         <p className="text-gray-300 mb-2">Geometric Altitude: {geoAltitude}</p>
-         <p className="text-gray-300 mb-2">Squawk: {squawk}</p>
-         <p className="text-gray-300 mb-2">SPI: {spi}</p>
-         <p className="text-gray-300 mb-2">Position Source: {positionSource}</p>
-         <p className="text-gray-300 mb-2">Category: {category}</p>
+         <p className="text-gray-300 mb-2">On Ground: {onGround ? 'Yes' : 'No'}</p>
+         <p className="text-gray-300 mb-2">Velocity: {formatValue(velocity)}</p>
+         <p className="text-gray-300 mb-2">True Track: {formatValue(trueTrack)}</p>
+         <p className="text-gray-300 mb-2">Vertical Rate: {formatValue(verticalRate)}</p>
+         <p className="text-gray-300 mb-2">Sensors: {formattedSensors}</p>
+         <p className="text-gray-300 mb-2">Geometric Altitude: {formatValue(geoAltitude)}</p>
+         <p className="text-gray-300 mb-2">Squawk: {formatValue(squawk)}</p>
+         <p className="text-gray-300 mb-2">SPI: {spi ? 'Yes' : 'No'}</p>
+         <p className="text-gray-300 mb-2">Position Source: {formatValue(positionSource)}</p>
+         <p className="text-gray-300 mb-2">Category: {formatValue(category)}</p>
       </>
    )
 }
