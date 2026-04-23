@@ -1,6 +1,7 @@
 import { Body } from 'astronomy-engine'
 import * as THREE from 'three'
 import { Vector3 } from 'three'
+import { clamp } from '@/lib/clamp'
 
 const DAYS_PER_YEAR = 365.25
 const MILLISECONDS_PER_DAY = 86_400_000
@@ -19,10 +20,6 @@ const ORBITAL_PERIOD_DAYS: Partial<Record<Body, number>> = {
    [Body.Uranus]: 30688.5,
    [Body.Neptune]: 60182,
    [Body.Pluto]: 90560,
-}
-
-const clamp = (value: number, min: number, max: number): number => {
-   return Math.max(min, Math.min(max, value))
 }
 
 const getOrbitalPeriodDays = (body: Body): number | null => {

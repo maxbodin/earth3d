@@ -1,3 +1,8 @@
+import { OpenSkyBoundingBox } from '@/app/types/openSky/openSkyBoundingBox'
+
+export const SPHERICAL_SCENE_TYPE = 0
+export const PLANE_SCENE_TYPE = 1
+
 /**
  * Earth radius in meters.
  */
@@ -89,7 +94,56 @@ export const SPHERE_HEIGHT_SEGMENTS: number = 45
 export const PLANET_RESOLUTION_FACTOR: number = 10
 export const PLANET_DISPLACEMENT_SCALE: number = 0.03
 export const AIRPORT_SCALE: number = 10000
-export const PLANE_SCALE: number = 0.001
+
+/**
+ * Upper bound for plane meshes rendered at once so the scene stays responsive.
+ */
+export const MAX_DISPLAYED_PLANES: number = 1200
+
+/**
+ * Minimum plane mesh scale used on the spherical scene when zoomed out.
+ */
+export const GLOBE_PLANE_MIN_SCALE: number = 2000
+
+/**
+ * Maximum plane mesh scale used on the spherical scene when zoomed in.
+ */
+export const GLOBE_PLANE_MAX_SCALE: number = 3000
+
+/**
+ * Minimum plane mesh scale used on the planar scene when the camera is close.
+ */
+export const PLANE_SCENE_PLANE_MIN_SCALE: number = 1000
+
+/**
+ * Maximum plane mesh scale used on the planar scene when the camera is far.
+ */
+export const PLANE_SCENE_PLANE_MAX_SCALE: number = 4000
+
+/**
+ * Small vertical lift applied to spherical plane positions to avoid z-fighting.
+ */
+export const GLOBE_ALTITUDE_OFFSET_METERS: number = 5e4
+
+/**
+ * Cone geometry radius used when the GLB plane model cannot be loaded.
+ */
+export const PLANE_FALLBACK_CONE_RADIUS: number = 1
+
+/**
+ * Cone geometry height used when the GLB plane model cannot be loaded.
+ */
+export const PLANE_FALLBACK_CONE_HEIGHT: number = 3
+
+/**
+ * Cone geometry radial segments used when the GLB plane model cannot be loaded.
+ */
+export const PLANE_FALLBACK_CONE_RADIAL_SEGMENTS: number = 8
+
+/**
+ * Rotation applied to the fallback cone so it points like a plane mesh.
+ */
+export const PLANE_FALLBACK_CONE_ROTATION_X: number = Math.PI / 2
 
 /**
  * Nombre maximal de navires affichés.
@@ -144,3 +198,22 @@ export const PLANE_SCENE_AIRPORT_MAX_SCALE: number = 3e3
  *
  */
 export const MAX_LIST_PREVIEW_COUNT = 6
+
+export const DEFAULT_BBOX: OpenSkyBoundingBox = {
+   lamin: 43,
+   lomin: -3,
+   lamax: 52,
+   lomax: 8,
+}
+
+export const MIN_LATITUDE = -90
+export const MAX_LATITUDE = 90
+export const MIN_LONGITUDE = -180
+export const MAX_LONGITUDE = 180
+export const MAX_LATITUDE_SPAN = 16
+export const MAX_LONGITUDE_SPAN = 24
+
+export const STATES_TTL_ANONYMOUS_MS = 30_000
+export const STATES_TTL_AUTHENTICATED_MS = 12_000
+export const TRACK_TTL_MS = 60_000
+export const STALE_GRACE_MS = 5 * 60_000

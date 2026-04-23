@@ -1,10 +1,5 @@
 import { expect, test } from '@playwright/test'
-
-type ThreeSceneDebugSnapshot = {
-   countryNamesCount?: number
-   countryFrontiersCount?: number
-   selectedCountryFrontiersCount?: number
-}
+import { ThreeSceneDebugSnapshot } from '@/tests/e2e/types/threeSceneDebugSnapshot'
 
 test.describe('Country search', () => {
    test('selecting a country sets URL param and forces country label/frontier visibility', async ({ page }) => {
@@ -219,7 +214,7 @@ test.describe('Country search', () => {
       await expect(page.getByText(/Region:\s*Europe/i)).toBeVisible({ timeout: 15_000 })
       await expect(page.getByText(/Population:\s*67,391,582/i)).toBeVisible({ timeout: 15_000 })
       await expect(page.getByText(/Currencies:\s*Euro \(EUR, €/i)).toBeVisible({ timeout: 15_000 })
-      await expect(page.getByRole('heading', { name: 'Worldometer (COVID-19)' })).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByRole('heading', { name: 'Worldometer - Disease (COVID-19)' })).toBeVisible({ timeout: 15_000 })
       await expect(page.getByText(/Cases:\s*1,234,567/i)).toBeVisible({ timeout: 15_000 })
       await expect(page.getByText(/Deaths:\s*12,345/i)).toBeVisible({ timeout: 15_000 })
    })

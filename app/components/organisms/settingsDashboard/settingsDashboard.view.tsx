@@ -28,6 +28,9 @@ import {
 import {
    SolarSystemTabView,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/solarSystemTab/solarSystemTab.view'
+import {
+   PlanesTabView,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.view'
 
 export function SettingsDashboardView() {
    const { activeSettingsDashboardTab, isSettingsDashboardOpen, setIsSettingsDashboardOpen } =
@@ -40,8 +43,7 @@ export function SettingsDashboardView() {
    const renderTab = React.useCallback(() => {
       switch (activeSettingsDashboardTab) {
          case TabType.PLANES:
-            // TODO Planes Tab View
-            return <></>
+            return <PlanesTabView />
          case TabType.AIRPORTS:
             return <AirportsTabView />
          case TabType.VESSELS:

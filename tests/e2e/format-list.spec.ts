@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test'
-
-import { formatList } from '../../lib/format/formatList'
+import { formatList } from '@/lib/format/formatList'
 
 test.describe('formatList', () => {
    test('returns the empty fallback and truncates long lists with a suffix', () => {

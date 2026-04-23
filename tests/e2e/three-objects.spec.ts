@@ -1,16 +1,8 @@
 import { expect, Page, test } from '@playwright/test'
+import { readSceneDebug } from '@/tests/e2e/utils/readSceneDebug'
+import { moveCameraToPlaneScene } from '@/tests/e2e/utils/moveCameraToPlaneScene'
 
-type ThreeSceneDebugSnapshot = {
-   markerTitlesCount?: number
-   markerTitleMinVisualSize?: number | null
-   markerTitleMinClearanceFromMarkerTop?: number | null
-   markerTitleSceneType?: number | null
-   markerTitleScaleDamping?: number | null
-   countryNamesCount?: number
-   countryNamesMinDistanceFromCenter?: number | null
-   countryNamesMinVisualSize?: number | null
-}
-
+// TODO : put in constants/numbers
 const EARTH_RADIUS = 6_371_008
 const SPHERICAL_SCENE_TYPE = 0
 const PLANE_SCENE_TYPE = 1
@@ -21,46 +13,6 @@ const GLOBE_MIN_MARKER_TITLE_SCALE_DAMPING = 0.35
 const PLANE_MIN_MARKER_TITLE_SCALE_DAMPING = 0.2
 const MAX_MARKER_TITLE_SCALE_DAMPING = 1
 const MAX_MARKER_TITLE_GAP = 2_000
-
-const readSceneDebug = async (page: Page): Promise<ThreeSceneDebugSnapshot> => {
-   return page.evaluate(() => {
-      return (window as Window & {
-         __THREE_SCENE_DEBUG__?: ThreeSceneDebugSnapshot
-      }).__THREE_SCENE_DEBUG__ ?? {}
-   })
-}
-
-const moveCameraToPlaneScene = async (page: Page): Promise<void> => {
-   const viewport = page.viewportSize() ?? { width: 1280, height: 720 }
-   const centerX = Math.floor(viewport.width / 2)
-   const centerY = Math.floor(viewport.height / 2)
-
-   await page.mouse.move(centerX, centerY)
-
-   const tryZoomDirection = async (wheelDeltaY: number): Promise<boolean> => {
-      for (let attempt = 0; attempt < 50; attempt++) {
-         await page.mouse.wheel(0, wheelDeltaY)
-         await page.waitForTimeout(30)
-
-         const debug = await readSceneDebug(page)
-         if (debug.markerTitleSceneType === PLANE_SCENE_TYPE) {
-            return true
-         }
-      }
-
-      return false
-   }
-
-   if (await tryZoomDirection(-1600)) {
-      return
-   }
-
-   if (await tryZoomDirection(1600)) {
-      return
-   }
-
-   throw new Error('Unable to switch to plane scene from test camera controls.')
-}
 
 const findLowestPlaneMarkerTitleScaleDamping = async (page: Page): Promise<number> => {
    let lowestPlaneDamping = Number.POSITIVE_INFINITY

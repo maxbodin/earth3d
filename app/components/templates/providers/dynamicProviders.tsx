@@ -11,7 +11,6 @@ import { MarkersDashboardProvider } from '@/app/components/organisms/markersDash
 import { DataDashboardProvider } from '@/app/components/organisms/dataDashboard/dataDashboard.model'
 import { SettingsDashboardProvider } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
 import { SelectionProvider } from '@/app/components/atoms/clickHandler/selectionContext'
-import { DataProvider } from '@/app/context_todo_improve/dataContext'
 
 /**
  * Hell.
@@ -25,13 +24,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <DashboardTabsProviders>
                <EntitiesProviders>
                   <SelectionProvider>
-                     <DataProvider>
                         <DashboardTabsProviders>
                            <DrawerProviders>
                               {children}
                            </DrawerProviders>
                         </DashboardTabsProviders>
-                     </DataProvider>
                   </SelectionProvider>
                </EntitiesProviders>
             </DashboardTabsProviders>

@@ -1,9 +1,6 @@
 import { expect, Page, test } from '@playwright/test'
+import { ThreeSceneDebugSnapshot } from '@/tests/e2e/types/threeSceneDebugSnapshot'
 
-type ThreeSceneDebugSnapshot = {
-   markerTitleTexts?: string[]
-   markerTitleMinVisualSize?: number | null
-}
 
 const getMarkerTitlesDebug = async (page: Page): Promise<ThreeSceneDebugSnapshot> => {
    return page.evaluate(() => {
