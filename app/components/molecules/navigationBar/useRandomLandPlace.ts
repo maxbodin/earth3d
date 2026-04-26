@@ -1,11 +1,14 @@
 import { Dispatch, SetStateAction, useCallback, useState } from 'react'
 import { ObjectType } from '@/app/enums/objectType'
 import { getRandomLandPlace } from '@/app/components/molecules/navigationBar/navigationBarRandomPlace'
+import { Marker } from '@/app/types/marker'
+import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 
 interface UseRandomLandPlaceParams {
    flyToCoordinates: (latitude: number, longitude: number) => void
    setSelectedObjectData: Dispatch<SetStateAction<any>>
    setSelectedObjectType: Dispatch<SetStateAction<ObjectType>>
+   setMarkers: Dispatch<SetStateAction<Marker[]>>
 }
 
 interface UseRandomLandPlaceResult {
@@ -17,6 +20,7 @@ export function useRandomLandPlace({
                                        flyToCoordinates,
                                        setSelectedObjectData,
                                        setSelectedObjectType,
+                                       setMarkers,
                                     }: UseRandomLandPlaceParams): UseRandomLandPlaceResult {
    const [isRandomPlaceLoading, setIsRandomPlaceLoading] = useState<boolean>(false)
 
@@ -35,13 +39,19 @@ export function useRandomLandPlace({
 
          setSelectedObjectData(randomPlace.feature)
          setSelectedObjectType(ObjectType.PLACE)
+
+         const marker = createMarkerFromPlaceFeature(randomPlace.feature)
+         if (marker != null) {
+            setMarkers(prevMarkers => [...prevMarkers, marker])
+         }
+
          flyToCoordinates(randomPlace.coordinates.latitude, randomPlace.coordinates.longitude)
       } catch (error) {
          console.error('Failed to fetch a random land place.', error)
       } finally {
          setIsRandomPlaceLoading(false)
       }
-   }, [flyToCoordinates, isRandomPlaceLoading, setSelectedObjectData, setSelectedObjectType])
+   }, [flyToCoordinates, isRandomPlaceLoading, setMarkers, setSelectedObjectData, setSelectedObjectType])
 
    return {
       getRandomPlace,

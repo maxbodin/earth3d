@@ -1,5 +1,6 @@
 import countriesCoords from '@/app/data/country-codes-lat-long-alpha3.json'
 import { Country } from '@/app/types/countryType'
+import { normalizeCountryName } from '@/lib/normalize/normalizeCountryName'
 
 type CountriesCoordinatesDataset = {
    ref_country_codes: Country[]
@@ -7,10 +8,6 @@ type CountriesCoordinatesDataset = {
 
 const countriesDataset = countriesCoords as CountriesCoordinatesDataset
 const allCountries = countriesDataset.ref_country_codes
-
-export function normalizeCountryName(countryName: string): string {
-   return countryName.trim().toLowerCase()
-}
 
 export function findCountryByName(countryName: string): Country | undefined {
    const normalizedCountryName = normalizeCountryName(countryName)

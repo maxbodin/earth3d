@@ -13,7 +13,7 @@ import {
    PLANE_SCENE_VESSEL_MIN_SCALE,
 } from '@/app/constants/numbers'
 import { VESSEL_GLB_MODEL } from '@/app/constants/paths'
-import { clamp } from '@/app/helpers/numberHelper'
+import { clamp } from '@/lib/clamp'
 import { VESSEL_MATERIAL } from '@/app/constants/materials'
 import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
 import { debounce } from 'lodash'

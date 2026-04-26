@@ -1,6 +1,6 @@
 'use client'
 import React, { useCallback, useEffect } from 'react'
-import { useUi } from '@/app/context_todo_improve/UIContext'
+import { useUi } from '@/app/context/uiContext'
 import { useCredit } from '@/app/components/organisms/credit/credit.model'
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
@@ -102,7 +102,7 @@ export function CreditView() {
                         isIconOnly
                         size="sm"
                         aria-label="Close"
-                        onClick={handleCreditClose}
+                        onPress={handleCreditClose}
                         className="absolute top-4 right-4"
                      >
                         <CloseIcon />

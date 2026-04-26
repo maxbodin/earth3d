@@ -2,7 +2,7 @@
 
 import React from 'react'
 import dynamic from 'next/dynamic'
-import { UiProvider } from '@/app/context_todo_improve/UIContext'
+import { UiProvider } from '@/app/context/uiContext'
 import { DashboardTabsProviders } from '@/app/components/templates/providers/dashboardTabsProviders'
 import { CreditProvider } from '@/app/components/organisms/credit/credit.model'
 import { EntitiesProviders } from '@/app/components/templates/providers/entitiesProviders'

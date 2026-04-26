@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
 import { Marker } from '@/app/types/marker'
-import { getRandomVibrantColor } from '@/app/lib/utils'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
 import debounce from 'lodash/debounce'
 import { Option } from '@/shadcn/ui/autocomplete'
@@ -8,6 +7,12 @@ import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyContr
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { autocompleteORS, reverseORS } from '@/app/server/services/openRouteService'
 import { PUCK_COLOR } from '@/app/constants/colors'
+import {
+   parseMarkerJson,
+   ValidatedMarkerEntry,
+   validateMarkerFile,
+} from '@/app/components/organisms/markersDashboard/markerImportValidator'
+import { createMarker } from '@/app/lib/markerFactory'
 
 export function MarkersDashboardController() {
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
@@ -19,30 +24,12 @@ export function MarkersDashboardController() {
 
    const { flyToCoordinates } = CameraFlyController()
 
-   const generateUniqueId = (): string => {
-      return `marker_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-   }
-
    const { markers, setMarkers } = useMarkersDashboard()
 
    const createNewMarker = (): void => {
       setMarkers(prevMarkers => {
-         return [...prevMarkers, {
-            id: generateUniqueId(),
-            selection: 'selection',
-            name: '',
-            showTitleOnMap: true,
-            address: '',
-            latitude: 0,
-            longitude: 0,
-            color: getRandomVibrantColor(),
-            actions: 'actions',
-            isPuck: false,
-         }]
+         return [...prevMarkers, createMarker({ latitude: 0, longitude: 0 })]
       })
-
-
-      // TODO Create marker on map.
    }
 
    /**
@@ -70,21 +57,19 @@ export function MarkersDashboardController() {
             return updatedRows
          }
 
-         return [...prevMarkers, {
-            id: generateUniqueId(),
-            selection: 'selection',
+         return [...prevMarkers, createMarker({
             name: 'Your position',
-            showTitleOnMap: true,
-            address: '',
             latitude,
             longitude,
             color: PUCK_COLOR,
-            actions: 'actions',
             isPuck: true,
-         }]
+         })]
       })
    }
 
+   /**
+    * 
+    */
    const applyReverseGeocodingForMarker = useCallback(async (
       markerId: string,
       latitude: number,
@@ -120,6 +105,9 @@ export function MarkersDashboardController() {
       }
    }, [setMarkers])
 
+   /**
+    * 
+    */
    const fillPuckAddressIfMissing = useCallback(async (): Promise<void> => {
       const puckMarker: Marker | undefined = markers.find(marker => marker.isPuck)
 
@@ -145,6 +133,37 @@ export function MarkersDashboardController() {
       })
    }
 
+   /**
+    * 
+    */
+   const importMarkersFromFile = useCallback(async (file: File): Promise<string | null> => {
+      const fileError = validateMarkerFile(file)
+      if (fileError != null) return fileError
+
+      const text = await file.text()
+      const result = parseMarkerJson(text)
+
+      if (!result.ok) return result.error
+
+      const newMarkers: Marker[] = result.markers.map((entry: ValidatedMarkerEntry) =>
+         createMarker({
+            name: entry.name,
+            address: entry.address,
+            latitude: entry.latitude,
+            longitude: entry.longitude,
+            color: entry.color || undefined,
+         }),
+      )
+
+      setMarkers(prev => [...prev, ...newMarkers])
+
+      return null
+   }, [setMarkers])
+
+   /**
+    * 
+    * @returns 
+    */
    const exportSelectedMarkers = (): void => {
       if (selectedRows.length === 0) return
 
@@ -179,9 +198,6 @@ export function MarkersDashboardController() {
          updatedRows[index] = newMaker
          return updatedRows
       })
-
-
-      // TODO Update marker on map.
    }
 
    /**
@@ -300,6 +316,7 @@ export function MarkersDashboardController() {
       selectedRows,
       selectMarker,
       exportSelectedMarkers,
+      importMarkersFromFile,
       createNewMarker,
       updatePuckMarker,
       updateMarker,

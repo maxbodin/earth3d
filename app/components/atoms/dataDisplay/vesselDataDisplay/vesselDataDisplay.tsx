@@ -175,7 +175,7 @@ export function VesselDataDisplay(): React.JSX.Element {
             aria-label="Focus view on vessel"
             className="z-50 bg-black bg-opacity-50"
             endContent={<EyeIcon />}
-            onClick={(): void => {
+            onPress={(): void => {
                flyToCoordinates(latitude, longitude)
             }}>
             Focus view on vessel

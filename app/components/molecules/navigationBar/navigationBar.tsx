@@ -1,7 +1,6 @@
 'use client'
 import React, { useCallback, useEffect, useMemo } from 'react'
-import { useUi } from '@/app/context_todo_improve/UIContext'
-import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut/fadeInOut'
+import { useUi } from '@/app/context/uiContext'
 import './styles.css'
 import { PanelType } from '@/app/enums/panelType'
 import { useCredit } from '@/app/components/organisms/credit/credit.model'
@@ -30,7 +29,7 @@ export function NavigationBar() {
 
    const { setIsSettingsDashboardOpen } = useSettingsDashboard()
    const { setIsCreditOpen } = useCredit()
-   const { setIsMarkersDashboardOpen, markers } = useMarkersDashboard()
+   const { setIsMarkersDashboardOpen, markers, setMarkers } = useMarkersDashboard()
    const { setIsDataDashboardOpen } = useDataDashboard()
 
    const { displayedSceneData } = useScenes()
@@ -43,6 +42,7 @@ export function NavigationBar() {
       flyToCoordinates,
       setSelectedObjectData,
       setSelectedObjectType,
+      setMarkers,
    })
 
    const userPuckMarker = useMemo(() => {
@@ -53,8 +53,32 @@ export function NavigationBar() {
 
    const openPanel = useCallback((panelType: PanelType): void => {
       setIsNavBarDisplayed(false)
+      setIsSearchBarDisplayed(false)
       setOpenedPanelType(panelType)
-   }, [setIsNavBarDisplayed, setOpenedPanelType])
+
+      switch (panelType) {
+         case PanelType.MARKERS:
+            setIsMarkersDashboardOpen(true)
+            break
+         case PanelType.DASHBOARD:
+            setIsSettingsDashboardOpen(true)
+            break
+         case PanelType.CREDIT:
+            setIsCreditOpen(true)
+            break
+         case PanelType.DATA:
+            setIsDataDashboardOpen(true)
+            break
+      }
+   }, [
+      setIsNavBarDisplayed,
+      setIsSearchBarDisplayed,
+      setOpenedPanelType,
+      setIsMarkersDashboardOpen,
+      setIsSettingsDashboardOpen,
+      setIsCreditOpen,
+      setIsDataDashboardOpen,
+   ])
 
    const openMarkers = useCallback((): void => {
       openPanel(PanelType.MARKERS)
@@ -104,41 +128,11 @@ export function NavigationBar() {
       // TODO : Implement get back to earth scene instantly.
    }, [])
 
-   const handlePreFadeOut = useCallback((): void => {
-      setIsSearchBarDisplayed(false)
-
-      switch (openedPanelType) {
-         case PanelType.NULL:
-            break
-         case PanelType.MARKERS:
-            setIsMarkersDashboardOpen(true)
-            break
-         case PanelType.DASHBOARD:
-            setIsSettingsDashboardOpen(true)
-            break
-         case PanelType.CREDIT:
-            setIsCreditOpen(true)
-            break
-         case PanelType.DATA:
-            setIsDataDashboardOpen(true)
-            break
-      }
-   }, [
-      openedPanelType,
-      setIsSearchBarDisplayed,
-      setIsMarkersDashboardOpen,
-      setIsSettingsDashboardOpen,
-      setIsCreditOpen,
-      setIsDataDashboardOpen,
-   ])
-
    return (
-         <FadeInOut
-            isVisible={isNavBarDisplayed}
-            preFadeOutCallback={handlePreFadeOut}
-         >
             <div
-               className="flex flex-row navbaricons absolute right-10 p-4 transform bottom-10 z-40">
+               className={`flex flex-row navbaricons absolute right-10 p-4 transform bottom-10 z-40 transition-opacity duration-150 ${
+                  isNavBarDisplayed ? 'opacity-100' : 'opacity-0 pointer-events-none'
+               }`}>
                <NavigationBarActionGroup
                   displayedSceneType={displayedSceneData?.type ?? null}
                   cursorMode={cursorMode}
@@ -168,6 +162,5 @@ export function NavigationBar() {
                   </Tooltip>
                </div>
             </div>
-         </FadeInOut>
    )
 }

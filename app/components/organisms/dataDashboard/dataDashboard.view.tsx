@@ -1,6 +1,6 @@
 'use client'
 import React, { useCallback } from 'react'
-import { useUi } from '@/app/context_todo_improve/UIContext'
+import { useUi } from '@/app/context/uiContext'
 
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
@@ -59,7 +59,7 @@ export function DataDashboardView() {
                         isIconOnly
                         size="sm"
                         aria-label="Close"
-                        onClick={handleDataDashboardClose}
+                        onPress={handleDataDashboardClose}
                         className="absolute top-4 right-4"
                      >
                         <CloseIcon />

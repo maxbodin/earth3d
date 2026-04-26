@@ -13,7 +13,7 @@ import { useAirports } from '@/app/components/atoms/three/airports/airports.mode
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { AIRPORT_RENDER_ORDER } from '@/app/constants/renderOrder'
-import { clamp } from '@/app/helpers/numberHelper'
+import { clamp } from '@/lib/clamp'
 
 // Shared geometry for all airports, avoids creating thousands of geometries.
 const sharedAirportGeometry = new THREE.BoxGeometry(1, 1, 1, 4, 4, 4)

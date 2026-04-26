@@ -63,7 +63,7 @@ export function PlaceImageCarousel({
                               size="sm"
                               variant="solid"
                               aria-label="Previous image"
-                              onClick={goToPrevious}
+                              onPress={goToPrevious}
                               className="min-w-0 bg-black/55"
                            >
                               <ChevronLeft className="h-4 w-4" />
@@ -78,7 +78,7 @@ export function PlaceImageCarousel({
                               size="sm"
                               variant="solid"
                               aria-label="Next image"
-                              onClick={goToNext}
+                              onPress={goToNext}
                               className="min-w-0 bg-black/55"
                            >
                               <ChevronRight className="h-4 w-4" />

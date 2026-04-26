@@ -4,7 +4,7 @@ import {
 import {
    useOuterSpaceTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/outerSpaceTab/outerSpaceTab.model'
-import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
+import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled'
 
 export function OuterSpaceTabView() {
    const {

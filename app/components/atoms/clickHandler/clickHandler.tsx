@@ -17,6 +17,7 @@ import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
 import { SceneType } from '@/app/enums/sceneType'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { parseSelectedPlaneStateVector } from '@/lib/parse/parseSelectedPlaneStateVector'
+import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 
 export function ClickHandler(): null {
 
@@ -145,10 +146,18 @@ export function ClickHandler(): null {
       try {
          // Call server-side function.
          const data: GeocodeResponse = await reverseORS(geolocation.longitude, geolocation.latitude)
+         const feature = data.features[0]
 
          // Display place data.
-         setSelectedObjectData(data.features[0])
+         setSelectedObjectData(feature)
          setSelectedObjectType(ObjectType.PLACE)
+
+         if (cursorMode === CursorModeType.POINTER && feature != null) {
+            const marker = createMarkerFromPlaceFeature(feature)
+            if (marker != null) {
+               setMarkers(prevMarkers => [...prevMarkers, marker])
+            }
+         }
 
          flyToCoordinates(
             geolocation.latitude,
