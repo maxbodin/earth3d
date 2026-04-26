@@ -1,6 +1,5 @@
 'use client'
-import React, { useEffect } from 'react'
-import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut'
+import { useEffect } from 'react'
 import {
    AutocompleteItem,
    Avatar,
@@ -52,11 +51,13 @@ export function SearchBarView() {
    }, [handleInputChange])
 
 
+   const isVisible = isSearchBarDisplayed && displayedSceneData &&
+      displayedSceneData.type != SceneType.SOLAR_SYSTEM
+
    return (
-      <>
-         <FadeInOut isVisible={isSearchBarDisplayed && displayedSceneData &&
-            displayedSceneData.type != SceneType.SOLAR_SYSTEM}>
-            <div className="absolute top-16 transform left-16 z-40 min-w-[32rem] mx-auto">
+         <div className={`absolute top-16 transform left-16 z-40 min-w-[32rem] mx-auto transition-opacity duration-150 ${
+            isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+         }`}>
                <div className="flex w-full flex-wrap md:flex-nowrap gap-4">
                   <Dropdown>
                      <DropdownTrigger>
@@ -146,8 +147,6 @@ export function SearchBarView() {
                {autoCompleteLoading && (
                   <p className="text-gray-500">Loading...</p>
                )}
-            </div>
-         </FadeInOut>
-      </>
+         </div>
    )
 }
