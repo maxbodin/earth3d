@@ -38,6 +38,7 @@ import { OuterSpaceProvider } from '@/app/components/atoms/three/outerSpace/oute
 import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
 import { PlanesController } from '@/app/components/atoms/three/planes/planes.controller'
 import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch/planeDataFetch'
+import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -155,6 +156,7 @@ export function ThreeScene() {
 
       // Initialize shared scene data once to avoid null consumers at startup.
       syncDisplayedSceneData(SceneType.SPHERICAL)
+      LoadingTracker.completeStep(LOADING_STEPS.RENDERER_SETUP.id)
    }
 
    /**
@@ -277,6 +279,7 @@ export function ThreeScene() {
       globeControls.current.target.set(0, 0, 0)
       globeControls.current!.update()
 
+      LoadingTracker.completeStep(LOADING_STEPS.GLOBE_SCENE.id)
       return {
          type: SceneType.SPHERICAL,
          camera: globeCamera.current,
@@ -315,6 +318,7 @@ export function ThreeScene() {
       planeControls.current!.autoRotate = false
       planeControls.current!.update()
 
+      LoadingTracker.completeStep(LOADING_STEPS.PLANE_SCENE.id)
       return {
          type: SceneType.PLANE,
          camera: planeCamera.current,
@@ -367,6 +371,7 @@ export function ThreeScene() {
 
       solarSystemControls.current!.update()
 
+      LoadingTracker.completeStep(LOADING_STEPS.SOLAR_SCENE.id)
       return {
          type: SceneType.SOLAR_SYSTEM,
          camera: solarSystemCamera.current,
@@ -827,6 +832,7 @@ export function ThreeScene() {
 
             planeMapRef.current = map
             setPlaneMap(map)
+            LoadingTracker.completeStep(LOADING_STEPS.PLANE_MAP.id)
          } catch (error) {
             if (isDisposed) return
 
