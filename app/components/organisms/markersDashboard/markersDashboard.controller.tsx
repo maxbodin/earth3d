@@ -137,9 +137,40 @@ export function MarkersDashboardController() {
 
    const selectMarker = (marker: Marker): void => {
       setSelectedRows(prevRows => {
-         prevRows.push(marker)
-         return prevRows
+         const isAlreadySelected = prevRows.some(row => row.id === marker.id)
+
+         return isAlreadySelected
+            ? prevRows.filter(row => row.id !== marker.id)
+            : [...prevRows, marker]
       })
+   }
+
+   const exportSelectedMarkers = (): void => {
+      if (selectedRows.length === 0) return
+
+      const latestSelected: Marker[] = markers.filter(
+         marker => selectedRows.some(selected => selected.id === marker.id),
+      )
+
+      const exportData = latestSelected.map(({ name, address, latitude, longitude, color }) => ({
+         name,
+         address,
+         latitude,
+         longitude,
+         color,
+      }))
+
+      const blob = new Blob(
+         [JSON.stringify(exportData, null, 2)],
+         { type: 'application/json' },
+      )
+
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = 'markers.json'
+      anchor.click()
+      URL.revokeObjectURL(url)
    }
 
    const updateMarker = (index: number, newMaker: Marker): void => {
@@ -268,6 +299,7 @@ export function MarkersDashboardController() {
    return {
       selectedRows,
       selectMarker,
+      exportSelectedMarkers,
       createNewMarker,
       updatePuckMarker,
       updateMarker,
