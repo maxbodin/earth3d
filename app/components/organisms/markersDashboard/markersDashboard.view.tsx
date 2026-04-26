@@ -24,7 +24,7 @@ import { MarkersDashboardController } from '@/app/components/organisms/markersDa
 import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
-import { CrosshairIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon } from 'lucide-react'
+import { CrosshairIcon, DownloadIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon } from 'lucide-react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
@@ -178,6 +178,7 @@ export function MarkersDashboardView() {
    const {
       selectedRows,
       selectMarker,
+      exportSelectedMarkers,
       createNewMarker,
       updateMarker,
       deleteMarker,
@@ -604,10 +605,34 @@ export function MarkersDashboardView() {
                   </Table>
                   <div className="pt-4 pb-4 flex flex-row justify-evenly">
                      {markers.length > 0 &&
-                        <Button variant="bordered" size="sm" onPress={createNewMarker} startContent={<PlusIcon />}>Create
-                           new marker</Button>}
-                     <Button variant="bordered" size="sm" isDisabled={selectedRows.length <= 1}>Compute track with
-                        selected markers</Button>
+                        <Button 
+                           variant="bordered" 
+                           size="sm" 
+                           onPress={createNewMarker} 
+                           startContent={<PlusIcon />}
+                           aria-label="Create new marker"
+                        >
+                           Create new marker
+                        </Button>
+                     }
+                     <Button
+                        variant="bordered"
+                        size="sm"
+                        isDisabled={selectedRows.length === 0}
+                        onPress={exportSelectedMarkers}
+                        startContent={<DownloadIcon />}
+                        aria-label="Export selected markers"
+                     >
+                        Export selected markers
+                     </Button>
+                     <Button 
+                        variant="bordered" 
+                        size="sm" 
+                        isDisabled={selectedRows.length <= 1}
+                        aria-label="Compute track with selected markers"
+                     >
+                        Compute track with selected markers
+                     </Button>
                   </div>
                </div>
             </div>
