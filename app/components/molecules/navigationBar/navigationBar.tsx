@@ -29,7 +29,7 @@ export function NavigationBar() {
 
    const { setIsSettingsDashboardOpen } = useSettingsDashboard()
    const { setIsCreditOpen } = useCredit()
-   const { setIsMarkersDashboardOpen, markers } = useMarkersDashboard()
+   const { setIsMarkersDashboardOpen, markers, setMarkers } = useMarkersDashboard()
    const { setIsDataDashboardOpen } = useDataDashboard()
 
    const { displayedSceneData } = useScenes()
@@ -42,6 +42,7 @@ export function NavigationBar() {
       flyToCoordinates,
       setSelectedObjectData,
       setSelectedObjectType,
+      setMarkers,
    })
 
    const userPuckMarker = useMemo(() => {
