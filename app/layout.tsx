@@ -6,6 +6,7 @@ import { NextFont } from 'next/dist/compiled/@next/font'
 import { ErrorSecurity } from '@/app/components/atoms/ui/errorSecurity/errorSecurity'
 import { DynamicProviders } from '@/app/components/templates/providers/dynamicProviders'
 import { RootClientProviders } from '@/app/components/templates/providers/rootClientProviders'
+import { LoadingScreen } from '@/app/components/atoms/ui/loadingScreen/loadingScreen'
 
 const inter: NextFont = Inter({ subsets: ['latin'] })
 
@@ -22,6 +23,7 @@ export default function RootLayout({
    return (
       <html lang="en" className="dark">
       <body className={`overflow-hidden ${inter.className}`}>
+      <LoadingScreen />
       <RootClientProviders>
          <DynamicProviders>
             <ErrorSecurity>{children}</ErrorSecurity>
