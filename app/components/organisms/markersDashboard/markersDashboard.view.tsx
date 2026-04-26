@@ -24,13 +24,19 @@ import { MarkersDashboardController } from '@/app/components/organisms/markersDa
 import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
-import { CrosshairIcon, DownloadIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon } from 'lucide-react'
+import { CrosshairIcon, DownloadIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon, UploadIcon } from 'lucide-react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { CursorModeType } from '@/app/enums/modeType'
 import { reverseORS } from '@/app/server/services/openRouteService'
 import { ObjectType } from '@/app/enums/objectType'
+import {
+   MAX_LATITUDE,
+   MAX_LONGITUDE,
+   MIN_LATITUDE,
+   MIN_LONGITUDE,
+} from '@/app/constants/numbers'
 
 
 const columns: string[] = ['Selection', 'Title', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
@@ -42,11 +48,6 @@ interface MarkerToast {
    message: string
    tone: ToastTone
 }
-
-const MIN_LATITUDE = -90
-const MAX_LATITUDE = 90
-const MIN_LONGITUDE = -180
-const MAX_LONGITUDE = 180
 
 const parseCoordinateInput = (rawValue: string): number | null => {
    const normalizedValue = rawValue.trim().replace(',', '.')
@@ -179,6 +180,7 @@ export function MarkersDashboardView() {
       selectedRows,
       selectMarker,
       exportSelectedMarkers,
+      importMarkersFromFile,
       createNewMarker,
       updateMarker,
       deleteMarker,
@@ -195,6 +197,52 @@ export function MarkersDashboardView() {
 
       void fillPuckAddressIfMissing()
    }, [isMarkersDashboardOpen, fillPuckAddressIfMissing])
+
+   const fileInputRef = useRef<HTMLInputElement | null>(null)
+   const [isDragOver, setIsDragOver] = useState<boolean>(false)
+
+   const handleImportFile = useCallback(async (file: File): Promise<void> => {
+      const error = await importMarkersFromFile(file)
+
+      if (error != null) {
+         showToast(error, 'danger')
+         return
+      }
+
+      showToast(`Markers imported successfully.`, 'info')
+   }, [importMarkersFromFile, showToast])
+
+   const handleFileInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>): void => {
+      const file = event.target.files?.[0]
+      if (file != null) {
+         void handleImportFile(file)
+      }
+
+      event.target.value = ''
+   }, [handleImportFile])
+
+   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
+      event.preventDefault()
+      event.stopPropagation()
+      setIsDragOver(false)
+
+      const file = event.dataTransfer.files[0]
+      if (file != null) {
+         void handleImportFile(file)
+      }
+   }, [handleImportFile])
+
+   const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
+      event.preventDefault()
+      event.stopPropagation()
+      setIsDragOver(true)
+   }, [])
+
+   const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
+      event.preventDefault()
+      event.stopPropagation()
+      setIsDragOver(false)
+   }, [])
 
    const setCoordinateError = useCallback((
       markerId: string,
@@ -389,7 +437,6 @@ export function MarkersDashboardView() {
                   isDisabled={marker.isPuck}
                   type="text"
                   inputMode="decimal"
-                  pattern="[-0-9.,]+"
                   variant="bordered"
                   placeholder="Enter the marker latitude"
                   size="sm"
@@ -411,7 +458,6 @@ export function MarkersDashboardView() {
                   isDisabled={marker.isPuck}
                   type="text"
                   inputMode="decimal"
-                  pattern="[-0-9.,]+"
                   variant="bordered"
                   placeholder="Enter the marker longitude"
                   size="sm"
@@ -573,36 +619,57 @@ export function MarkersDashboardView() {
                         Show all marker titles
                      </Switch>
                   </div>
-                  <Table
-                     isHeaderSticky
-                     className="overflow-auto max-h-[25vh]"
-                     aria-label="Table of your markers"
-                     color="primary">
-                     <TableHeader>
-                        {columns.map((column: string, index: number) =>
-                           <TableColumn key={index}
-                                        align={column === 'Actions' ? 'center' : 'start'}>{column}</TableColumn>,
-                        )}
-                     </TableHeader>
-                     <TableBody
-                        className="h-2" emptyContent={
-                        <Button size="sm" onPress={createNewMarker} startContent={<PlusIcon />}>Create
-                           new
-                           marker</Button>
-                     }>
-                        {markers.map((row: Marker, rowIndex: number) => (
-                           <TableRow key={rowIndex} className="h-4">
-                              {Object.keys(row)
-                                 .filter((key: string): boolean => key !== 'id' && key !== 'isPuck' && key !== 'showTitleOnMap') // Filter out non-column fields.
-                                 .map((key: string) => (
-                                    <TableCell key={key}>
-                                       {renderCell(row, key, getKeyValue(row, key), rowIndex)}
-                                    </TableCell>
-                                 ))}
-                           </TableRow>
-                        ))}
-                     </TableBody>
-                  </Table>
+                  <div
+                     data-testid="marker-drop-zone"
+                     onDrop={handleDrop}
+                     onDragOver={handleDragOver}
+                     onDragLeave={handleDragLeave}
+                     className={`relative rounded-lg transition-colors ${isDragOver ? 'ring-2 ring-primary bg-primary/10' : ''}`}
+                  >
+                     {isDragOver && (
+                        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-primary/10 backdrop-blur-md">
+                           <p className="text-sm font-medium text-primary">Drop JSON file to import markers</p>
+                        </div>
+                     )}
+                     <Table
+                        isHeaderSticky
+                        className="overflow-auto max-h-[25vh]"
+                        aria-label="Table of your markers"
+                        color="primary">
+                        <TableHeader>
+                           {columns.map((column: string, index: number) =>
+                              <TableColumn key={index}
+                                           align={column === 'Actions' ? 'center' : 'start'}>{column}</TableColumn>,
+                           )}
+                        </TableHeader>
+                        <TableBody
+                           className="h-2" emptyContent={
+                           <Button size="sm" onPress={createNewMarker} startContent={<PlusIcon />}>Create
+                              new
+                              marker</Button>
+                        }>
+                           {markers.map((row: Marker, rowIndex: number) => (
+                              <TableRow key={rowIndex} className="h-4">
+                                 {Object.keys(row)
+                                    .filter((key: string): boolean => key !== 'id' && key !== 'isPuck' && key !== 'showTitleOnMap') // Filter out non-column fields.
+                                    .map((key: string) => (
+                                       <TableCell key={key}>
+                                          {renderCell(row, key, getKeyValue(row, key), rowIndex)}
+                                       </TableCell>
+                                    ))}
+                              </TableRow>
+                           ))}
+                        </TableBody>
+                     </Table>
+                  </div>
+                  <input
+                     ref={fileInputRef}
+                     type="file"
+                     accept=".json,application/json"
+                     className="hidden"
+                     aria-hidden="true"
+                     onChange={handleFileInputChange}
+                  />
                   <div className="pt-4 pb-4 flex flex-row justify-evenly">
                      {markers.length > 0 &&
                         <Button 
@@ -615,6 +682,15 @@ export function MarkersDashboardView() {
                            Create new marker
                         </Button>
                      }
+                     <Button
+                        variant="bordered"
+                        size="sm"
+                        onPress={() => fileInputRef.current?.click()}
+                        startContent={<UploadIcon />}
+                        aria-label="Import markers"
+                     >
+                        Import markers
+                     </Button>
                      <Button
                         variant="bordered"
                         size="sm"

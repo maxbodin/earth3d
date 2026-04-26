@@ -8,6 +8,11 @@ import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyContr
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { autocompleteORS, reverseORS } from '@/app/server/services/openRouteService'
 import { PUCK_COLOR } from '@/app/constants/colors'
+import {
+   parseMarkerJson,
+   validateMarkerFile,
+   ValidatedMarkerEntry,
+} from '@/app/components/organisms/markersDashboard/markerImportValidator'
 
 export function MarkersDashboardController() {
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
@@ -85,6 +90,9 @@ export function MarkersDashboardController() {
       })
    }
 
+   /**
+    * 
+    */
    const applyReverseGeocodingForMarker = useCallback(async (
       markerId: string,
       latitude: number,
@@ -120,6 +128,9 @@ export function MarkersDashboardController() {
       }
    }, [setMarkers])
 
+   /**
+    * 
+    */
    const fillPuckAddressIfMissing = useCallback(async (): Promise<void> => {
       const puckMarker: Marker | undefined = markers.find(marker => marker.isPuck)
 
@@ -145,6 +156,40 @@ export function MarkersDashboardController() {
       })
    }
 
+   /**
+    * 
+    */
+   const importMarkersFromFile = useCallback(async (file: File): Promise<string | null> => {
+      const fileError = validateMarkerFile(file)
+      if (fileError != null) return fileError
+
+      const text = await file.text()
+      const result = parseMarkerJson(text)
+
+      if (!result.ok) return result.error
+
+      const newMarkers: Marker[] = result.markers.map((entry: ValidatedMarkerEntry) => ({
+         id: generateUniqueId(),
+         selection: 'selection',
+         name: entry.name,
+         showTitleOnMap: true,
+         address: entry.address,
+         latitude: entry.latitude,
+         longitude: entry.longitude,
+         color: entry.color || getRandomVibrantColor(),
+         actions: 'actions',
+         isPuck: false,
+      }))
+
+      setMarkers(prev => [...prev, ...newMarkers])
+
+      return null
+   }, [setMarkers])
+
+   /**
+    * 
+    * @returns 
+    */
    const exportSelectedMarkers = (): void => {
       if (selectedRows.length === 0) return
 
@@ -300,6 +345,7 @@ export function MarkersDashboardController() {
       selectedRows,
       selectMarker,
       exportSelectedMarkers,
+      importMarkersFromFile,
       createNewMarker,
       updatePuckMarker,
       updateMarker,
