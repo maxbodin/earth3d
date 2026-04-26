@@ -16,16 +16,14 @@ async function importOpenSkyService(): Promise<typeof import('@/app/server/servi
    const originalResolveFilename = moduleBuiltin._resolveFilename
 
    moduleBuiltin._resolveFilename = function patchedResolveFilename(
-      request: string,
-      parent: unknown,
-      isMain: boolean,
-      options: unknown,
+      ...args: unknown[]
    ): string {
+      const request = args[0]
       if (request === 'server-only') {
          return serverOnlyStubPath
       }
 
-      return originalResolveFilename.call(this, request, parent, isMain, options)
+      return originalResolveFilename.call(this, ...args)
    }
 
    try {

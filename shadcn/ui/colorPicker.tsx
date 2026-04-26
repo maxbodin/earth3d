@@ -36,7 +36,7 @@ const ColorPicker = forwardRef<
                   {...props}
                   className={cn('block w-8 min-w-8 max-w-8', className)}
                   name={name}
-                  onClick={(): void => {
+                  onPress={(): void => {
                      setOpen(true)
                   }}
                   size="sm"

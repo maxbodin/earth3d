@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCountryProfile } from '@/app/server/services/countryProfileService'
 import { CountryProfileSeed } from '@/app/types/countryProfile'
-import { parseQueryNumber } from '@/lib/parseQueryNumber'
+import { parseQueryNumber } from '@/lib/parse/parseQueryNumber'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'

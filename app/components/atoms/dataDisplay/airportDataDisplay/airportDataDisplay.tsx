@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from '@/app/components/atoms/ui/link/link'
+import { Link } from '@/app/components/atoms/ui/link'
 import { getContinentEmoji, getContinentString, getTypeString } from '@/app/helpers/beautifyHelper'
 import { N_A_VALUE } from '@/app/constants/strings'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'

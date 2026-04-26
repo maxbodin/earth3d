@@ -19,7 +19,7 @@ import {
 import { TEXT_FONT } from '@/app/constants/paths'
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 import { Astre } from '@/app/types/astre'
-import { clamp } from '@/app/helpers/numberHelper'
+import { clamp } from '@/lib/clamp'
 import { useAstresList } from '@/app/components/organisms/astresList/astresList.model'
 import { SolarSystemHelper } from '@/app/components/atoms/three/solarSystem/solarSystem.helper'
 import { SOLAR_SYSTEM_FRAGMENT_SHADER, SOLAR_SYSTEM_VERTEX_SHADER } from '@/app/lib/shaders'

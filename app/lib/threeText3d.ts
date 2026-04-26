@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import type { Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import { SceneType } from '@/app/enums/sceneType'
-import { clamp } from '@/app/helpers/numberHelper'
 import {
    EARTH_RADIUS,
    GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
@@ -10,6 +9,7 @@ import {
    PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
    PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
 } from '@/app/constants/numbers'
+import { clamp } from '@/lib/clamp'
 
 export const EARTH_SCENE_TEXT_BASE_SIZE = EARTH_RADIUS / 1e2
 export const EARTH_SCENE_TEXT_BASE_DEPTH = EARTH_RADIUS / 2e5

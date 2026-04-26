@@ -29,7 +29,7 @@ import {
 import {
    useCountriesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
-import { normalizeCountryName, } from '@/app/lib/countrySearch'
+import { normalizeCountryName } from '@/lib/normalize/normalizeCountryName'
 
 const geoJson = require('world-geojson')
 

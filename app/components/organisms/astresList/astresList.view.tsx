@@ -4,7 +4,7 @@ import { useAstresList } from '@/app/components/organisms/astresList/astresList.
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { astres } from '@/app/data/astres'
-import { Tabs } from '@/app/components/atoms/ui/tabs/tabs'
+import { Tabs } from '@/app/components/atoms/ui/tabs'
 import { Astre } from '@/app/types/astre'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { DatePicker } from '@nextui-org/date-picker'

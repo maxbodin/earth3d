@@ -1,4 +1,4 @@
-import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled/switchTitled'
+import { SwitchTitled } from '@/app/components/atoms/ui/switchTitled'
 import {
    usePlanesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.model'

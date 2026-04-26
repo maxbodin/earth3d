@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import { useCallback, useMemo } from 'react'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
 import { PlaneDataDisplay } from '../../atoms/dataDisplay/planeDataDisplay/planeDataDisplay'
 import { AirportDataDisplay } from '../../atoms/dataDisplay/airportDataDisplay/airportDataDisplay'
@@ -23,47 +23,48 @@ export function DetailsCard() {
    } = useSelection()
    const { setSelectedCountry } = useCountries()
 
+   const isVisible = useMemo(() => {
+      return selectedObjectType !== ObjectType.NULL
+         && selectedObjectData != null
+         && Object.keys(selectedObjectData).length > 0
+   }, [selectedObjectType, selectedObjectData])
+
+   const handleClose = useCallback((): void => {
+      if (selectedObjectType === ObjectType.PLACE) {
+         clearCoordinatesFromCurrentUrl()
+      }
+
+      if (selectedObjectType === ObjectType.COUNTRY) {
+         clearCountryFromCurrentUrl()
+         setSelectedCountry('')
+      }
+
+      setSelectedObjectType(ObjectType.NULL)
+      setSelectedObjectData({})
+   }, [selectedObjectType, setSelectedObjectType, setSelectedObjectData, setSelectedCountry])
+
+   const content = useMemo(() => {
+      switch (selectedObjectType) {
+         case ObjectType.AIRPORT:
+            return <AirportDataDisplay />
+         case ObjectType.PLANE:
+            return <PlaneDataDisplay />
+         case ObjectType.VESSEL:
+            return <VesselDataDisplay />
+         case ObjectType.PLACE:
+            return <PlaceDataDisplay />
+         case ObjectType.COUNTRY:
+            return <CountryDataDisplay />
+         default:
+            return null
+      }
+   }, [selectedObjectType])
+
    return (
-      <>
-         {selectedObjectType != ObjectType.NULL &&
-            selectedObjectData &&
-            Object.keys(selectedObjectData).length > 0 && (
-               <GlassCard
-                  FadeInOut_isVisible={true}
-                  FadeInOut_preFadeOutCallback={() => {
-                     /*TODO*/
-                  }}
-                  centered={false}
-                  content={
-                     selectedObjectType === ObjectType.AIRPORT ? (
-                        <AirportDataDisplay />
-                     ) : selectedObjectType === ObjectType.PLANE ? (
-                        <PlaneDataDisplay />
-                     ) : selectedObjectType === ObjectType.VESSEL ? (
-                        <VesselDataDisplay />
-                     ) : selectedObjectType === ObjectType.PLACE ? (
-                        <PlaceDataDisplay />
-                     ) : selectedObjectType === ObjectType.COUNTRY ? (
-                        <CountryDataDisplay />
-                     ) : (
-                        <></>
-                     )
-                  }
-                  onClose={(): void => {
-                     if (selectedObjectType === ObjectType.PLACE) {
-                        clearCoordinatesFromCurrentUrl()
-                     }
-
-                     if (selectedObjectType === ObjectType.COUNTRY) {
-                        clearCountryFromCurrentUrl()
-                        setSelectedCountry('')
-                     }
-
-                     setSelectedObjectType(ObjectType.NULL)
-                     setSelectedObjectData({})
-                  }}
-               />
-            )}
-      </>
+      <GlassCard
+         isVisible={isVisible}
+         content={content}
+         onClose={handleClose}
+      />
    )
 }

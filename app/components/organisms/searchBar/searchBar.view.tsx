@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect } from 'react'
-import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut/fadeInOut'
+import { FadeInOut } from '@/app/components/atoms/ui/fadeInOut'
 import {
    AutocompleteItem,
    Avatar,
@@ -15,7 +15,7 @@ import { Autocomplete } from '@nextui-org/autocomplete'
 import { Feature } from '@/app/types/orsTypes'
 import { Country } from '@/app/types/countryType'
 import { SearchBarController } from '@/app/components/organisms/searchBar/searchBar.controller'
-import { useUi } from '@/app/context_todo_improve/UIContext'
+import { useUi } from '@/app/context/uiContext'
 import { SceneType } from '@/app/enums/sceneType'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { AirportSearchSuggestion } from '@/app/types/airport'

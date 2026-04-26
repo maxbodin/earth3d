@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
 import { Marker } from '@/app/types/marker'
-import { getRandomVibrantColor } from '@/app/lib/utils'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
 import debounce from 'lodash/debounce'
 import { Option } from '@/shadcn/ui/autocomplete'
@@ -10,9 +9,10 @@ import { autocompleteORS, reverseORS } from '@/app/server/services/openRouteServ
 import { PUCK_COLOR } from '@/app/constants/colors'
 import {
    parseMarkerJson,
-   validateMarkerFile,
    ValidatedMarkerEntry,
+   validateMarkerFile,
 } from '@/app/components/organisms/markersDashboard/markerImportValidator'
+import { createMarker } from '@/app/lib/markerFactory'
 
 export function MarkersDashboardController() {
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
@@ -24,30 +24,12 @@ export function MarkersDashboardController() {
 
    const { flyToCoordinates } = CameraFlyController()
 
-   const generateUniqueId = (): string => {
-      return `marker_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-   }
-
    const { markers, setMarkers } = useMarkersDashboard()
 
    const createNewMarker = (): void => {
       setMarkers(prevMarkers => {
-         return [...prevMarkers, {
-            id: generateUniqueId(),
-            selection: 'selection',
-            name: '',
-            showTitleOnMap: true,
-            address: '',
-            latitude: 0,
-            longitude: 0,
-            color: getRandomVibrantColor(),
-            actions: 'actions',
-            isPuck: false,
-         }]
+         return [...prevMarkers, createMarker({ latitude: 0, longitude: 0 })]
       })
-
-
-      // TODO Create marker on map.
    }
 
    /**
@@ -75,18 +57,13 @@ export function MarkersDashboardController() {
             return updatedRows
          }
 
-         return [...prevMarkers, {
-            id: generateUniqueId(),
-            selection: 'selection',
+         return [...prevMarkers, createMarker({
             name: 'Your position',
-            showTitleOnMap: true,
-            address: '',
             latitude,
             longitude,
             color: PUCK_COLOR,
-            actions: 'actions',
             isPuck: true,
-         }]
+         })]
       })
    }
 
@@ -168,18 +145,15 @@ export function MarkersDashboardController() {
 
       if (!result.ok) return result.error
 
-      const newMarkers: Marker[] = result.markers.map((entry: ValidatedMarkerEntry) => ({
-         id: generateUniqueId(),
-         selection: 'selection',
-         name: entry.name,
-         showTitleOnMap: true,
-         address: entry.address,
-         latitude: entry.latitude,
-         longitude: entry.longitude,
-         color: entry.color || getRandomVibrantColor(),
-         actions: 'actions',
-         isPuck: false,
-      }))
+      const newMarkers: Marker[] = result.markers.map((entry: ValidatedMarkerEntry) =>
+         createMarker({
+            name: entry.name,
+            address: entry.address,
+            latitude: entry.latitude,
+            longitude: entry.longitude,
+            color: entry.color || undefined,
+         }),
+      )
 
       setMarkers(prev => [...prev, ...newMarkers])
 
@@ -224,9 +198,6 @@ export function MarkersDashboardController() {
          updatedRows[index] = newMaker
          return updatedRows
       })
-
-
-      // TODO Update marker on map.
    }
 
    /**

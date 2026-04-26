@@ -1,10 +1,10 @@
 'use client'
 import React, { useCallback } from 'react'
-import { useUi } from '@/app/context_todo_improve/UIContext'
+import { useUi } from '@/app/context/uiContext'
 import { TAB_TITLES } from '@/app/constants/strings'
 import { TabType } from '@/app/enums/tabType'
 import { SettingsDashboardController } from '@/app/components/organisms/settingsDashboard/settingsDashboard.controller'
-import { Tabs } from '@/app/components/atoms/ui/tabs/tabs'
+import { Tabs } from '@/app/components/atoms/ui/tabs'
 import { CloseIcon } from '@nextui-org/shared-icons'
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
@@ -110,7 +110,7 @@ export function SettingsDashboardView() {
                            isIconOnly
                            size="sm"
                            aria-label="Close"
-                           onClick={handleSettingsClose}
+                           onPress={handleSettingsClose}
                            className="absolute top-4 right-4"
                         >
                            <CloseIcon />

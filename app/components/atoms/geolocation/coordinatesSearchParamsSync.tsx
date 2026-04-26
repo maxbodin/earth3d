@@ -19,10 +19,8 @@ import {
 } from '@/app/lib/coordinatesSearchParams'
 import { Coordinates } from '@/app/types/coordinates'
 import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
-import {
-   findCountryByName,
-   normalizeCountryName,
-} from '@/app/lib/countrySearch'
+import { findCountryByName } from '@/app/lib/countrySearch'
+import { normalizeCountryName } from '@/lib/normalize/normalizeCountryName'
 
 function extractCoordinatesFromSelection(
    selectedObjectType: ObjectType,

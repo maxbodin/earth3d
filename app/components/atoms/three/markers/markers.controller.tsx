@@ -21,7 +21,7 @@ import {
    PLANE_SCENE_PUCK_MIN_SCALE,
    PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
 } from '@/app/constants/numbers'
-import { clamp } from '@/app/helpers/numberHelper'
+import { clamp } from '@/lib/clamp'
 import { MARKER_RENDER_ORDER, MARKER_TITLE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
 import {
