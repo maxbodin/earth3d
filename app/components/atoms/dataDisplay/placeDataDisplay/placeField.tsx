@@ -1,6 +1,6 @@
 import React from 'react'
 import { N_A_VALUE } from '@/app/constants/strings'
-import { cn } from '@/app/lib/utils'
+import { cn } from '@/lib/cn'
 import { PlaceFieldItem } from '@/app/types/placeFieldItem'
 
 export function PlaceField({

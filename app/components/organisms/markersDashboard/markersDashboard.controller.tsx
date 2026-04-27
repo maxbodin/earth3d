@@ -13,6 +13,10 @@ import {
    validateMarkerFile,
 } from '@/app/components/organisms/markersDashboard/markerImportValidator'
 import { createMarker } from '@/app/lib/markerFactory'
+import { haversineDistance } from '@/lib/geo/haversineDistance'
+import { getRandomHighContrastColor } from '@/lib/color/getRandomHighContrastColor'
+import { midpoint } from '@/lib/geo/midpoint'
+import { DistanceMeasurement } from '@/app/types/distanceMeasurement'
 
 export function MarkersDashboardController() {
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
@@ -24,7 +28,43 @@ export function MarkersDashboardController() {
 
    const { flyToCoordinates } = CameraFlyController()
 
-   const { markers, setMarkers } = useMarkersDashboard()
+   const { markers, setMarkers, setDistanceMeasurement } = useMarkersDashboard()
+
+   const computeDistanceBetweenMarkers = useCallback((selected: Marker[]): DistanceMeasurement | null => {
+      if (selected.length !== 2) return null
+
+      const [a, b] = selected
+
+      if (!Number.isFinite(a.latitude) || !Number.isFinite(a.longitude)
+         || !Number.isFinite(b.latitude) || !Number.isFinite(b.longitude)) {
+         return null
+      }
+
+      const distanceKm = haversineDistance(a, b)
+      const mid = midpoint(a, b)
+
+      return {
+         markerA: a,
+         markerB: b,
+         midpoint: mid,
+         distanceKm,
+         color: getRandomHighContrastColor(),
+      }
+   }, [])
+
+   const measureDistance = useCallback((selected: Marker[]): DistanceMeasurement | null => {
+      const measurement = computeDistanceBetweenMarkers(selected)
+      setDistanceMeasurement(measurement)
+      return measurement
+   }, [computeDistanceBetweenMarkers, setDistanceMeasurement])
+
+   const clearDistanceMeasurement = useCallback((): void => {
+      setDistanceMeasurement(null)
+   }, [setDistanceMeasurement])
+
+   const clearSelectedRows = useCallback((): void => {
+      setSelectedRows([])
+   }, [])
 
    const createNewMarker = (): void => {
       setMarkers(prevMarkers => {
@@ -328,5 +368,8 @@ export function MarkersDashboardController() {
       onInputChange,
       onCoordsChange,
       fillPuckAddressIfMissing,
+      measureDistance,
+      clearDistanceMeasurement,
+      clearSelectedRows,
    }
 }

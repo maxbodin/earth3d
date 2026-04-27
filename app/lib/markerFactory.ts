@@ -1,6 +1,6 @@
 import { Feature } from '@/app/types/orsTypes'
 import { Marker } from '@/app/types/marker'
-import { getRandomVibrantColor } from '@/app/lib/utils'
+import { getRandomVibrantColor } from '@/lib/color/getRandomVibrantColor'
 
 export function generateMarkerId(): string {
    return `marker_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`

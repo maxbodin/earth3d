@@ -1,7 +1,7 @@
 import { Body } from 'astronomy-engine'
 import * as THREE from 'three'
 import { Vector3 } from 'three'
-import { clamp } from '@/lib/clamp'
+import { clamp } from '@/lib/math/clamp'
 
 const DAYS_PER_YEAR = 365.25
 const MILLISECONDS_PER_DAY = 86_400_000

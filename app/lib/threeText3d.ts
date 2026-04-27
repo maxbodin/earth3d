@@ -1,46 +1,11 @@
 import * as THREE from 'three'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import type { Font } from 'three/examples/jsm/loaders/FontLoader.js'
-import { SceneType } from '@/app/enums/sceneType'
-import {
-   EARTH_RADIUS,
-   GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-   GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-   PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-   PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-} from '@/app/constants/numbers'
-import { clamp } from '@/lib/clamp'
+import { EARTH_RADIUS } from '@/app/constants/numbers'
 
 export const EARTH_SCENE_TEXT_BASE_SIZE = EARTH_RADIUS / 1e2
 export const EARTH_SCENE_TEXT_BASE_DEPTH = EARTH_RADIUS / 2e5
 export const DEFAULT_TEXT_CURVE_SEGMENTS = 4
-
-type SceneLodSettings = {
-   distanceDivisor: number
-   distanceOffset: number
-   minScale: number
-   maxScale: number
-}
-
-export type SceneTextLodConfig = {
-   spherical: SceneLodSettings
-   plane: SceneLodSettings
-}
-
-export const EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG: SceneTextLodConfig = {
-   spherical: {
-      distanceDivisor: 1e7,
-      distanceOffset: -0.3,
-      minScale: GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-      maxScale: GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-   },
-   plane: {
-      distanceDivisor: 1e5,
-      distanceOffset: 0,
-      minScale: PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
-      maxScale: PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
-   },
-}
 
 type CenteredTextGeometryOptions = {
    text: string
@@ -75,30 +40,6 @@ export function createCenteredTextGeometry(
    geometry.center()
 
    return geometry
-}
-
-export function computeSceneTextScale(
-   sceneType: SceneType,
-   cameraDistance: number,
-   config: SceneTextLodConfig,
-): number {
-   if (sceneType === SceneType.SPHERICAL) {
-      return clamp(
-         cameraDistance / config.spherical.distanceDivisor + config.spherical.distanceOffset,
-         config.spherical.minScale,
-         config.spherical.maxScale,
-      )
-   }
-
-   if (sceneType === SceneType.PLANE) {
-      return clamp(
-         cameraDistance / config.plane.distanceDivisor + config.plane.distanceOffset,
-         config.plane.minScale,
-         config.plane.maxScale,
-      )
-   }
-
-   return config.plane.minScale
 }
 
 export function getObjectGeometryExtentFromOrigin(object: THREE.Object3D): number {

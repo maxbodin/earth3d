@@ -7,6 +7,7 @@ export const PLANE_SCENE_TYPE = 1
  * Earth radius in meters.
  */
 export const EARTH_RADIUS: number = 6371008
+export const EARTH_RADIUS_KM: number = 6371.008
 
 /**
  *
@@ -113,12 +114,12 @@ export const GLOBE_PLANE_MAX_SCALE: number = 3000
 /**
  * Minimum plane mesh scale used on the planar scene when the camera is close.
  */
-export const PLANE_SCENE_PLANE_MIN_SCALE: number = 1000
+export const PLANE_SCENE_PLANE_MIN_SCALE: number = 100
 
 /**
  * Maximum plane mesh scale used on the planar scene when the camera is far.
  */
-export const PLANE_SCENE_PLANE_MAX_SCALE: number = 4000
+export const PLANE_SCENE_PLANE_MAX_SCALE: number = 3e3
 
 /**
  * Small vertical lift applied to spherical plane positions to avoid z-fighting.
@@ -168,7 +169,7 @@ export const PLANE_MIN_ALLOWED_AIRPORT_DISTANCE_TO_CAMERA: number = 1e2
 
 export const SELECTED_COUNTRY_FRONTIERS_WIDTH: number = EARTH_RADIUS / 2e2
 export const PLANE_SCENE_COUNTRY_FRONTIERS_MAX_THRESHOLD_BEFORE_REMOVED: number = 5e3
-export const PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE: number = 0.5
+export const PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE: number = 0.2
 export const PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE: number = 0.01
 
 export const GLOBE_SCENE_COUNTRY_FRONTIERS_WIDTH: number = EARTH_RADIUS / 8e2
@@ -178,7 +179,7 @@ export const GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE: number = 0.5
 /**
  * Plane Puck size.
  */
-export const PLANE_SCENE_PUCK_MIN_SCALE: number = 10
+export const PLANE_SCENE_PUCK_MIN_SCALE: number = 1
 export const PLANE_SCENE_PUCK_MAX_SCALE: number = EARTH_RADIUS * 0.01
 
 /**

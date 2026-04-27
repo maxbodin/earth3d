@@ -24,7 +24,7 @@ import { MarkersDashboardController } from '@/app/components/organisms/markersDa
 import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
-import { CrosshairIcon, DownloadIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon, UploadIcon } from 'lucide-react'
+import { CrosshairIcon, DownloadIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon, RulerIcon, UploadIcon } from 'lucide-react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
@@ -106,6 +106,26 @@ export function MarkersDashboardView() {
    const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
    const { setCursorMode, setSelectedObjectData, setSelectedObjectType } = useSelection()
 
+   const { flyToCoordinates } = CameraFlyController()
+
+   const {
+      selectedRows,
+      selectMarker,
+      exportSelectedMarkers,
+      importMarkersFromFile,
+      createNewMarker,
+      updateMarker,
+      deleteMarker,
+      featureSuggestions,
+      autoCompleteLoading,
+      onSelectionChange,
+      onInputChange,
+      onCoordsChange,
+      fillPuckAddressIfMissing,
+      measureDistance,
+      clearSelectedRows,
+   } = MarkersDashboardController()
+
    const [toast, setToast] = useState<MarkerToast | null>(null)
    const [coordinateErrors, setCoordinateErrors] = useState<Record<string, Partial<Record<CoordinateField, string>>>>({})
    const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -139,11 +159,13 @@ export function MarkersDashboardView() {
          }
 
          clearTransientFormState()
+         clearSelectedRows()
       } else {
          clearTransientFormState()
       }
    }, [
       clearTransientFormState,
+      clearSelectedRows,
       restoreMainUi,
       setCoordinateSelectionMarkerId,
       setCursorMode,
@@ -173,24 +195,6 @@ export function MarkersDashboardView() {
          }
       }
    }, [])
-
-   const { flyToCoordinates } = CameraFlyController()
-
-   const {
-      selectedRows,
-      selectMarker,
-      exportSelectedMarkers,
-      importMarkersFromFile,
-      createNewMarker,
-      updateMarker,
-      deleteMarker,
-      featureSuggestions,
-      autoCompleteLoading,
-      onSelectionChange,
-      onInputChange,
-      onCoordsChange,
-      fillPuckAddressIfMissing,
-   } = MarkersDashboardController()
 
    useEffect(() => {
       if (!isMarkersDashboardOpen) return
@@ -700,6 +704,23 @@ export function MarkersDashboardView() {
                         aria-label="Export selected markers"
                      >
                         Export selected markers
+                     </Button>
+                     <Button 
+                        variant="bordered" 
+                        size="sm" 
+                        isDisabled={selectedRows.length !== 2}
+                        onPress={() => {
+                           const result = measureDistance(selectedRows)
+                           if (result != null) {
+                              showToast(`Distance: ${result.distanceKm.toFixed(2)} km`, 'info')
+                           } else {
+                              showToast('Invalid marker coordinates.', 'danger')
+                           }
+                        }}
+                        startContent={<RulerIcon />}
+                        aria-label="Measure distance"
+                     >
+                        Measure distance
                      </Button>
                      <Button 
                         variant="bordered" 
