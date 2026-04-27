@@ -17,6 +17,8 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
 import { NavigationBarActionGroup, } from '@/app/components/molecules/navigationBar/navigationBarActionGroup'
 import { useRandomLandPlace, } from '@/app/components/molecules/navigationBar/useRandomLandPlace'
+import { useAstresList } from '@/app/components/organisms/astresList/astresList.model'
+import { astres } from '@/app/data/astres'
 
 export function NavigationBar() {
    const {
@@ -24,7 +26,6 @@ export function NavigationBar() {
       isNavBarDisplayed,
       setIsSearchBarDisplayed,
       setOpenedPanelType,
-      openedPanelType,
    } = useUi()
 
    const { setIsSettingsDashboardOpen } = useSettingsDashboard()
@@ -33,8 +34,9 @@ export function NavigationBar() {
    const { setIsDataDashboardOpen } = useDataDashboard()
 
    const { displayedSceneData } = useScenes()
-   const { flyToCoordinates } = CameraFlyController()
+   const { flyToCoordinates, flyToAstre } = CameraFlyController()
    const { setSelectedObjectType, setSelectedObjectData, cursorMode, setCursorMode } = useSelection()
+   const { setSelectedAstre } = useAstresList()
 
    const { trueSize, setTrueSize, showTrajectories, setShowTrajectories } = useSolarSystem()
 
@@ -125,8 +127,12 @@ export function NavigationBar() {
    }, [flyToCoordinates, userPuckMarker])
 
    const handleBackToEarth = useCallback((): void => {
-      // TODO : Implement get back to earth scene instantly.
-   }, [])
+      const earthAstre = astres.find(a => a.name === 'Earth')
+      if (earthAstre == null) return
+
+      setSelectedAstre(earthAstre)
+      flyToAstre(earthAstre)
+   }, [setSelectedAstre, flyToAstre])
 
    return (
             <div
