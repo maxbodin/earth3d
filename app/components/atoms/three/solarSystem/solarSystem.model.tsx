@@ -1,5 +1,6 @@
 'use client'
-import React, { createContext, ReactNode, useContext, useState } from 'react'
+import React, { createContext, ReactNode, useContext } from 'react'
+import { useLocalStorageState } from '@/app/hooks/useLocalStorageState'
 
 interface SolarSystemContextValue {
    trueSize: boolean
@@ -21,9 +22,9 @@ export function useSolarSystem(): SolarSystemContextValue {
 }
 
 export function SolarSystemProvider({ children }: { children: ReactNode }) {
-   const [trueSize, setTrueSize] = useState<boolean>(true)
-   const [showTrajectories, setShowTrajectories] = useState<boolean>(true)
-   const [trajectoryLineWidth, setTrajectoryLineWidth] = useState<number>(2)
+   const [trueSize, setTrueSize] = useLocalStorageState<boolean>('settings.solarSystem.trueSize', true)
+   const [showTrajectories, setShowTrajectories] = useLocalStorageState<boolean>('settings.solarSystem.showTrajectories', true)
+   const [trajectoryLineWidth, setTrajectoryLineWidth] = useLocalStorageState<number>('settings.solarSystem.trajectoryLineWidth', 2)
 
    const value: SolarSystemContextValue = {
       trueSize: trueSize,

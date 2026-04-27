@@ -6,6 +6,9 @@ import { PLANE_MIN_ALLOWED_AIRPORT_DISTANCE_TO_CAMERA, } from '@/app/constants/n
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { AIRPORT_MATERIAL } from '@/app/constants/materials'
 import { useAirports } from '@/app/components/atoms/three/airports/airports.model'
+import {
+   useAirportsTab,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/airportsTab/airportsTab.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { AIRPORT_RENDER_ORDER } from '@/app/constants/renderOrder'
@@ -18,6 +21,7 @@ const sharedAirportGeometry = new THREE.BoxGeometry(1, 1, 1, 4, 4, 4)
 export function AirportsController(): null {
    const { displayedSceneData } = useScenes()
    const { displayedAirportsGroup } = useAirports()
+   const { airportsActivated } = useAirportsTab()
 
    const visibleAirports = useRef<any[]>([])
    const cameraDistanceToPlanetCenter = useRef<number>(0)
@@ -27,6 +31,18 @@ export function AirportsController(): null {
    const lastVisibleAirportCount = useRef<number>(0)
    const lastAirportScale = useRef<number>(AIRPORT_LOD_CONFIG.plane.maxScale)
    const LOD_THRESHOLD_CHANGE = 0.1 // Minimum scale change to trigger re-render.
+
+   /**
+    * Clear all airport meshes from the scene.
+    */
+   const clearAirports = (): void => {
+      if (!displayedSceneData?.scene) return
+      displayedAirportsGroup.forEach((airportMesh): void => {
+         displayedSceneData.scene.remove(airportMesh)
+      })
+      displayedAirportsGroup.clear()
+      lastVisibleAirportCount.current = 0
+   }
 
    /**
     * Display airports with geometry and material reuse.
@@ -67,6 +83,7 @@ export function AirportsController(): null {
     */
    const processAirports = (): void => {
       if (
+         !airportsActivated ||
          !displayedAirportsGroup ||
          !displayedSceneData?.camera ||
          displayedSceneData.type !== SceneType.PLANE
@@ -150,12 +167,17 @@ export function AirportsController(): null {
    }
 
    useEffect(() => {
+      if (!airportsActivated) {
+         clearAirports()
+         return
+      }
+
       displayedSceneData?.controls?.addEventListener('change', onControlsChange)
 
       return () => {
          displayedSceneData?.controls?.removeEventListener('change', onControlsChange)
       }
-   }, [displayedSceneData])
+   }, [displayedSceneData, airportsActivated])
 
    return null
 }

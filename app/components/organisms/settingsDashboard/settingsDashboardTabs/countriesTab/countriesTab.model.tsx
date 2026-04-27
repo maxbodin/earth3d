@@ -1,4 +1,5 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react'
+import React, { createContext, ReactNode, useContext } from 'react'
+import { useLocalStorageState } from '@/app/hooks/useLocalStorageState'
 
 interface CountriesTabContextValue {
    frontiersActivated: boolean
@@ -21,8 +22,8 @@ export function useCountriesTab(): CountriesTabContextValue {
 }
 
 export function CountriesTabProvider({ children }: { children: ReactNode }) {
-   const [frontiersActivated, setFrontiersActivated] = useState<boolean>(false)
-   const [namesActivated, setNamesActivated] = useState<boolean>(false)
+   const [frontiersActivated, setFrontiersActivated] = useLocalStorageState<boolean>('settings.countries.frontiers', false)
+   const [namesActivated, setNamesActivated] = useLocalStorageState<boolean>('settings.countries.names', false)
 
    const value: CountriesTabContextValue = {
       frontiersActivated,
