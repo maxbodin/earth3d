@@ -72,6 +72,7 @@ export function NavigationBarActionGroup({
                      variant="bordered"
                      aria-label={trueSize ? 'Switch to Visualization Size' : 'Switch to True Size'}
                      onPress={onToggleSolarSystemScale}
+                     className={trueSize ? 'bg-white/20' : ''}
                   >
                      {trueSize ? <AArrowUpIcon /> : <AArrowDownIcon />}
                   </Button>
