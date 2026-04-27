@@ -14,12 +14,11 @@ import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { EARTH_RADIUS } from '@/app/constants/numbers'
 import { DISTANCE_LABEL_RENDER_ORDER, DISTANCE_LINE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import {
-   computeDampedTextScale,
    createCenteredTextGeometry,
-   EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
    EARTH_SCENE_TEXT_BASE_DEPTH,
    EARTH_SCENE_TEXT_BASE_SIZE,
 } from '@/app/lib/threeText3d'
+import { computeDampedScale, computeSceneLodScale, COUNTRY_TEXT_LOD_CONFIG, DISTANCE_LINE_LOD_CONFIG } from '@/app/lib/sceneLod'
 import { DistanceMeasurement } from '@/app/types/distanceMeasurement'
 import { midpoint } from '@/lib/geo/midpoint'
 import { formatDistanceLabel } from '@/lib/format/formatDistanceLabel'
@@ -28,8 +27,7 @@ const ARC_SEGMENTS = 64
 const ARC_ALTITUDE_FACTOR = 0.03
 const ARC_BASE_OFFSET = EARTH_RADIUS * 0.001
 const PLANE_SEGMENT_LIFT = 50
-const GLOBE_LINE_WIDTH = EARTH_RADIUS / 2e2
-const PLANE_LINE_WIDTH = EARTH_RADIUS / 2e2
+const LINE_BASE_WIDTH = EARTH_RADIUS / 2e2
 
 let sharedFontPromise: Promise<Font> | null = null
 let sharedFont: Font | null = null
@@ -190,8 +188,14 @@ export function DistanceMeasurementController(): null {
          )
 
       const lineGeometry = new MeshLineGeometry()
-      const lineWidth = isSpherical ? GLOBE_LINE_WIDTH : PLANE_LINE_WIDTH
-      lineGeometry.setPoints(points, () => lineWidth)
+      lineGeometry.setPoints(points, () => LINE_BASE_WIDTH)
+
+      const initialCameraDistance = sceneData.controls.getDistance()
+      const initialLineWidthFactor = computeSceneLodScale(
+         sceneData.type,
+         initialCameraDistance,
+         DISTANCE_LINE_LOD_CONFIG,
+      )
 
       const resolution = isSpherical
          ? new THREE.Vector2(window.innerWidth, window.innerHeight)
@@ -200,6 +204,7 @@ export function DistanceMeasurementController(): null {
       const lineMaterial = new MeshLineMaterial({
          resolution,
          color,
+         lineWidth: initialLineWidthFactor,
       })
       lineMaterial.depthTest = false
       lineMaterial.depthWrite = false
@@ -256,10 +261,10 @@ export function DistanceMeasurementController(): null {
       label.frustumCulled = false
       label.name = 'distance-measurement-label'
 
-      const initialScale = computeDampedTextScale(
+      const initialScale = computeDampedScale(
          sceneData.type,
          sceneData.controls.getDistance(),
-         EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+         COUNTRY_TEXT_LOD_CONFIG,
       )
 
       if (isSpherical) {
@@ -285,17 +290,26 @@ export function DistanceMeasurementController(): null {
       labelRef.current = label
       attachedSceneRef.current = scene
 
-      const updateLabelTransform = (): void => {
+      const onControlsChange = (): void => {
+         const cameraDistance = sceneData.controls.getDistance()
+
+         if (lineMaterialRef.current != null) {
+            const lineWidthFactor = computeSceneLodScale(
+               sceneData.type,
+               cameraDistance,
+               DISTANCE_LINE_LOD_CONFIG,
+            )
+            lineMaterialRef.current.uniforms.lineWidth.value = lineWidthFactor
+         }
+
          if (labelRef.current == null || sceneData.camera == null) return
 
          labelRef.current.lookAt(sceneData.camera.position)
 
-         const cameraDistance = sceneData.controls.getDistance()
-
-         const scale = computeDampedTextScale(
+         const scale = computeDampedScale(
             sceneData.type,
             cameraDistance,
-            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+            COUNTRY_TEXT_LOD_CONFIG,
          )
          labelRef.current.scale.setScalar(scale)
 
@@ -306,7 +320,7 @@ export function DistanceMeasurementController(): null {
          }
       }
 
-      sceneData.controls.addEventListener('change', updateLabelTransform)
+      sceneData.controls.addEventListener('change', onControlsChange)
 
       const animateBillboard = (): void => {
          if (labelRef.current == null || sceneData.camera == null) return
@@ -317,7 +331,7 @@ export function DistanceMeasurementController(): null {
 
       animFrameRef.current = requestAnimationFrame(animateBillboard)
 
-      label.userData = { updateLabelTransform }
+      label.userData = { onControlsChange }
    }
 
    useEffect(() => {
@@ -353,8 +367,8 @@ export function DistanceMeasurementController(): null {
       void sync(distanceMeasurement, displayedSceneData)
 
       return (): void => {
-         if (labelRef.current?.userData?.updateLabelTransform != null && displayedSceneData?.controls != null) {
-            displayedSceneData.controls.removeEventListener('change', labelRef.current.userData.updateLabelTransform)
+         if (labelRef.current?.userData?.onControlsChange != null && displayedSceneData?.controls != null) {
+            displayedSceneData.controls.removeEventListener('change', labelRef.current.userData.onControlsChange)
          }
          cleanup()
       }

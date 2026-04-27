@@ -114,12 +114,12 @@ export const GLOBE_PLANE_MAX_SCALE: number = 3000
 /**
  * Minimum plane mesh scale used on the planar scene when the camera is close.
  */
-export const PLANE_SCENE_PLANE_MIN_SCALE: number = 1000
+export const PLANE_SCENE_PLANE_MIN_SCALE: number = 100
 
 /**
  * Maximum plane mesh scale used on the planar scene when the camera is far.
  */
-export const PLANE_SCENE_PLANE_MAX_SCALE: number = 4000
+export const PLANE_SCENE_PLANE_MAX_SCALE: number = 3e3
 
 /**
  * Small vertical lift applied to spherical plane positions to avoid z-fighting.
@@ -179,7 +179,7 @@ export const GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE: number = 0.5
 /**
  * Plane Puck size.
  */
-export const PLANE_SCENE_PUCK_MIN_SCALE: number = 10
+export const PLANE_SCENE_PUCK_MIN_SCALE: number = 1
 export const PLANE_SCENE_PUCK_MAX_SCALE: number = EARTH_RADIUS * 0.01
 
 /**

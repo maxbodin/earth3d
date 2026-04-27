@@ -20,12 +20,11 @@ import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
 import {
-   computeSceneTextScale,
    createCenteredTextGeometry,
-   EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
    EARTH_SCENE_TEXT_BASE_SIZE,
    getObjectGeometryExtentFromOrigin,
 } from '@/app/lib/threeText3d'
+import { computeSceneLodScale, COUNTRY_TEXT_LOD_CONFIG } from '@/app/lib/sceneLod'
 import {
    useCountriesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
@@ -498,10 +497,10 @@ export function CountriesController(): null {
       if (!namesGroup.current || !displayedSceneData) return
 
             const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
-            const newScale = computeSceneTextScale(
+            const newScale = computeSceneLodScale(
           displayedSceneData.type,
           cameraDistanceToPlanetCenter.current,
-          EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+          COUNTRY_TEXT_LOD_CONFIG,
             )
 
       const currentScaleRef = isSpherical ? globeAdjustedScale : planeAdjustedScale

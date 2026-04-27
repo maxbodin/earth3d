@@ -2,17 +2,14 @@
 import * as THREE from 'three'
 import { useEffect, useRef } from 'react'
 import layers from '../../../../data/Airports.json'
-import {
-   PLANE_MIN_ALLOWED_AIRPORT_DISTANCE_TO_CAMERA,
-   PLANE_SCENE_AIRPORT_MAX_SCALE,
-   PLANE_SCENE_AIRPORT_MIN_SCALE,
-} from '@/app/constants/numbers'
+import { PLANE_MIN_ALLOWED_AIRPORT_DISTANCE_TO_CAMERA, } from '@/app/constants/numbers'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { AIRPORT_MATERIAL } from '@/app/constants/materials'
 import { useAirports } from '@/app/components/atoms/three/airports/airports.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { AIRPORT_RENDER_ORDER } from '@/app/constants/renderOrder'
+import { AIRPORT_LOD_CONFIG, computeSceneLodScale } from '@/app/lib/sceneLod'
 import { clamp } from '@/lib/math/clamp'
 
 // Shared geometry for all airports, avoids creating thousands of geometries.
@@ -24,11 +21,11 @@ export function AirportsController(): null {
 
    const visibleAirports = useRef<any[]>([])
    const cameraDistanceToPlanetCenter = useRef<number>(0)
-   const globeAirportAdjustedScale = useRef<number>(PLANE_SCENE_AIRPORT_MAX_SCALE)
+   const globeAirportAdjustedScale = useRef<number>(AIRPORT_LOD_CONFIG.plane.maxScale)
 
    // Threshold tracking to avoid unnecessary re-renders.
    const lastVisibleAirportCount = useRef<number>(0)
-   const lastAirportScale = useRef<number>(PLANE_SCENE_AIRPORT_MAX_SCALE)
+   const lastAirportScale = useRef<number>(AIRPORT_LOD_CONFIG.plane.maxScale)
    const LOD_THRESHOLD_CHANGE = 0.1 // Minimum scale change to trigger re-render.
 
    /**
@@ -125,16 +122,16 @@ export function AirportsController(): null {
 
       const newDistance = displayedSceneData.controls.getDistance()
       const distanceChange = Math.abs(newDistance - cameraDistanceToPlanetCenter.current)
+      cameraDistanceToPlanetCenter.current = newDistance
 
       // Only process if distance changed significantly. (threshold-based LOD)
       if (distanceChange < 500) {
          // Just update scale for smooth transitions.
          const oldScale = globeAirportAdjustedScale.current
-         cameraDistanceToPlanetCenter.current = newDistance
-         globeAirportAdjustedScale.current = clamp(
-            newDistance / 10,
-            PLANE_SCENE_AIRPORT_MIN_SCALE,
-            PLANE_SCENE_AIRPORT_MAX_SCALE
+         globeAirportAdjustedScale.current = computeSceneLodScale(
+            SceneType.PLANE,
+            newDistance,
+            AIRPORT_LOD_CONFIG,
          )
 
          if (Math.abs(globeAirportAdjustedScale.current - oldScale) >= LOD_THRESHOLD_CHANGE) {
@@ -143,11 +140,10 @@ export function AirportsController(): null {
          return
       }
 
-      cameraDistanceToPlanetCenter.current = newDistance
-      globeAirportAdjustedScale.current = clamp(
-         newDistance / 10,
-         PLANE_SCENE_AIRPORT_MIN_SCALE,
-         PLANE_SCENE_AIRPORT_MAX_SCALE
+      globeAirportAdjustedScale.current = computeSceneLodScale(
+         SceneType.PLANE,
+         newDistance,
+         AIRPORT_LOD_CONFIG,
       )
 
       processAirports()

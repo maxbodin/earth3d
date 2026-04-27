@@ -5,14 +5,11 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import {
    GLOBE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA,
-   GLOBE_SCENE_VESSEL_MAX_SCALE,
-   GLOBE_SCENE_VESSEL_MIN_SCALE,
    MAX_DISPLAYED_VESSELS,
    PLANE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA,
-   PLANE_SCENE_VESSEL_MAX_SCALE,
-   PLANE_SCENE_VESSEL_MIN_SCALE,
 } from '@/app/constants/numbers'
 import { VESSEL_GLB_MODEL } from '@/app/constants/paths'
+import { computeSceneLodScale, VESSEL_LOD_CONFIG } from '@/app/lib/sceneLod'
 import { clamp } from '@/lib/math/clamp'
 import { VESSEL_MATERIAL } from '@/app/constants/materials'
 import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
@@ -295,8 +292,8 @@ export function VesselsController(): null {
 
 
    const cameraDistanceToPlanetCenter = useRef<number>(0)
-   const planeAdjustedScale = useRef<number>(PLANE_SCENE_VESSEL_MAX_SCALE)
-   const globeAdjustedScale = useRef<number>(GLOBE_SCENE_VESSEL_MAX_SCALE)
+   const planeAdjustedScale = useRef<number>(VESSEL_LOD_CONFIG.plane.maxScale)
+   const globeAdjustedScale = useRef<number>(VESSEL_LOD_CONFIG.spherical.maxScale)
 
    /**
     * Called each times controls change (Zoom, camera move, ...)
@@ -309,32 +306,20 @@ export function VesselsController(): null {
       cameraDistanceToPlanetCenter.current =
          displayedSceneData.controls.getDistance()
 
-      planeAdjustedScale.current = clamp(
-         cameraDistanceToPlanetCenter.current / 1e3,
-         PLANE_SCENE_VESSEL_MIN_SCALE,
-         PLANE_SCENE_VESSEL_MAX_SCALE,
+      const vesselScale = computeSceneLodScale(
+         displayedSceneData.type,
+         cameraDistanceToPlanetCenter.current,
+         VESSEL_LOD_CONFIG,
       )
 
-      globeAdjustedScale.current = clamp(
-         cameraDistanceToPlanetCenter.current / 1e4,
-         GLOBE_SCENE_VESSEL_MIN_SCALE,
-         GLOBE_SCENE_VESSEL_MAX_SCALE,
-      )
+      if (displayedSceneData.type === SceneType.SPHERICAL) {
+         globeAdjustedScale.current = vesselScale
+      } else if (displayedSceneData.type === SceneType.PLANE) {
+         planeAdjustedScale.current = vesselScale
+      }
 
       displayedVesselsGroup.forEach((vessel): void => {
-         if (displayedSceneData.type == SceneType.SPHERICAL) {
-            vessel.scale.set(
-               globeAdjustedScale.current,
-               globeAdjustedScale.current,
-               globeAdjustedScale.current,
-            )
-         } else if (displayedSceneData.type == SceneType.PLANE) {
-            vessel.scale.set(
-               planeAdjustedScale.current,
-               planeAdjustedScale.current,
-               planeAdjustedScale.current,
-            )
-         }
+         vessel.scale.setScalar(vesselScale)
       })
    }
 

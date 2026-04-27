@@ -9,18 +9,14 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { AssetManager } from '@/app/lib/assetManager'
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { clamp } from '@/lib/math/clamp'
+import { computeSceneLodScale, AIRCRAFT_LOD_CONFIG } from '@/app/lib/sceneLod'
 import {
    GLOBE_ALTITUDE_OFFSET_METERS,
-   GLOBE_PLANE_MAX_SCALE,
-   GLOBE_PLANE_MIN_SCALE,
    MAX_DISPLAYED_PLANES,
    PLANE_FALLBACK_CONE_HEIGHT,
    PLANE_FALLBACK_CONE_RADIAL_SEGMENTS,
    PLANE_FALLBACK_CONE_RADIUS,
    PLANE_FALLBACK_CONE_ROTATION_X,
-   PLANE_SCENE_PLANE_MAX_SCALE,
-   PLANE_SCENE_PLANE_MIN_SCALE,
 } from '@/app/constants/numbers'
 import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
 import { OpenSkyStateVector } from '@/app/types/openSky/openSkyStateVector'
@@ -78,21 +74,6 @@ function getHeadingRadians(state: OpenSkyStateVector): number | null {
    return THREE.MathUtils.degToRad(trueTrack)
 }
 
-function getPlaneScale(sceneType: SceneType, cameraDistance: number): number {
-   if (sceneType === SceneType.PLANE) {
-      return clamp(
-         cameraDistance / 1500,
-         PLANE_SCENE_PLANE_MIN_SCALE,
-         PLANE_SCENE_PLANE_MAX_SCALE,
-      )
-   }
-
-   return clamp(
-      cameraDistance / 8500,
-      GLOBE_PLANE_MIN_SCALE,
-      GLOBE_PLANE_MAX_SCALE,
-   )
-}
 
 export function PlanesController(): null {
    const { planesData } = usePlanes()
@@ -230,7 +211,7 @@ export function PlanesController(): null {
       if (isUnmountedRef.current) return
 
       const cameraDistance = sceneData.controls.getDistance()
-      const scale = getPlaneScale(sceneData.type, cameraDistance)
+      const scale = computeSceneLodScale(sceneData.type, cameraDistance, AIRCRAFT_LOD_CONFIG)
 
       const renderablePlanes: RenderablePlane[] = []
 
