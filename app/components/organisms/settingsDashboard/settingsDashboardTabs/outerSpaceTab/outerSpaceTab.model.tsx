@@ -1,5 +1,10 @@
 import React, { createContext, ReactNode, useContext } from 'react'
 import { useLocalStorageState } from '@/app/hooks/useLocalStorageState'
+import {
+   STORAGE_KEY_OUTER_SPACE_CONSTELLATION_BOUNDS,
+   STORAGE_KEY_OUTER_SPACE_CONSTELLATION_FIGURES,
+   STORAGE_KEY_OUTER_SPACE_HYPTIC,
+} from '@/app/constants/storageKeys'
 
 interface OuterSpaceTabContextValue {
    constellationBoundsActivated: boolean
@@ -26,10 +31,10 @@ export function useOuterSpaceTab(): OuterSpaceTabContextValue {
 
 export function OuterSpaceTabProvider({ children }: { children: ReactNode }) {
    const [constellationBoundsActivated, setConstellationBoundsActivated] =
-      useLocalStorageState<boolean>('settings.outerSpace.constellationBounds', false)
+      useLocalStorageState<boolean>(STORAGE_KEY_OUTER_SPACE_CONSTELLATION_BOUNDS, false)
    const [constellationFiguresActivated, setConstellationFiguresActivated] =
-      useLocalStorageState<boolean>('settings.outerSpace.constellationFigures', false)
-   const [hypticActivated, setHypticActivated] = useLocalStorageState<boolean>('settings.outerSpace.hyptic', true)
+      useLocalStorageState<boolean>(STORAGE_KEY_OUTER_SPACE_CONSTELLATION_FIGURES, false)
+   const [hypticActivated, setHypticActivated] = useLocalStorageState<boolean>(STORAGE_KEY_OUTER_SPACE_HYPTIC, true)
 
    const value: OuterSpaceTabContextValue = {
       constellationBoundsActivated,

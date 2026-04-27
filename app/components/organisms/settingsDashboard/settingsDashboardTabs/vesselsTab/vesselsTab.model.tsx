@@ -1,5 +1,6 @@
 import React, { createContext, ReactNode, useContext } from 'react'
 import { useLocalStorageState } from '@/app/hooks/useLocalStorageState'
+import { STORAGE_KEY_VESSELS_ACTIVATED } from '@/app/constants/storageKeys'
 
 interface VesselsTabContextValue {
    vesselsActivated: boolean
@@ -17,7 +18,7 @@ export function useVesselsTab(): VesselsTabContextValue {
 }
 
 export function VesselsTabProvider({ children }: { children: ReactNode }) {
-   const [vesselsActivated, setVesselsActivated] = useLocalStorageState<boolean>('settings.vessels.activated', false)
+   const [vesselsActivated, setVesselsActivated] = useLocalStorageState<boolean>(STORAGE_KEY_VESSELS_ACTIVATED, false)
 
    const value: VesselsTabContextValue = {
       vesselsActivated: vesselsActivated,

@@ -1,5 +1,6 @@
 import React, { createContext, ReactNode, useContext } from 'react'
 import { useLocalStorageState } from '@/app/hooks/useLocalStorageState'
+import { STORAGE_KEY_AIRPORTS_ACTIVATED } from '@/app/constants/storageKeys'
 
 interface AirportsTabContextValue {
    airportsActivated: boolean
@@ -19,7 +20,7 @@ export function useAirportsTab(): AirportsTabContextValue {
 }
 
 export function AirportsTabProvider({ children }: { children: ReactNode }) {
-   const [airportsActivated, setAirportsActivated] = useLocalStorageState<boolean>('settings.airports.activated', true)
+   const [airportsActivated, setAirportsActivated] = useLocalStorageState<boolean>(STORAGE_KEY_AIRPORTS_ACTIVATED, true)
 
    const value: AirportsTabContextValue = {
       airportsActivated: airportsActivated,
