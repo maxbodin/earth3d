@@ -22,7 +22,7 @@ export function useSolarSystem(): SolarSystemContextValue {
 
 export function SolarSystemProvider({ children }: { children: ReactNode }) {
    const [trueSize, setTrueSize] = useState<boolean>(true)
-   const [showTrajectories, setShowTrajectories] = useState<boolean>(false)
+   const [showTrajectories, setShowTrajectories] = useState<boolean>(true)
    const [trajectoryLineWidth, setTrajectoryLineWidth] = useState<number>(2)
 
    const value: SolarSystemContextValue = {
