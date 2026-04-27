@@ -1,5 +1,7 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react'
+import React, { createContext, ReactNode, useContext } from 'react'
 import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
+import { useLocalStorageState } from '@/app/hooks/useLocalStorageState'
+import { STORAGE_KEY_MAP_STYLE } from '@/app/constants/storageKeys'
 
 interface MapTabContextValue {
    activeMapStyleId: string
@@ -17,8 +19,8 @@ export function useMapTab(): MapTabContextValue {
 }
 
 export function MapTabProvider({ children }: { children: ReactNode }) {
-   const [activeMapStyleId, setActiveMapStyleId] = useState<string>(
-      DEFAULT_MAP_STYLE_ID,
+   const [activeMapStyleId, setActiveMapStyleId] = useLocalStorageState<string>(
+      STORAGE_KEY_MAP_STYLE, DEFAULT_MAP_STYLE_ID,
    )
 
    const value: MapTabContextValue = {

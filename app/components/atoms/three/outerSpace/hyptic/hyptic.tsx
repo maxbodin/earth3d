@@ -76,9 +76,16 @@ export function Hyptic(): null {
    }
 
    useEffect(() => {
+      if (!hypticActivated) {
+         if (hyptic && displayedSceneData?.scene) {
+            removeObject3D(hyptic, displayedSceneData.scene)
+            setHyptic(null)
+         }
+         return
+      }
+
       createHyptic()
 
-      // Clean up the hyptic when the component unmounts or when the scene changes.
       return (): void => {
          if (hyptic && displayedSceneData?.scene) {
             removeObject3D(hyptic, displayedSceneData.scene)

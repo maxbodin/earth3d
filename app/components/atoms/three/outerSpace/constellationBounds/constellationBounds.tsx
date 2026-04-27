@@ -72,9 +72,16 @@ export function ConstellationBounds(): null {
    }
 
    useEffect(() => {
+      if (!constellationBoundsActivated) {
+         if (constellationBounds && displayedSceneData?.scene) {
+            removeObject3D(constellationBounds, displayedSceneData.scene)
+            setConstellationBounds(null)
+         }
+         return
+      }
+
       createConstellationBounds()
 
-      // Clean up the constellationBounds when the component unmounts or when the scene changes.
       return (): void => {
          if (constellationBounds && displayedSceneData?.scene) {
             removeObject3D(constellationBounds, displayedSceneData.scene)

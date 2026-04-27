@@ -73,9 +73,16 @@ export function ConstellationFigures(): null {
    }
 
    useEffect(() => {
+      if (!constellationFiguresActivated) {
+         if (constellationFigures && displayedSceneData?.scene) {
+            removeObject3D(constellationFigures, displayedSceneData.scene)
+            setConstellationFigures(null)
+         }
+         return
+      }
+
       createConstellationFigures()
 
-      // Clean up the constellationFigures when the component unmounts or when the scene changes.
       return (): void => {
          if (constellationFigures && displayedSceneData?.scene) {
             removeObject3D(constellationFigures, displayedSceneData.scene)

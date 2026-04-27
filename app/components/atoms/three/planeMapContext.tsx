@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, ReactNode, useContext, useState } from 'react'
-import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
+import { useMapTab } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
 
 // TODO : Add types.
 interface PlaneMapContextValue {
@@ -24,9 +24,10 @@ export function usePlaneMap(): PlaneMapContextValue {
 
 export function PlaneMapProvider({ children }: { children: ReactNode }) {
 // TODO : Add types.
+   const { activeMapStyleId } = useMapTab()
    const [planeMap, setPlaneMap] = useState<any>(null)
    const [mapProvider, setMapProvider] = useState<any>(null)
-   const [mapStyle, setMapStyle] = useState<string>(DEFAULT_MAP_STYLE_ID)
+   const [mapStyle, setMapStyle] = useState<string>(activeMapStyleId)
 
    const value: PlaneMapContextValue = {
       planeMap: planeMap,
