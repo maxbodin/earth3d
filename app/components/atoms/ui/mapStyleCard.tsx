@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { Button } from '@nextui-org/react'
 import { Check } from 'lucide-react'
 import { MapStyleOption } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.styles'
-import { cn } from '@/app/lib/utils'
+import { cn } from '@/lib/cn'
 import { Skeleton } from '@/shadcn/ui/skeleton'
 
 // A fixed tile that covers Western Europe / North Africa at zoom 2

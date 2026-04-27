@@ -1,5 +1,6 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react'
+import React, { createContext, ReactNode, useContext, useMemo, useState } from 'react'
 import { Marker } from '@/app/types/marker'
+import { DistanceMeasurement } from '@/app/types/distanceMeasurement'
 
 interface MarkersDashboardContextValue {
    isMarkersDashboardOpen: boolean
@@ -10,6 +11,8 @@ interface MarkersDashboardContextValue {
    setAreMarkerTitlesVisible: React.Dispatch<React.SetStateAction<boolean>>
    coordinateSelectionMarkerId: string | null
    setCoordinateSelectionMarkerId: React.Dispatch<React.SetStateAction<string | null>>
+   distanceMeasurement: DistanceMeasurement | null
+   setDistanceMeasurement: React.Dispatch<React.SetStateAction<DistanceMeasurement | null>>
 }
 
 const MarkersDashboardContext = createContext<MarkersDashboardContextValue | null>(null)
@@ -27,17 +30,26 @@ export function MarkersDashboardProvider({ children }: { children: ReactNode }) 
    const [markers, setMarkers] = useState<Marker[]>([])
    const [areMarkerTitlesVisible, setAreMarkerTitlesVisible] = useState<boolean>(true)
    const [coordinateSelectionMarkerId, setCoordinateSelectionMarkerId] = useState<string | null>(null)
+   const [distanceMeasurement, setDistanceMeasurement] = useState<DistanceMeasurement | null>(null)
 
-   const value: MarkersDashboardContextValue = {
-      isMarkersDashboardOpen: isMarkersDashboardOpen,
-      setIsMarkersDashboardOpen: setIsMarkersDashboardOpen,
-      markers: markers,
-      setMarkers: setMarkers,
-      areMarkerTitlesVisible: areMarkerTitlesVisible,
-      setAreMarkerTitlesVisible: setAreMarkerTitlesVisible,
-      coordinateSelectionMarkerId: coordinateSelectionMarkerId,
-      setCoordinateSelectionMarkerId: setCoordinateSelectionMarkerId,
-   }
+   const value: MarkersDashboardContextValue = useMemo(() => ({
+      isMarkersDashboardOpen,
+      setIsMarkersDashboardOpen,
+      markers,
+      setMarkers,
+      areMarkerTitlesVisible,
+      setAreMarkerTitlesVisible,
+      coordinateSelectionMarkerId,
+      setCoordinateSelectionMarkerId,
+      distanceMeasurement,
+      setDistanceMeasurement,
+   }), [
+      isMarkersDashboardOpen,
+      markers,
+      areMarkerTitlesVisible,
+      coordinateSelectionMarkerId,
+      distanceMeasurement,
+   ])
 
    return (
       <MarkersDashboardContext.Provider value={value}>

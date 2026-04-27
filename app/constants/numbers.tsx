@@ -7,6 +7,7 @@ export const PLANE_SCENE_TYPE = 1
  * Earth radius in meters.
  */
 export const EARTH_RADIUS: number = 6371008
+export const EARTH_RADIUS_KM: number = 6371.008
 
 /**
  *

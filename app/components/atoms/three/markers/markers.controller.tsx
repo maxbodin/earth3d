@@ -16,22 +16,21 @@ import {
    EARTH_RADIUS,
    GLOBE_SCENE_PUCK_MAX_SCALE,
    GLOBE_SCENE_PUCK_MIN_SCALE,
-   GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
    PLANE_SCENE_PUCK_MAX_SCALE,
    PLANE_SCENE_PUCK_MIN_SCALE,
-   PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
 } from '@/app/constants/numbers'
-import { clamp } from '@/lib/clamp'
 import { MARKER_RENDER_ORDER, MARKER_TITLE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
 import {
+   computeDampedTextScale,
+   computeTextScaleDamping,
    createCenteredTextGeometry,
-   computeSceneTextScale,
    EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
    EARTH_SCENE_TEXT_BASE_DEPTH,
    EARTH_SCENE_TEXT_BASE_SIZE,
    getObjectGeometryExtentFromOrigin,
 } from '@/app/lib/threeText3d'
+import { clamp } from '@/lib/math/clamp'
 
 let sharedMarkerTemplate: THREE.Group | null = null
 let markerModelLoadPromise: Promise<THREE.Group> | null = null
@@ -47,9 +46,6 @@ const GLOBE_MARKER_TITLE_GAP_BASE = EARTH_RADIUS / 1e5
 const GLOBE_MARKER_TITLE_GAP_SCALE_MULTIPLIER = 0.003
 const PLANE_MARKER_TITLE_GAP_BASE = EARTH_RADIUS / 8e9
 const PLANE_MARKER_TITLE_GAP_SCALE_MULTIPLIER = 0.002
-const MARKER_TITLE_NEAR_CAMERA_DAMPING_SCALE_MULTIPLIER = 3e2
-const GLOBE_MARKER_TITLE_NEAR_CAMERA_MIN_DAMPING = 1.5
-const PLANE_MARKER_TITLE_NEAR_CAMERA_MIN_DAMPING = 0.1
 const MARKER_TITLE_CURVE_SEGMENTS = 4
 
 const getMarkerLiftMultiplier = (sceneType: SceneType): number => {
@@ -68,16 +64,6 @@ const getMarkerTitleGapBase = (sceneType: SceneType): number => {
    return sceneType === SceneType.SPHERICAL
    ? GLOBE_MARKER_TITLE_GAP_BASE
    : PLANE_MARKER_TITLE_GAP_BASE
-}
-
-const getMarkerTitleNearCameraMinDamping = (sceneType: SceneType): number => {
-   return sceneType === SceneType.SPHERICAL
-      ? GLOBE_MARKER_TITLE_NEAR_CAMERA_MIN_DAMPING
-      : PLANE_MARKER_TITLE_NEAR_CAMERA_MIN_DAMPING
-}
-
-const interpolate = (from: number, to: number, t: number): number => {
-   return from + (to - from) * t
 }
 
 const hasColorChannel = (material: THREE.Material): material is THREE.Material & { color: THREE.Color } => {
@@ -250,8 +236,6 @@ export function MarkersController(): null {
    const cameraDistanceToPlanetCenter = useRef<number>(0)
    const planeMarkerAdjustedScale = useRef<number>(PLANE_SCENE_PUCK_MAX_SCALE)
    const globeMarkerAdjustedScale = useRef<number>(GLOBE_SCENE_PUCK_MAX_SCALE)
-   const planeMarkerTitleAdjustedScale = useRef<number>(PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
-   const globeMarkerTitleAdjustedScale = useRef<number>(GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE)
    const titleBillboardAnimationFrameRef = useRef<number | null>(null)
 
    const getCurrentScale = (sceneType: SceneType): number => {
@@ -264,54 +248,6 @@ export function MarkersController(): null {
       }
 
       return 1
-   }
-
-   const getMarkerTitleScaleDamping = (sceneType: SceneType): number => {
-      const markerMinScale = sceneType === SceneType.SPHERICAL
-         ? GLOBE_SCENE_PUCK_MIN_SCALE
-         : PLANE_SCENE_PUCK_MIN_SCALE
-
-      const markerAdjustedScale = sceneType === SceneType.SPHERICAL
-         ? globeMarkerAdjustedScale.current
-         : planeMarkerAdjustedScale.current
-
-      const nearCameraDampingThreshold =
-         markerMinScale * MARKER_TITLE_NEAR_CAMERA_DAMPING_SCALE_MULTIPLIER
-
-      if (markerAdjustedScale >= nearCameraDampingThreshold) {
-         return 1
-      }
-
-      const dampingRange = Math.max(
-         nearCameraDampingThreshold - markerMinScale,
-         Number.EPSILON,
-      )
-
-      const normalizedNearCameraScale = clamp(
-         (markerAdjustedScale - markerMinScale) / dampingRange,
-         0,
-         1,
-      )
-
-      return interpolate(
-         getMarkerTitleNearCameraMinDamping(sceneType),
-         1,
-         normalizedNearCameraScale,
-      )
-   }
-
-   const getCurrentTitleScale = (sceneType: SceneType): number => {
-      const markerTitleScaleDamping = getMarkerTitleScaleDamping(sceneType)
-
-      if (sceneType === SceneType.SPHERICAL) {
-         return globeMarkerTitleAdjustedScale.current * markerTitleScaleDamping
-      }
-
-      if (sceneType === SceneType.PLANE) {
-         return planeMarkerTitleAdjustedScale.current * markerTitleScaleDamping
-      }
-
-      return EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.plane.minScale
    }
 
    const publishMarkerDebugSnapshotFromCurrentObjects = (): void => {
@@ -352,7 +288,7 @@ export function MarkersController(): null {
          markerTitleSceneType: displayedSceneData?.type ?? null,
          markerTitleScaleDamping: displayedSceneData == null
             ? null
-            : getMarkerTitleScaleDamping(displayedSceneData.type),
+            : computeTextScaleDamping(displayedSceneData.type, cameraDistanceToPlanetCenter.current)
       })
    }
 
@@ -468,7 +404,11 @@ export function MarkersController(): null {
    ): number => {
       const markerLift = markerScale * getMarkerLiftMultiplier(sceneType)
       const markerTopLift = markerLift + markerGeometryExtent * markerScale
-      const titleScale = getCurrentTitleScale(sceneType)
+      const titleScale = computeDampedTextScale(
+         sceneType,
+         cameraDistanceToPlanetCenter.current,
+         EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
+      )
       const titleHalfHeight = getTitleHalfHeight(titleMesh)
       const titleGapFromMarkerTop = getMarkerTitleGapBase(sceneType)
          + markerScale * getMarkerTitleGapScaleMultiplier(sceneType)
@@ -570,31 +510,11 @@ export function MarkersController(): null {
             GLOBE_SCENE_PUCK_MIN_SCALE,
             GLOBE_SCENE_PUCK_MAX_SCALE,
          )
-
-         globeMarkerTitleAdjustedScale.current = clamp(
-            computeSceneTextScale(
-               displayedSceneData.type,
-               cameraDistanceToPlanetCenter.current,
-               EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
-            ),
-            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.spherical.minScale,
-            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.spherical.maxScale,
-         )
       } else if (displayedSceneData.type === SceneType.PLANE) {
          planeMarkerAdjustedScale.current = clamp(
             cameraDistanceToPlanetCenter.current / 1e2,
             PLANE_SCENE_PUCK_MIN_SCALE,
             PLANE_SCENE_PUCK_MAX_SCALE,
-         )
-
-         planeMarkerTitleAdjustedScale.current = clamp(
-            computeSceneTextScale(
-               displayedSceneData.type,
-               cameraDistanceToPlanetCenter.current,
-               EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG,
-            ),
-            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.plane.minScale,
-            EARTH_SCENE_COUNTRY_TEXT_LOD_CONFIG.plane.maxScale,
          )
       }
 
@@ -676,7 +596,7 @@ export function MarkersController(): null {
       let markerTitleMinVisualSize: number | null = null
       let markerTitleMinClearanceFromMarkerTop: number | null = null
       const markerScale = getCurrentScale(displayedSceneData.type)
-      const markerTitleScaleDamping = getMarkerTitleScaleDamping(displayedSceneData.type)
+      const markerTitleScaleDamping = computeTextScaleDamping(displayedSceneData.type, cameraDistanceToPlanetCenter.current)
 
       for (const marker of markers) {
          if (!hasRenderableCoordinates(marker)) continue

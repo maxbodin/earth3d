@@ -6,10 +6,15 @@ import {
    EARTH_RADIUS,
    GLOBE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
    GLOBE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
+   GLOBE_SCENE_PUCK_MAX_SCALE, // TODO : Rename correctly.
+   GLOBE_SCENE_PUCK_MIN_SCALE,
    PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
    PLANE_SCENE_COUNTRIES_NAMES_MIN_SCALE,
+   PLANE_SCENE_PUCK_MAX_SCALE,
+   PLANE_SCENE_PUCK_MIN_SCALE,
 } from '@/app/constants/numbers'
-import { clamp } from '@/lib/clamp'
+import { clamp } from '@/lib/math/clamp'
+import { interpolate } from '@/lib/math/interpolate'
 
 export const EARTH_SCENE_TEXT_BASE_SIZE = EARTH_RADIUS / 1e2
 export const EARTH_SCENE_TEXT_BASE_DEPTH = EARTH_RADIUS / 2e5
@@ -99,6 +104,43 @@ export function computeSceneTextScale(
    }
 
    return config.plane.minScale
+}
+
+const NEAR_CAMERA_DAMPING_SCALE_MULTIPLIER = 3e2
+const GLOBE_NEAR_CAMERA_MIN_DAMPING = 1.5
+const PLANE_NEAR_CAMERA_MIN_DAMPING = 0.1
+
+export function computeTextScaleDamping(
+   sceneType: SceneType,
+   cameraDistance: number,
+): number {
+   const isSpherical = sceneType === SceneType.SPHERICAL
+
+   const puckMinScale = isSpherical ? GLOBE_SCENE_PUCK_MIN_SCALE : PLANE_SCENE_PUCK_MIN_SCALE
+   const puckMaxScale = isSpherical ? GLOBE_SCENE_PUCK_MAX_SCALE : PLANE_SCENE_PUCK_MAX_SCALE
+   const puckDivisor = isSpherical ? 1e3 : 1e2
+   const nearCameraMinDamping = isSpherical ? GLOBE_NEAR_CAMERA_MIN_DAMPING : PLANE_NEAR_CAMERA_MIN_DAMPING
+
+   const adjustedPuckScale = clamp(cameraDistance / puckDivisor, puckMinScale, puckMaxScale)
+   const nearCameraDampingThreshold = puckMinScale * NEAR_CAMERA_DAMPING_SCALE_MULTIPLIER
+
+   if (adjustedPuckScale >= nearCameraDampingThreshold) return 1
+
+   const dampingRange = Math.max(nearCameraDampingThreshold - puckMinScale, Number.EPSILON)
+   const normalized = clamp((adjustedPuckScale - puckMinScale) / dampingRange, 0, 1)
+
+   return interpolate(nearCameraMinDamping, 1, normalized)
+}
+
+export function computeDampedTextScale(
+   sceneType: SceneType,
+   cameraDistance: number,
+   config: SceneTextLodConfig,
+): number {
+   const lodScale = computeSceneTextScale(sceneType, cameraDistance, config)
+   const damping = computeTextScaleDamping(sceneType, cameraDistance)
+
+   return lodScale * damping
 }
 
 export function getObjectGeometryExtentFromOrigin(object: THREE.Object3D): number {

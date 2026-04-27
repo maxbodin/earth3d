@@ -4,7 +4,7 @@ import { Command as CommandPrimitive } from 'cmdk'
 import { Search } from 'lucide-react'
 
 import { Dialog, DialogContent } from './dialog'
-import { cn } from '@/app/lib/utils'
+import { cn } from '@/lib/cn'
 
 const Command = React.forwardRef<
    React.ElementRef<typeof CommandPrimitive>,

@@ -1,5 +1,5 @@
 import { OpenSkyBoundingBox } from '@/app/types/openSky/openSkyBoundingBox'
-import { clamp } from '@/lib/clamp'
+import { clamp } from '@/lib/math/clamp'
 import { DEFAULT_BBOX } from '@/app/constants/numbers'
 
 export function toBoundingBox(

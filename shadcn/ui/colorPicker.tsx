@@ -2,11 +2,11 @@
 
 import { forwardRef, useMemo, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
-import { cn } from '@/app/lib/utils'
 import { Button, ButtonProps } from '@nextui-org/react'
 import { useForwardedRef } from '@/app/lib/useForwardRef'
 import { Input } from '@nextui-org/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shadcn/ui/popover'
+import { cn } from '@/lib/cn'
 
 interface ColorPickerProps {
    value: string;

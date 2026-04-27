@@ -9,7 +9,7 @@ import {
    MIN_LATITUDE,
    MIN_LONGITUDE
 } from '@/app/constants/numbers'
-import { clamp } from '@/lib/clamp'
+import { clamp } from '@/lib/math/clamp'
 
 export function normalizeBBox(rawBBox: Partial<OpenSkyBoundingBox> | null | undefined): OpenSkyBoundingBox {
    const lamin = parseNumber(rawBBox?.lamin)

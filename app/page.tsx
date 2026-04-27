@@ -15,6 +15,7 @@ import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
 import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
 import { CoordinatesSearchParamsSync } from '@/app/components/atoms/geolocation/coordinatesSearchParamsSync'
 import { MarkersController } from '@/app/components/atoms/three/markers/markers.controller'
+import { DistanceMeasurementController } from '@/app/components/atoms/three/distanceMeasurement.controller'
 import { CountriesProvider } from '@/app/components/atoms/three/countries/countries.model'
 
 export default function Home() {
@@ -33,6 +34,7 @@ export default function Home() {
                   <MarkersDashboardView />
                   <Geolocation />
                   <MarkersController />
+                  <DistanceMeasurementController />
                   <CoordinatesSearchParamsSync />
                   <div className="w-full items-center justify-between font-mono text-sm lg:flex">
                      <SearchBarView />

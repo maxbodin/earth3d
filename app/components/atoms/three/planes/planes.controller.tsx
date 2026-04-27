@@ -9,7 +9,7 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { AssetManager } from '@/app/lib/assetManager'
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { clamp } from '@/lib/clamp'
+import { clamp } from '@/lib/math/clamp'
 import {
    GLOBE_ALTITUDE_OFFSET_METERS,
    GLOBE_PLANE_MAX_SCALE,
