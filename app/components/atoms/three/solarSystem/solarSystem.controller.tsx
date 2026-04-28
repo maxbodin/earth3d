@@ -1,5 +1,4 @@
 'use client'
-import { clearGroup, disposeMaterial } from '@/app/helpers/threeHelper'
 import { useEffect, useRef } from 'react'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import * as THREE from 'three'
@@ -25,6 +24,8 @@ import { SolarSystemHelper } from '@/app/components/atoms/three/solarSystem/sola
 import { SOLAR_SYSTEM_FRAGMENT_SHADER, SOLAR_SYSTEM_VERTEX_SHADER } from '@/app/lib/shaders'
 import { AssetManager } from '@/app/lib/assetManager'
 import { buildTrajectoryPoints } from '@/app/components/atoms/three/solarSystem/solarSystemTrajectories.helper'
+import { clearGroup } from '@/lib/three/clearGroup'
+import { disposeMaterial } from '@/app/helpers/threeHelper'
 
 // Shared materials for text labels.
 const textMaterialFront = new THREE.MeshBasicMaterial({ color: '#ffffff' })

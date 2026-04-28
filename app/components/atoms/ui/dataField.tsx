@@ -1,13 +1,13 @@
 import React from 'react'
 import { N_A_VALUE } from '@/app/constants/strings'
 import { cn } from '@/lib/cn'
-import { PlaceFieldItem } from '@/app/types/placeFieldItem'
+import { FieldItem } from '@/app/types/fieldItem'
 
-export function PlaceField({
+export function DataField({
                               label,
                               value,
                               prominent = false,
-                           }: PlaceFieldItem): React.JSX.Element {
+                           }: FieldItem): React.JSX.Element {
    const hasValue = value !== N_A_VALUE
 
    return (

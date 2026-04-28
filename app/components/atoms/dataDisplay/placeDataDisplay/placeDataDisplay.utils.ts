@@ -2,6 +2,7 @@ import { N_A_VALUE } from '@/app/constants/strings'
 import { Feature } from '@/app/types/orsTypes'
 import { ParsedPlaceCoordinates } from '@/app/types/parsedPlaceCoordinates'
 import { Coordinates } from '@/app/types/coordinates'
+import { isValidCoordinate } from '@/lib/isValid/isValidCoordinate'
 
 export function isFeature(value: unknown): value is Feature {
    if (value == null || typeof value !== 'object') return false
@@ -39,8 +40,7 @@ export function mergeDisplayValues(primary: string, suffix: string): string {
 export function parsePlaceCoordinates(feature: Feature): ParsedPlaceCoordinates {
    const latitudeRaw = Number(feature.geometry.coordinates?.[1])
    const longitudeRaw = Number(feature.geometry.coordinates?.[0])
-   const hasValidCoordinates =
-      Number.isFinite(latitudeRaw) && Number.isFinite(longitudeRaw)
+   const hasValidCoordinates = isValidCoordinate(latitudeRaw, longitudeRaw)
 
    const latitude = hasValidCoordinates ? latitudeRaw : NaN
    const longitude = hasValidCoordinates ? longitudeRaw : NaN

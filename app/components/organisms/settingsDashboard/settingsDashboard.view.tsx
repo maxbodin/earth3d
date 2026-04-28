@@ -1,6 +1,5 @@
 'use client'
 import React, { useCallback } from 'react'
-import { useUi } from '@/app/context/uiContext'
 import { TAB_TITLES } from '@/app/constants/strings'
 import { TabType } from '@/app/enums/tabType'
 import { SettingsDashboardController } from '@/app/components/organisms/settingsDashboard/settingsDashboard.controller'
@@ -31,14 +30,19 @@ import {
 import {
    PlanesTabView,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.view'
+import {
+   EarthquakesTabView,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/earthquakesTab/earthquakesTab.view'
 
 export function SettingsDashboardView() {
-   const { activeSettingsDashboardTab, isSettingsDashboardOpen, setIsSettingsDashboardOpen } =
+   const { activeSettingsDashboardTab, isSettingsDashboardOpen, handleSettingsOpenChange } =
       useSettingsDashboard()
 
-   const { setIsNavBarDisplayed, setIsSearchBarDisplayed } = useUi()
-
    const { onTabSelection } = SettingsDashboardController()
+
+   const handleSettingsClose = useCallback((): void => {
+      handleSettingsOpenChange(false)
+   }, [handleSettingsOpenChange])
 
    const renderTab = React.useCallback(() => {
       switch (activeSettingsDashboardTab) {
@@ -48,6 +52,8 @@ export function SettingsDashboardView() {
             return <AirportsTabView />
          case TabType.VESSELS:
             return <VesselsTabView />
+         case TabType.EARTHQUAKES:
+            return <EarthquakesTabView />
          case TabType.MAP:
             return <MapTabView />
          case TabType.OUTER_SPACE:
@@ -58,23 +64,6 @@ export function SettingsDashboardView() {
             return <SolarSystemTabView />
       }
    }, [activeSettingsDashboardTab])
-
-   const restoreMainUi = useCallback((): void => {
-      setIsNavBarDisplayed(true)
-      setIsSearchBarDisplayed(true)
-   }, [setIsNavBarDisplayed, setIsSearchBarDisplayed])
-
-   const handleSettingsOpenChange = useCallback((isOpen: boolean): void => {
-      setIsSettingsDashboardOpen(isOpen)
-
-      if (!isOpen) {
-         restoreMainUi()
-      }
-   }, [setIsSettingsDashboardOpen, restoreMainUi])
-
-   const handleSettingsClose = useCallback((): void => {
-      handleSettingsOpenChange(false)
-   }, [handleSettingsOpenChange])
 
    const handleTabSelection = useCallback((tabIndex: number): void => {
       onTabSelection(tabIndex as TabType)

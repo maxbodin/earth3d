@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { Country } from '@/app/types/countryType'
 import { COUNTRY_PROFILE_API_BASE_PATH, N_A_VALUE } from '@/app/constants/strings'
-import { PlaceField } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeField'
-import { PlaceFieldItem } from '@/app/types/placeFieldItem'
+import { FieldItem } from '@/app/types/fieldItem'
 import { Button } from '@nextui-org/react'
 import { EyeIcon } from '@nextui-org/shared-icons'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
@@ -16,6 +15,7 @@ import { formatCurrencies } from '@/lib/format/formatCurrencies'
 import { formatLanguages } from '@/lib/format/formatLanguages'
 import { formatRegionalBlocs } from '@/lib/format/formatRegionalBlocs'
 import { formatTranslations } from '@/lib/format/formatTranslations'
+import { DataSection } from '@/app/components/atoms/ui/dataSection'
 
 const lookup = require('country-data').lookup
 
@@ -33,28 +33,6 @@ function isCountrySelection(selection: unknown): selection is Country {
       && typeof maybeCountry.numeric === 'number'
       && typeof maybeCountry.latitude === 'number'
       && typeof maybeCountry.longitude === 'number'
-   )
-}
-
-function ProfileSection({
-   title,
-   fields,
-}: {
-   title: string
-   fields: PlaceFieldItem[]
-}): React.JSX.Element {
-   return (
-      <section className="space-y-1 rounded-lg border border-white/10 bg-black/20 p-3">
-         <h2 className="text-lg font-semibold text-white/80">{title}</h2><br/>
-         {fields.map((field: PlaceFieldItem) => (
-            <PlaceField
-               key={`${title}-${field.label}`}
-               label={field.label}
-               value={field.value}
-               prominent={field.prominent}
-            />
-         ))}
-      </section>
    )
 }
 
@@ -154,7 +132,7 @@ export function CountryDataDisplay(): React.JSX.Element {
    const displayedFlagUrl = countryProfile?.summary.flagPngUrl
       ?? `https://flagcdn.com/w320/${country.alpha2.toLowerCase()}.png`
 
-   const identityFields: PlaceFieldItem[] = [
+   const identityFields: FieldItem[] = [
       {
          label: 'Country',
          value: countryEmoji.length > 0
@@ -192,7 +170,7 @@ export function CountryDataDisplay(): React.JSX.Element {
       },
    ]
 
-   const geographyFields: PlaceFieldItem[] = [
+   const geographyFields: FieldItem[] = [
       {
          label: 'Latitude',
          value: formatCoordinate(countryProfile?.geography.latitude ?? country.latitude),
@@ -219,7 +197,7 @@ export function CountryDataDisplay(): React.JSX.Element {
       },
    ]
 
-   const demographicsFields: PlaceFieldItem[] = [
+   const demographicsFields: FieldItem[] = [
       {
          label: 'Population',
          value: formatNumber(countryProfile?.demographics.population ?? null),
@@ -242,7 +220,7 @@ export function CountryDataDisplay(): React.JSX.Element {
       },
    ]
 
-   const economyAndCultureFields: PlaceFieldItem[] = [
+   const economyAndCultureFields: FieldItem[] = [
       {
          label: 'Currencies',
          value: formatCurrencies(countryProfile),
@@ -273,7 +251,7 @@ export function CountryDataDisplay(): React.JSX.Element {
       },
    ]
 
-   const worldometerFields: PlaceFieldItem[] = useMemo((): PlaceFieldItem[] => {
+   const worldometerFields: FieldItem[] = useMemo((): FieldItem[] => {
       const worldometer = countryProfile?.worldometer
 
       if (worldometer == null) {
@@ -354,11 +332,11 @@ export function CountryDataDisplay(): React.JSX.Element {
             )}
          </section>
 
-         <ProfileSection title="Identity" fields={identityFields} />
-         <ProfileSection title="Geography" fields={geographyFields} />
-         <ProfileSection title="Demographics" fields={demographicsFields} />
-         <ProfileSection title="Economy & Culture" fields={economyAndCultureFields} />
-         <ProfileSection title="Worldometer - Disease (COVID-19)" fields={worldometerFields} />
+         <DataSection title="Identity" fields={identityFields} />
+         <DataSection title="Geography" fields={geographyFields} />
+         <DataSection title="Demographics" fields={demographicsFields} />
+         <DataSection title="Economy & Culture" fields={economyAndCultureFields} />
+         <DataSection title="Worldometer - Disease (COVID-19)" fields={worldometerFields} />
 
          <section className="flex flex-wrap items-center gap-2 pt-2">
             <Button

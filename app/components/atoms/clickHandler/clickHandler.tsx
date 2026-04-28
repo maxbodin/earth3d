@@ -6,6 +6,7 @@ import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
 import { useAirports } from '@/app/components/atoms/three/airports/airports.model'
 import { ObjectType } from '@/app/enums/objectType'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
+import { useEarthquakes } from '@/app/components/atoms/three/earthquakes/earthquakes.model'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
 import { Geolocation, ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
@@ -29,6 +30,7 @@ export function ClickHandler(): null {
    const { displayedVesselsGroup } = useVessels()
    const { displayedAirportsGroup } = useAirports()
    const { displayedPlanesGroup } = usePlanes()
+   const { displayedEarthquakesGroup, setSelectedEarthquake } = useEarthquakes()
    const { planet } = usePlanet()
    const { flyToCoordinates } = CameraFlyController()
    const { planeMap } = usePlaneMap()
@@ -247,6 +249,27 @@ export function ClickHandler(): null {
    }
 
    /**
+    * Handle click on earthquake.
+    */
+   const clickOnEarthquakes = (): void => {
+      if (!displayedEarthquakesGroup || displayedEarthquakesGroup.children.length === 0) return
+
+      const intersects = raycaster.intersectObjects(
+         displayedEarthquakesGroup.children,
+      )
+
+      if (intersects.length > 0) {
+         const earthquakeFeature = intersects[0].object.userData?.earthquakeFeature
+
+         if (!earthquakeFeature) return 
+
+         setSelectedEarthquake(earthquakeFeature)
+         setSelectedObjectData(earthquakeFeature)
+         setSelectedObjectType(ObjectType.EARTHQUAKE)
+      }
+   }
+
+   /**
     * Function to handle click events.
     * @param event
     */
@@ -281,6 +304,7 @@ export function ClickHandler(): null {
       clickOnVessel()
       clickOnAirport()
       clickOnPlanes()
+      clickOnEarthquakes()
    }
 
    const cleanup = (): void => {

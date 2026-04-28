@@ -15,10 +15,10 @@ import { VESSEL_MATERIAL } from '@/app/constants/materials'
 import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
 import { debounce } from 'lodash'
 import { VESSEL_RENDER_ORDER } from '@/app/constants/renderOrder'
-import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { gsap } from 'gsap'
 import { AssetManager } from '@/app/lib/assetManager'
+import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
 
 type VesselCoordinate = [number, number]
 type VesselCoordinatesHistory = VesselCoordinate[]

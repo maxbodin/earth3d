@@ -22,7 +22,6 @@ export default function Home() {
    return (
       <PlaneMapProvider>
          <SolarSystemProvider>
-            <SettingsDashboardView />
             <CreditView />
             <DataDashboardView />
             <ScenesProvider>
@@ -37,6 +36,7 @@ export default function Home() {
                      </div>
                   </AstresListProvider>
                   <MarkersDashboardView />
+                  <SettingsDashboardView />
                   <Geolocation />
                   <MarkersController />
                   <DistanceMeasurementController />

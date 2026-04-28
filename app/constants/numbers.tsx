@@ -218,3 +218,22 @@ export const STATES_TTL_ANONYMOUS_MS = 30_000
 export const STATES_TTL_AUTHENTICATED_MS = 12_000
 export const TRACK_TTL_MS = 60_000
 export const STALE_GRACE_MS = 5 * 60_000
+
+/**
+ * Earthquake constants.
+ */
+export const MAX_DISPLAYED_EARTHQUAKES: number = 10000
+export const EARTHQUAKE_FETCH_INTERVAL_MS: number = 300_000
+export const EARTHQUAKE_BASE_RADIUS: number = 8000
+export const EARTHQUAKE_DEPTH_LINE_WIDTH: number = 2
+export const EARTHQUAKE_HEATMAP_RADIUS: number = EARTH_RADIUS * 1.02
+
+export const HEATMAP_CANVAS_WIDTH = 2048
+export const HEATMAP_CANVAS_HEIGHT = 1024
+export const HEATMAP_DOT_RADIUS = 5
+
+export const ONE_MINUTE_IN_MS = 60_000
+export const ONE_HOUR_IN_MS = ONE_MINUTE_IN_MS * 60
+export const ONE_DAY_IN_MS = ONE_HOUR_IN_MS * 24
+export const ONE_WEEK_IN_MS = ONE_DAY_IN_MS * 7
+export const ONE_MONTH_IN_MS = ONE_DAY_IN_MS * 30

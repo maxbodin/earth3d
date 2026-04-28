@@ -17,6 +17,9 @@ import {
 import {
    PlanesTabProvider,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.model'
+import {
+   EarthquakesTabProvider,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/earthquakesTab/earthquakesTab.model'
 
 /**
  * Hell. x2
@@ -34,7 +37,11 @@ export function DashboardTabsProviders({
             <VesselsTabProvider>
                <CountriesTabProvider>
                   <PlanesTabProvider>
-                     <AirportsTabProvider>{children}</AirportsTabProvider>
+                     <AirportsTabProvider>
+                        <EarthquakesTabProvider>
+                           {children}
+                        </EarthquakesTabProvider>
+                     </AirportsTabProvider>
                   </PlanesTabProvider>
                </CountriesTabProvider>
             </VesselsTabProvider>

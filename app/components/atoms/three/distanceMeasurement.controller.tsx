@@ -9,7 +9,6 @@ import { haversineDistance } from '@/lib/geo/haversineDistance'
 import { SceneType } from '@/app/enums/sceneType'
 import { AssetManager } from '@/app/lib/assetManager'
 import { TEXT_FONT } from '@/app/constants/paths'
-import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { EARTH_RADIUS } from '@/app/constants/numbers'
 import { DISTANCE_LABEL_RENDER_ORDER, DISTANCE_LINE_RENDER_ORDER } from '@/app/constants/renderOrder'
@@ -18,10 +17,16 @@ import {
    EARTH_SCENE_TEXT_BASE_DEPTH,
    EARTH_SCENE_TEXT_BASE_SIZE,
 } from '@/app/lib/threeText3d'
-import { computeDampedScale, computeSceneLodScale, COUNTRY_TEXT_LOD_CONFIG, DISTANCE_LINE_LOD_CONFIG } from '@/app/lib/sceneLod'
+import {
+   computeDampedScale,
+   computeSceneLodScale,
+   COUNTRY_TEXT_LOD_CONFIG,
+   DISTANCE_LINE_LOD_CONFIG
+} from '@/app/lib/sceneLod'
 import { DistanceMeasurement } from '@/app/types/distanceMeasurement'
 import { midpoint } from '@/lib/geo/midpoint'
 import { formatDistanceLabel } from '@/lib/format/formatDistanceLabel'
+import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
 
 const ARC_SEGMENTS = 64
 const ARC_ALTITUDE_FACTOR = 0.03
