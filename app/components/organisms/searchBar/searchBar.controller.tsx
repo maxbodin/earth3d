@@ -10,10 +10,12 @@ import { Key } from '@react-types/shared'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import {
    clearCoordinatesFromCurrentUrl,
-   clearCountryFromCurrentUrl,
    updateCoordinatesInCurrentUrl,
-   updateCountryInCurrentUrl,
 } from '@/app/lib/coordinatesSearchParams'
+import {
+   clearCountryFromCurrentUrl,
+   updateCountryInCurrentUrl,
+} from '@/app/lib/countrySearchParams'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { ObjectType } from '@/app/enums/objectType'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
