@@ -4,7 +4,6 @@ import { moveCameraToPlaneScene } from '@/tests/e2e/utils/moveCameraToPlaneScene
 
 // TODO : put in constants/numbers
 const EARTH_RADIUS = 6_371_008
-const SPHERICAL_SCENE_TYPE = 0
 const PLANE_SCENE_TYPE = 1
 const MIN_COUNTRY_NAME_CLEARANCE = 20_000
 const MIN_TEXT_SIZE_RATIO = 0.5

@@ -24,19 +24,23 @@ import { MarkersDashboardController } from '@/app/components/organisms/markersDa
 import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
-import { CrosshairIcon, DownloadIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon, RulerIcon, UploadIcon } from 'lucide-react'
+import {
+   CrosshairIcon,
+   DownloadIcon,
+   Eye as VisibilityOnIcon,
+   EyeOff as VisibilityOffIcon,
+   PlusIcon,
+   RulerIcon,
+   UploadIcon
+} from 'lucide-react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { CursorModeType } from '@/app/enums/modeType'
 import { reverseORS } from '@/app/server/services/openRouteService'
 import { ObjectType } from '@/app/enums/objectType'
-import {
-   MAX_LATITUDE,
-   MAX_LONGITUDE,
-   MIN_LATITUDE,
-   MIN_LONGITUDE,
-} from '@/app/constants/numbers'
+import { MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGITUDE, } from '@/app/constants/numbers'
+import { isValidCoordinate } from '@/lib/isValid/isValidCoordinate'
 
 
 const columns: string[] = ['Selection', 'Title', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
@@ -326,7 +330,7 @@ export function MarkersDashboardView() {
    ])
 
    const focusMarkerAndDisplayPlace = useCallback(async (marker: Marker): Promise<void> => {
-      if (!Number.isFinite(marker.latitude) || !Number.isFinite(marker.longitude)) {
+      if (!isValidCoordinate(marker.latitude, marker.longitude)) {
          showToast('Marker coordinates are invalid.', 'danger')
          return
       }

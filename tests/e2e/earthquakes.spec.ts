@@ -1,80 +1,13 @@
-import { expect, Page, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
    STORAGE_KEY_EARTHQUAKES_ACTIVATED,
    STORAGE_KEY_EARTHQUAKES_MIN_MAGNITUDE,
    STORAGE_KEY_EARTHQUAKES_TIME_RANGE,
 } from '@/app/constants/storageKeys'
 import { openSettingsTab } from '@/tests/e2e/utils/openSettingsTab'
-import { ONE_HOUR_IN_MS } from '@/app/constants/numbers'
+import { mockEarthquakeRoute } from '@/tests/e2e/mocks/routes/mockEarthquakeRoute'
 
 const TAB_EARTHQUAKES = 'Earthquakes'
-
-function createMockEarthquakeResponse(count: number = 3) {
-   const features = Array.from({ length: count }, (_, i) => ({
-      type: 'Feature',
-      properties: {
-         mag: 3.5 + i,
-         place: `${50 + i}km NW of TestCity ${i}`,
-         time: Date.now() - i * ONE_HOUR_IN_MS,
-         updated: Date.now(),
-         tz: null,
-         url: `https://earthquake.usgs.gov/earthquakes/eventpage/test${i}`,
-         detail: '',
-         felt: i > 0 ? 10 + i : null,
-         cdi: null,
-         mmi: null,
-         alert: null,
-         status: 'reviewed',
-         tsunami: 0,
-         sig: 200 + i * 50,
-         net: 'us',
-         code: `test${i}`,
-         ids: `,ustest${i},`,
-         sources: ',us,',
-         types: ',origin,',
-         nst: null,
-         dmin: null,
-         rms: null,
-         gap: null,
-         magType: 'mb',
-         type: 'earthquake',
-         title: `M ${3.5 + i} - ${50 + i}km NW of TestCity ${i}`,
-      },
-      geometry: {
-         type: 'Point',
-         coordinates: [-120 + i * 10, 35 + i * 5, 10 + i * 20],
-      },
-      id: `test${i}`,
-   }))
-
-   return {
-      type: 'FeatureCollection',
-      metadata: {
-         generated: Date.now(),
-         url: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
-         title: 'USGS Earthquakes',
-         status: 200,
-         api: '1.14.1',
-         count,
-      },
-      features,
-   }
-}
-
-async function mockEarthquakeRoute(
-   page: Page,
-   options: { count?: number; onRequest?: () => void } = {},
-): Promise<void> {
-   await page.route('**/api/earthquakes**', async (route) => {
-      options.onRequest?.()
-
-      await route.fulfill({
-         status: 200,
-         contentType: 'application/json',
-         body: JSON.stringify(createMockEarthquakeResponse(options.count ?? 3)),
-      })
-   })
-}
 
 test.describe('Earthquakes settings tab', () => {
    test('earthquakes tab is visible in settings', async ({ page }) => {

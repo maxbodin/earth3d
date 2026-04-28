@@ -57,6 +57,16 @@ export const LOADING_STEPS = {
     label: 'Building planet mesh',
     weight: 10,
   },
+  PLANES_DATA: {
+    id: 'planes_data',
+    label: 'Loading flight data',
+    weight: 5,
+  },
+  EARTHQUAKES_DATA: {
+    id: 'earthquakes_data',
+    label: 'Loading earthquake data',
+    weight: 5,
+  },
 } as const satisfies Record<string, LoadingStepDefinition>
 
 export interface LoadingSnapshot {

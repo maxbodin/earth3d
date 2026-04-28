@@ -19,6 +19,8 @@ import { SceneType } from '@/app/enums/sceneType'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { parseSelectedPlaneStateVector } from '@/lib/parse/parseSelectedPlaneStateVector'
 import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
+import { Marker } from '@/app/types/marker'
+import { isValidCoordinate } from '@/lib/isValid/isValidCoordinate'
 
 export function ClickHandler(): null {
 
@@ -249,6 +251,37 @@ export function ClickHandler(): null {
    }
 
    /**
+    * Handle click on marker.
+    */
+   const clickOnMarker = (): void => {
+      if (displayedSceneData?.scene == null) return
+
+      const markerObjects = displayedSceneData.scene.children.filter(
+         child => child.name.startsWith('marker:'),
+      )
+      if (markerObjects.length === 0) return
+
+      const intersects = raycaster.intersectObjects(markerObjects, true)
+      if (intersects.length === 0) return
+
+      let markerData: Marker | null = null
+      let current: THREE.Object3D | null = intersects[0].object
+      while (current != null) {
+         if (current.userData?.data != null && current.name.startsWith('marker:')) {
+            markerData = current.userData.data as Marker
+            break
+         }
+         current = current.parent
+      }
+
+      if (markerData == null || !isValidCoordinate(markerData.latitude, markerData.longitude)) return
+
+      flyToCoordinates(markerData.latitude, markerData.longitude)
+      setSelectedObjectData(markerData)
+      setSelectedObjectType(ObjectType.MARKER)
+   }
+
+   /**
     * Handle click on earthquake.
     */
    const clickOnEarthquakes = (): void => {
@@ -278,15 +311,11 @@ export function ClickHandler(): null {
          return
 
       const target = event.target as HTMLElement | null
-      const isInteractiveUiClick = target?.closest(
-         '[data-map-pick-ignore="true"],button,a,input,textarea,select,[role="button"],[role="dialog"]',
+      const isUiClick = target?.closest(
+         '[data-map-pick-ignore="true"],button,a,input,textarea,select,[role="button"],[role="dialog"],[role="listbox"],[role="option"]',
       ) != null
 
-      if (coordinateSelectionMarkerId != null && isInteractiveUiClick) {
-         return
-      }
-
-      if (target?.closest('[data-map-pick-ignore="true"]') != null) {
+      if (isUiClick) {
          return
       }
 
@@ -305,6 +334,7 @@ export function ClickHandler(): null {
       clickOnAirport()
       clickOnPlanes()
       clickOnEarthquakes()
+      clickOnMarker()
    }
 
    const cleanup = (): void => {
