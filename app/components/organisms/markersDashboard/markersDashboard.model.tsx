@@ -1,6 +1,8 @@
 import React, { createContext, ReactNode, useContext, useMemo, useState } from 'react'
 import { Marker } from '@/app/types/marker'
 import { DistanceMeasurement } from '@/app/types/distanceMeasurement'
+import { useLocalStorageState } from '@/app/hooks/useLocalStorageState'
+import { STORAGE_KEY_MARKERS } from '@/app/constants/storageKeys'
 
 interface MarkersDashboardContextValue {
    isMarkersDashboardOpen: boolean
@@ -27,7 +29,7 @@ export function useMarkersDashboard(): MarkersDashboardContextValue {
 
 export function MarkersDashboardProvider({ children }: { children: ReactNode }) {
    const [isMarkersDashboardOpen, setIsMarkersDashboardOpen] = useState<boolean>(false)
-   const [markers, setMarkers] = useState<Marker[]>([])
+   const [markers, setMarkers] = useLocalStorageState<Marker[]>(STORAGE_KEY_MARKERS, [])
    const [areMarkerTitlesVisible, setAreMarkerTitlesVisible] = useState<boolean>(true)
    const [coordinateSelectionMarkerId, setCoordinateSelectionMarkerId] = useState<string | null>(null)
    const [distanceMeasurement, setDistanceMeasurement] = useState<DistanceMeasurement | null>(null)
