@@ -5,4 +5,6 @@ export enum ObjectType {
    VESSEL,
    PLACE,
    COUNTRY,
+   EARTHQUAKE,
+   MARKER,
 }

@@ -1,7 +1,6 @@
 'use client'
 import * as THREE from 'three'
 import { useCallback, useEffect, useRef } from 'react'
-import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { PLANE_MATERIAL } from '@/app/constants/materials'
 import { PLANE_GLB_MODEL } from '@/app/constants/paths'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
@@ -9,7 +8,7 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { AssetManager } from '@/app/lib/assetManager'
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { computeSceneLodScale, AIRCRAFT_LOD_CONFIG } from '@/app/lib/sceneLod'
+import { AIRCRAFT_LOD_CONFIG, computeSceneLodScale } from '@/app/lib/sceneLod'
 import {
    GLOBE_ALTITUDE_OFFSET_METERS,
    MAX_DISPLAYED_PLANES,
@@ -24,6 +23,7 @@ import { RenderablePlane } from '@/app/types/plane/renderablePlane'
 import {
    usePlanesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.model'
+import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
 
 let sharedPlaneTemplate: THREE.Group | null = null
 let sharedPlaneLoadPromise: Promise<THREE.Group> | null = null

@@ -13,6 +13,7 @@ export function GlassCard({
 }) {
    return (
       <div
+         data-map-pick-ignore="true"
          className={`absolute top-1/2 right-10 transform -translate-y-1/2 z-40 isolate aspect-video w-96 h-fit rounded-xl bg-black bg-opacity-40 backdrop-blur-md drop-shadow-lg pr-2 border-medium border-default transition-opacity duration-150 ${
             isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
          }`}>

@@ -14,6 +14,8 @@ import {
    clearCountryFromCurrentUrl,
 } from '@/app/lib/countrySearchParams'
 import { CountryDataDisplay } from '@/app/components/atoms/dataDisplay/countryDataDisplay/countryDataDisplay'
+import { EarthquakeDataDisplay } from '@/app/components/atoms/dataDisplay/earthquakeDataDisplay/earthquakeDataDisplay'
+import { MarkerDataDisplay } from '@/app/components/atoms/dataDisplay/markerDataDisplay/markerDataDisplay'
 import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
 
 export function DetailsCard() {
@@ -57,6 +59,10 @@ export function DetailsCard() {
             return <PlaceDataDisplay />
          case ObjectType.COUNTRY:
             return <CountryDataDisplay />
+         case ObjectType.EARTHQUAKE:
+            return <EarthquakeDataDisplay />
+         case ObjectType.MARKER:
+            return <MarkerDataDisplay />
          default:
             return null
       }

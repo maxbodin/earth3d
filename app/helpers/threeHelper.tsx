@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { disposeNode } from '@/lib/three/disposeObject'
 
 // TODO : Merge with asset manager.
 /**
@@ -18,52 +19,6 @@ export function removeObject3D(
 
    if (scene && object3D.parent === scene) {
       scene.remove(object3D)
-   }
-}
-
-/**
- * Clear a group and dispose of all children recursively.
- *
- * @param group - The group to clear
- */
-export function clearGroup(group: THREE.Group | null | undefined): void {
-   if (!group) return
-
-   for (let i = group.children.length - 1; i >= 0; i--) {
-      const child = group.children[i]
-      disposeNode(child)
-      group.remove(child)
-   }
-}
-
-/**
- * Recursively dispose of an Object3D and all its resources.
- *
- * @param node - The node to dispose
- */
-function disposeNode(node: THREE.Object3D): void {
-   const mesh = node as THREE.Mesh
-   if (mesh.geometry) {
-      mesh.geometry.dispose()
-      mesh.geometry = null as any
-   }
-
-   // Dispose materials and their textures.
-   if (mesh.material) {
-      disposeMaterial(mesh.material)
-      mesh.material = null as any
-   }
-
-   // Recursively dispose children.
-   if (node.children) {
-      for (let i = node.children.length - 1; i >= 0; i--) {
-         disposeNode(node.children[i])
-      }
-   }
-
-   // Clear userData to prevent memory leaks from references.
-   if (node.userData) {
-      node.userData = {}
    }
 }
 

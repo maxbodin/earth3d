@@ -14,12 +14,12 @@ import {
    normalizeDisplayValue,
    parsePlaceCoordinates,
 } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeDataDisplay.utils'
-import { PlaceField } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeField'
 import { PlaceImageCarousel, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeImageCarousel'
 import { usePlaceImages, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/usePlaceImages'
-import { PlaceFieldItem } from '@/app/types/placeFieldItem'
+import { FieldItem } from '@/app/types/fieldItem'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
+import { DataSection } from '@/app/components/atoms/ui/dataSection'
 
 export function PlaceDataDisplay(): React.JSX.Element {
    const {
@@ -116,7 +116,7 @@ export function PlaceDataDisplay(): React.JSX.Element {
       }
    }
 
-   const placeHeadlineFields: PlaceFieldItem[] = [
+   const placeHeadlineFields: FieldItem[] = [
       {
          label: 'Name',
          value: name,
@@ -128,7 +128,7 @@ export function PlaceDataDisplay(): React.JSX.Element {
       },
    ]
 
-   const placeMetadataFields: PlaceFieldItem[] = [
+   const placeMetadataFields: FieldItem[] = [
       {
          label: 'Continent',
          value: continent,
@@ -147,7 +147,7 @@ export function PlaceDataDisplay(): React.JSX.Element {
       },
    ]
 
-   const coordinatesFields: PlaceFieldItem[] = [
+   const coordinatesFields: FieldItem[] = [
       {
          label: 'Longitude',
          value: strLongitude,
@@ -160,36 +160,9 @@ export function PlaceDataDisplay(): React.JSX.Element {
 
    return (
       <div className="w-full min-w-0 max-w-full space-y-2 overflow-x-hidden">
-         <section className="space-y-1">
-            {placeHeadlineFields.map((field: PlaceFieldItem) => (
-               <PlaceField
-                  key={field.label}
-                  label={field.label}
-                  value={field.value}
-                  prominent={field.prominent}
-               />
-            ))}
-         </section>
-
-         <section className="space-y-1">
-            {placeMetadataFields.map((field: PlaceFieldItem) => (
-               <PlaceField
-                  key={field.label}
-                  label={field.label}
-                  value={field.value}
-               />
-            ))}
-         </section>
-
-         <section className="space-y-1">
-            {coordinatesFields.map((field: PlaceFieldItem) => (
-               <PlaceField
-                  key={field.label}
-                  label={field.label}
-                  value={field.value}
-               />
-            ))}
-         </section>
+         <DataSection title="Place" fields={placeHeadlineFields} />
+         <DataSection title="Location" fields={placeMetadataFields} />
+         <DataSection title="Coordinates" fields={coordinatesFields} />
 
          <PlaceImageCarousel imageUrls={imageUrls} imagesLoading={imagesLoading} />
 

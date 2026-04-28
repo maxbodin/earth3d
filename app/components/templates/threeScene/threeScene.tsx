@@ -38,6 +38,9 @@ import { OuterSpaceProvider } from '@/app/components/atoms/three/outerSpace/oute
 import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
 import { PlanesController } from '@/app/components/atoms/three/planes/planes.controller'
 import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch/planeDataFetch'
+import { EarthquakesController } from '@/app/components/atoms/three/earthquakes/earthquakes.controller'
+import { EarthquakeDataFetch } from '@/app/components/atoms/dataFetch/earthquakeDataFetch/earthquakeDataFetch'
+import { EarthquakeHeatmap } from '@/app/components/atoms/three/earthquakes/earthquakeHeatmap'
 import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
 import { readModeFromCurrentUrl, updateModeInCurrentUrl } from '@/app/lib/modeSearchParams'
 
@@ -930,6 +933,8 @@ export function ThreeScene() {
                   <VesselsController />
                   <AirportsController />
                   <PlanesController />
+                  <EarthquakesController />
+                  <EarthquakeHeatmap />
                </PlanetProvider>
 
                <OuterSpaceProvider>
@@ -937,6 +942,7 @@ export function ThreeScene() {
                </OuterSpaceProvider>
 
                <PlaneDataFetch />
+               <EarthquakeDataFetch />
 
                <Atmosphere />
                <PlaneSky />

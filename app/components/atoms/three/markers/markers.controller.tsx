@@ -10,11 +10,8 @@ import { AssetManager } from '@/app/lib/assetManager'
 import { MARKER_GLB_MODEL, TEXT_FONT } from '@/app/constants/paths'
 import { Marker } from '@/app/types/marker'
 import { PUCK_COLOR } from '@/app/constants/colors'
-import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import {
-   EARTH_RADIUS,
-} from '@/app/constants/numbers'
+import { EARTH_RADIUS } from '@/app/constants/numbers'
 import { MARKER_RENDER_ORDER, MARKER_TITLE_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
 import {
@@ -30,6 +27,7 @@ import {
    COUNTRY_TEXT_LOD_CONFIG,
    MARKER_PUCK_LOD_CONFIG,
 } from '@/app/lib/sceneLod'
+import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
 
 let sharedMarkerTemplate: THREE.Group | null = null
 let markerModelLoadPromise: Promise<THREE.Group> | null = null

@@ -22,7 +22,6 @@ export default function Home() {
    return (
       <PlaneMapProvider>
          <SolarSystemProvider>
-            <SettingsDashboardView />
             <CreditView />
             <DataDashboardView />
             <ScenesProvider>
@@ -30,13 +29,14 @@ export default function Home() {
                   <AstresListProvider>
                      <AstresListView />
                      <ThreeScene />
-                     <div className="w-full items-center justify-between font-mono text-sm lg:flex">
+                     <div data-map-pick-ignore="true" className="w-full items-center justify-between font-mono text-sm lg:flex">
                         <SearchBarView />
                         <DetailsCard />
                         <NavigationBar />
                      </div>
                   </AstresListProvider>
                   <MarkersDashboardView />
+                  <SettingsDashboardView />
                   <Geolocation />
                   <MarkersController />
                   <DistanceMeasurementController />

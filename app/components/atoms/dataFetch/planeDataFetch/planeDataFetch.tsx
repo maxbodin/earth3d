@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { fetchPlanesData } from '@/app/server/services/planeDataService'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
@@ -11,6 +11,7 @@ import {
    usePlanesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.model'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
+import { LoadingTracker, LOADING_STEPS } from '@/app/lib/loadingTracker'
 
 const PLANES_FETCH_INTERVAL_MS = 30_000
 
@@ -58,12 +59,14 @@ export function PlaneDataFetch(): null {
    const { setPlanesData, setOpenSkyRemainingTokens } = usePlanes()
    const { displayedSceneData } = useScenes()
    const { planesActivated } = usePlanesTab()
+   const initialFetchDoneRef = useRef(false)
 
    useEffect(() => {
       let cancelled = false
 
       if (!planesActivated) {
          setPlanesData([])
+         LoadingTracker.completeStep(LOADING_STEPS.PLANES_DATA.id)
 
          return (): void => {
             cancelled = true
@@ -87,9 +90,17 @@ export function PlaneDataFetch(): null {
             if (!cancelled) {
                setPlanesData(planesResponse.states ?? [])
                setOpenSkyRemainingTokens(planesResponse.meta.remainingTokens)
+               if (!initialFetchDoneRef.current) {
+                  initialFetchDoneRef.current = true
+                  LoadingTracker.completeStep(LOADING_STEPS.PLANES_DATA.id)
+               }
             }
          } catch (error) {
             console.error('PlaneDataFetch failed:', error)
+            if (!initialFetchDoneRef.current) {
+               initialFetchDoneRef.current = true
+               LoadingTracker.completeStep(LOADING_STEPS.PLANES_DATA.id)
+            }
          }
       }
 

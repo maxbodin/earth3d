@@ -57,6 +57,16 @@ export const LOADING_STEPS = {
     label: 'Building planet mesh',
     weight: 10,
   },
+  PLANES_DATA: {
+    id: 'planes_data',
+    label: 'Loading flight data',
+    weight: 5,
+  },
+  EARTHQUAKES_DATA: {
+    id: 'earthquakes_data',
+    label: 'Loading earthquake data',
+    weight: 5,
+  },
 } as const satisfies Record<string, LoadingStepDefinition>
 
 export interface LoadingSnapshot {
@@ -87,12 +97,30 @@ class LoadingTrackerClass {
     this.snapshot = this.compute()
   }
 
-  /** Mark a step as complete. Idempotent — safe to call multiple times. */
+  /** Mark a step as complete. Idempotent - safe to call multiple times. */
   completeStep(id: string): void {
     if (this.done.has(id)) return
     this.done.add(id)
     this.snapshot = this.compute()
     this.notify()
+  }
+
+  /** useSyncExternalStore - client snapshot */
+  getSnapshot(): LoadingSnapshot {
+    return this.snapshot
+  }
+
+  /** useSyncExternalStore - server snapshot (always loading state) */
+  getServerSnapshot(): LoadingSnapshot {
+    return SERVER_SNAPSHOT
+  }
+
+  /** useSyncExternalStore - subscription */
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener)
+    return (): void => {
+      this.listeners.delete(listener)
+    }
   }
 
   private compute(): LoadingSnapshot {
@@ -110,24 +138,6 @@ class LoadingTrackerClass {
 
   private notify(): void {
     this.listeners.forEach((l) => l())
-  }
-
-  /** useSyncExternalStore — client snapshot */
-  getSnapshot(): LoadingSnapshot {
-    return this.snapshot
-  }
-
-  /** useSyncExternalStore — server snapshot (always loading state) */
-  getServerSnapshot(): LoadingSnapshot {
-    return SERVER_SNAPSHOT
-  }
-
-  /** useSyncExternalStore — subscription */
-  subscribe(listener: () => void): () => void {
-    this.listeners.add(listener)
-    return (): void => {
-      this.listeners.delete(listener)
-    }
   }
 }
 

@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { EARTHQUAKE_DEPTH_LINE_WIDTH } from './numbers'
 
 /**
  * Shared materials pool.
@@ -37,6 +38,17 @@ export const VESSEL_MATERIAL: THREE.MeshBasicMaterial =
       color: 0x36393B,
       depthWrite: true,
       depthTest: true,
+   })
+
+// Earthquake depth line material.
+export const EARTHQUAKE_DEPTH_LINE_MATERIAL: THREE.LineBasicMaterial =
+   new THREE.LineBasicMaterial({
+      color: 0xff4444,
+      linewidth: EARTHQUAKE_DEPTH_LINE_WIDTH,
+      transparent: false,
+      opacity: 0.8,
+      depthWrite: false,
+      depthTest: false,
    })
 
 // Country frontier material.
@@ -81,6 +93,7 @@ export const MaterialPool = {
    plane: PLANE_MATERIAL,
    selectedPlane: SELECTED_PLANE_MATERIAL,
    vessel: VESSEL_MATERIAL,
+   earthquakeDepthLine: EARTHQUAKE_DEPTH_LINE_MATERIAL,
    frontier: FRONTIER_MATERIAL,
    sun: SUN_MATERIAL,
    labelFront: LABEL_MATERIAL_FRONT,

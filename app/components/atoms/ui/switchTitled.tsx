@@ -24,7 +24,7 @@ export function SwitchTitled({
    }
 
    return (
-      <div className="pb-8 px-8">
+      <div className="pb-2">
          <div
             className="flex justify-between items-center rounded-lg text-black"
             style={{

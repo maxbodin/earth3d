@@ -1,6 +1,6 @@
 import React from 'react'
-import Link from 'next/link'
 import { CreditItem } from '@/app/types/creditItem'
+import { Link } from '@/app/components/atoms/ui/link'
 
 interface CreditItemCardProps {
    item: CreditItem
@@ -32,13 +32,9 @@ export function CreditItemCard({ item }: CreditItemCardProps): React.JSX.Element
                {item.links.map((linkItem) => (
                   <Link
                      key={`${item.id}-${linkItem.url}`}
-                     href={linkItem.url}
-                     target="_blank"
-                     rel="noreferrer"
-                     className="text-sm text-sky-300 transition-colors hover:text-sky-200"
-                  >
-                     {linkItem.label}
-                  </Link>
+                     link={linkItem.url}
+                     title={linkItem.label}
+                  />
                ))}
             </div>
          </div>

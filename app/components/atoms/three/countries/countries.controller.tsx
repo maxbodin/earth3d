@@ -1,4 +1,3 @@
-import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import * as THREE from 'three'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { useEffect, useRef } from 'react'
@@ -29,6 +28,7 @@ import {
    useCountriesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
 import { normalizeCountryName } from '@/lib/normalize/normalizeCountryName'
+import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
 
 const geoJson = require('world-geojson')
 

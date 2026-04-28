@@ -5,22 +5,10 @@ import {
    STORAGE_KEY_OUTER_SPACE_CONSTELLATION_FIGURES,
    STORAGE_KEY_OUTER_SPACE_HYPTIC,
 } from '@/app/constants/storageKeys'
+import { openSettingsTab } from '@/tests/e2e/utils/openSettingsTab'
 
 const TAB_AIRPORTS = 'Airports'
 const TAB_OUTER_SPACE = 'Outer Space'
-
-async function openSettingsTab(page: import('@playwright/test').Page, tabName: string) {
-   const openSettingsButton = page.getByRole('button', { name: 'Open Settings' })
-   await expect(openSettingsButton).toBeVisible()
-   await openSettingsButton.click()
-
-   const settingsTitle = page.getByRole('heading', { name: '⚙️ Settings' })
-   await expect(settingsTitle).toBeVisible()
-
-   const tab = page.getByText(tabName, { exact: true })
-   await expect(tab).toBeVisible()
-   await tab.click()
-}
 
 test.describe('Airports settings toggle', () => {
    test('toggling airports off writes false to localStorage', async ({ page }) => {

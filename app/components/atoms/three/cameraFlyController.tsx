@@ -1,13 +1,13 @@
 import countriesCoords from '@/app/data/country-codes-lat-long-alpha3.json'
 import * as THREE from 'three'
 import { SceneType } from '@/app/enums/sceneType'
-import { latLongToVector3 } from '@/app/helpers/latLongHelper'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { EARTH_RADIUS, SUN_RADIUS } from '@/app/constants/numbers'
 import { gsap } from 'gsap'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { Astre } from '@/app/types/astre'
 import { useSolarSystem } from '@/app/components/atoms/three/solarSystem/solarSystem.model'
+import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
 
 let activeSphericalFlyTween: gsap.core.Tween | null = null
 let activePlaneTargetTween: gsap.core.Tween | null = null
