@@ -3,6 +3,8 @@ export function Link({ link, title }: { link: string; title: string }) {
       <div className="mb-2">
          <a
             href={link}
+            target="_blank"
+            rel="noreferrer"
             className="inline-flex items-center font-medium text-blue-800 hover:underline"
          >
             {title}
