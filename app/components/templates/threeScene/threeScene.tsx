@@ -39,6 +39,7 @@ import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
 import { PlanesController } from '@/app/components/atoms/three/planes/planes.controller'
 import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch/planeDataFetch'
 import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
+import { readModeFromCurrentUrl, updateModeInCurrentUrl } from '@/app/lib/modeSearchParams'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -141,27 +142,72 @@ export function ThreeScene() {
       // List of scenes.
       scenes.current = [createGlobeScene(), createPlaneScene(), createSolarSystemScene()]
 
-      // Start explicitly on spherical scene to avoid bootstrap LOD oscillations.
-      activeSceneType.current = SceneType.SPHERICAL
+      // Determine initial scene from URL search params, default to spherical.
+      const urlMode = readModeFromCurrentUrl()
+      const initialScene = urlMode ?? SceneType.SPHERICAL
+
+      activeSceneType.current = initialScene
       isBootstrapFrameRef.current = true
-      sphereDistanceRef.current = GLOBE_STARTUP_ALTITUDE
-      distanceToSphereSurface.current = GLOBE_STARTUP_DISTANCE_FROM_CENTER
-      distanceToPlaneSurface.current = GLOBE_STARTUP_ALTITUDE
-      lastGlobeAltitudeRef.current = GLOBE_STARTUP_ALTITUDE
       solarDistanceRef.current = Number.POSITIVE_INFINITY
 
-      scenes.current[SceneType.SPHERICAL].scene.visible = true
-      scenes.current[SceneType.PLANE].scene.visible = false
-      scenes.current[SceneType.SOLAR_SYSTEM].scene.visible = false
+      scenes.current[SceneType.SPHERICAL].scene.visible = initialScene === SceneType.SPHERICAL
+      scenes.current[SceneType.PLANE].scene.visible = initialScene === SceneType.PLANE
+      scenes.current[SceneType.SOLAR_SYSTEM].scene.visible = initialScene === SceneType.SOLAR_SYSTEM
+
+      if (initialScene === SceneType.SPHERICAL) {
+         sphereDistanceRef.current = GLOBE_STARTUP_ALTITUDE
+         distanceToSphereSurface.current = GLOBE_STARTUP_DISTANCE_FROM_CENTER
+         distanceToPlaneSurface.current = GLOBE_STARTUP_ALTITUDE
+         lastGlobeAltitudeRef.current = GLOBE_STARTUP_ALTITUDE
+      } else if (initialScene === SceneType.PLANE) {
+         // TODO : Refactor in constants.
+         const planeStartAltitude = 1e6
+         planeDistanceRef.current = planeStartAltitude
+         distanceToPlaneSurface.current = planeStartAltitude
+         const planeSceneData = scenes.current[SceneType.PLANE]
+         const worldCoords = ThreeGeoUnitsUtils.datumsToSpherical(
+            FRANCE_DEFAULT_GEO.current.latitude,
+            FRANCE_DEFAULT_GEO.current.longitude,
+         )
+         planeSceneData.controls.target.set(worldCoords.x, 0, -worldCoords.y)
+         planeSceneData.camera.position.set(worldCoords.x, planeStartAltitude, -worldCoords.y)
+         planeSceneData.controls.update()
+      } else if (initialScene === SceneType.SOLAR_SYSTEM) {
+         sphereDistanceRef.current = GLOBE_STARTUP_ALTITUDE
+         lastGlobeAltitudeRef.current = GLOBE_STARTUP_ALTITUDE
+
+         // TODO : Refactor in constants.
+         const safeSolarDistance = SOLAR_SYSTEM_TO_GLOBE_TOGGLE_DISTANCE * 3e3
+         solarDistanceRef.current = safeSolarDistance
+         const solarSceneData = scenes.current[SceneType.SOLAR_SYSTEM]
+         const earthPos = getPlanetPosition(Body.Earth, dateValueToDate(selectedDate))
+         const direction = new THREE.Vector3(1, 1, 0).normalize()
+         solarSceneData.camera.position.copy(
+             earthPos.clone().add(direction.multiplyScalar(safeSolarDistance)),
+         )
+         solarSceneData.controls.target.copy(earthPos)
+         solarSceneData.controls.update()
+      }
 
       // Initialize shared scene data once to avoid null consumers at startup.
-      syncDisplayedSceneData(SceneType.SPHERICAL)
+      syncDisplayedSceneData(initialScene)
       LoadingTracker.completeStep(LOADING_STEPS.RENDERER_SETUP.id)
+
+      // PlanetController only builds the globe mesh when the active scene is
+      // SPHERICAL, so its loading steps (textures + mesh) would never complete
+      // when starting directly in another mode. Mark them done immediately so
+      // the loading overlay can finish.
+      if (initialScene !== SceneType.SPHERICAL) {
+         LoadingTracker.completeStep(LOADING_STEPS.EARTH_TEXTURE.id)
+         LoadingTracker.completeStep(LOADING_STEPS.DISPLACEMENT_MAP.id)
+         LoadingTracker.completeStep(LOADING_STEPS.PLANET_MESH.id)
+      }
    }
 
    /**
     * Sync displayed scene data only when active scene changes.
     * Uses ref tracking to avoid unnecessary React state updates.
+    * Also updates the URL search param to reflect the current mode.
     */
    const syncDisplayedSceneData = (sceneType: SceneType): void => {
       if (displayedSceneTypeRef.current === sceneType && lastSetSceneTypeRef.current === sceneType) return
@@ -172,6 +218,7 @@ export function ThreeScene() {
       displayedSceneTypeRef.current = sceneType
       lastSetSceneTypeRef.current = sceneType
       setDisplayedSceneData(sceneData)
+      updateModeInCurrentUrl(sceneType)
    }
 
    /**

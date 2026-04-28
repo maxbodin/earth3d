@@ -9,8 +9,10 @@ import { useSelection } from '@/app/components/atoms/clickHandler/selectionConte
 import { PlaceDataDisplay } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeDataDisplay'
 import {
    clearCoordinatesFromCurrentUrl,
-   clearCountryFromCurrentUrl,
 } from '@/app/lib/coordinatesSearchParams'
+import {
+   clearCountryFromCurrentUrl,
+} from '@/app/lib/countrySearchParams'
 import { CountryDataDisplay } from '@/app/components/atoms/dataDisplay/countryDataDisplay/countryDataDisplay'
 import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
 

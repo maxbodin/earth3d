@@ -8,19 +8,21 @@ import { ObjectType } from '@/app/enums/objectType'
 import { SceneType } from '@/app/enums/sceneType'
 import {
    COORDINATES_SEARCH_PARAMS_UPDATED_EVENT,
-   clearCountryFromCurrentUrl,
    coordinatesToKey,
-   normalizeCoordinates,
-   parseCoordinatesFromUnknown,
-   readCountryFromCurrentUrl,
    readCoordinatesFromCurrentUrl,
-   updateCountryInCurrentUrl,
    updateCoordinatesInCurrentUrl,
 } from '@/app/lib/coordinatesSearchParams'
+import {
+   clearCountryFromCurrentUrl,
+   readCountryFromCurrentUrl,
+   updateCountryInCurrentUrl,
+} from '@/app/lib/countrySearchParams'
 import { Coordinates } from '@/app/types/coordinates'
 import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
 import { findCountryByName } from '@/app/lib/countrySearch'
 import { normalizeCountryName } from '@/lib/normalize/normalizeCountryName'
+import { normalizeCoordinates } from '@/lib/normalize/normalizeCoordinates'
+import { parseCoordinatesFromUnknown } from '@/lib/parse/parseCoordinates'
 
 function extractCoordinatesFromSelection(
    selectedObjectType: ObjectType,

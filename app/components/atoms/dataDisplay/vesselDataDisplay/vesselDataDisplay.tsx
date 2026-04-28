@@ -4,8 +4,9 @@ import { useSelection } from '@/app/components/atoms/clickHandler/selectionConte
 import { Button } from '@nextui-org/react'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { EyeIcon } from '@nextui-org/shared-icons'
-import { parseCoordinatesFromUnknown } from '@/app/lib/coordinatesSearchParams'
+import { parseCoordinatesFromUnknown } from '@/lib/parse/parseCoordinates'
 
+// TODO : Refactor in cleaner arch like place data display.
 export function VesselDataDisplay(): React.JSX.Element {
    const { selectedObjectData } = useSelection()
 
