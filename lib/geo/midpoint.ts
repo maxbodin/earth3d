@@ -1,4 +1,4 @@
-import { Coordinates } from '@/app/types/coordinates'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 import { toRad } from '@/lib/to/toRad'
 import { toDeg } from '@/lib/to/toDeg'
 

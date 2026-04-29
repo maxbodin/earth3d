@@ -1,4 +1,4 @@
-import { Coordinates } from '@/app/types/coordinates'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 import { Marker } from '@/app/types/marker'
 
 export interface DistanceMeasurement {

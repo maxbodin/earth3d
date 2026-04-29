@@ -21,6 +21,7 @@ import { parseSelectedPlaneStateVector } from '@/lib/parse/parseSelectedPlaneSta
 import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 import { Marker } from '@/app/types/marker'
 import { isValidCoordinate } from '@/lib/isValid/isValidCoordinate'
+import { parseCoordinatesFromUnknown } from '@/lib/parse/parseCoordinates'
 
 export function ClickHandler(): null {
 
@@ -192,6 +193,11 @@ export function ClickHandler(): null {
 
          setSelectedObjectType(ObjectType.VESSEL)
          setSelectedObjectData(selectedVesselData)
+
+         const coords = parseCoordinatesFromUnknown(selectedVesselData?.message?.location?.coordinates)
+         if (coords != null) {
+            flyToCoordinates(coords.latitude, coords.longitude)
+         }
       }
    }
 
@@ -206,8 +212,15 @@ export function ClickHandler(): null {
       )
 
       if (intersects.length > 0) {
-         setSelectedObjectData(intersects[0].object.userData)
+         const airportData = intersects[0].object.userData
+         setSelectedObjectData(airportData)
          setSelectedObjectType(ObjectType.AIRPORT)
+
+         const latitude = Number(airportData?.data?.attributes?.latitude_deg)
+         const longitude = Number(airportData?.data?.attributes?.longitude_deg)
+         if (isValidCoordinate({ latitude, longitude })) {
+            flyToCoordinates(latitude, longitude)
+         }
       }
    }
 
@@ -247,6 +260,14 @@ export function ClickHandler(): null {
 
          setSelectedObjectData(selectedPlaneData)
          setSelectedObjectType(ObjectType.PLANE)
+
+         const stateVector = parseSelectedPlaneStateVector(selectedPlaneData)
+         if (stateVector != null) {
+            const coords = { latitude: stateVector[6], longitude: stateVector[5] }
+            if (isValidCoordinate(coords)) {
+               flyToCoordinates(coords.latitude, coords.longitude)
+            }
+         }
       }
    }
 
@@ -274,7 +295,7 @@ export function ClickHandler(): null {
          current = current.parent
       }
 
-      if (markerData == null || !isValidCoordinate(markerData.latitude, markerData.longitude)) return
+      if (markerData == null || !isValidCoordinate({ latitude: markerData.latitude, longitude: markerData.longitude })) return
 
       flyToCoordinates(markerData.latitude, markerData.longitude)
       setSelectedObjectData(markerData)
@@ -299,6 +320,12 @@ export function ClickHandler(): null {
          setSelectedEarthquake(earthquakeFeature)
          setSelectedObjectData(earthquakeFeature)
          setSelectedObjectType(ObjectType.EARTHQUAKE)
+
+         const [eqLon, eqLat] = earthquakeFeature.geometry?.coordinates ?? []
+         const eqCoords = { latitude: eqLat ?? null, longitude: eqLon ?? null }
+         if (isValidCoordinate(eqCoords)) {
+            flyToCoordinates(eqCoords.latitude, eqCoords.longitude)
+         }
       }
    }
 

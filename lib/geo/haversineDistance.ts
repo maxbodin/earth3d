@@ -1,4 +1,4 @@
-import { Coordinates } from '@/app/types/coordinates'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 import { EARTH_RADIUS_KM } from '@/app/constants/numbers'
 import { toRad } from '@/lib/to/toRad'
 

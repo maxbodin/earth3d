@@ -1,30 +1,30 @@
 export interface AirportAttributes {
    OBJECTID?: number | null
+   closed?: number | null
+   continent?: string | null
+   description?: string | null
+   elevation_ft?: number | null
+   frequency_mhz?: number | null
+   gps_code?: string | null
+   home_link?: string | null
+   iata_code?: string | null
    id?: number | null
    ident?: string | null
-   type?: string | null
-   name?: string | null
-   latitude_deg?: number | null
-   longitude_deg?: number | null
-   elevation_ft?: number | null
-   continent?: string | null
    iso_country?: string | null
    iso_region?: string | null
-   municipality?: string | null
-   scheduled_service?: string | null
-   gps_code?: string | null
-   iata_code?: string | null
-   local_code?: string | null
-   home_link?: string | null
-   wikipedia_link?: string | null
    keywords?: string | null
-   description?: string | null
-   frequency_mhz?: number | null
+   latitude_deg?: number | null
    length_ft?: number | null
-   width_ft?: number | null
-   surface?: string | null
    lighted?: number | null
-   closed?: number | null
+   local_code?: string | null
+   longitude_deg?: number | null
+   municipality?: string | null
+   name?: string | null
+   scheduled_service?: string | null
+   surface?: string | null
+   type?: string | null
+   width_ft?: number | null
+   wikipedia_link?: string | null
 }
 
 export interface AirportFeature {

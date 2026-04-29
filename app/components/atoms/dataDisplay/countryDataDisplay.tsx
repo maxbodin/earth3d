@@ -15,9 +15,10 @@ import { formatCurrencies } from '@/lib/format/formatCurrencies'
 import { formatLanguages } from '@/lib/format/formatLanguages'
 import { formatRegionalBlocs } from '@/lib/format/formatRegionalBlocs'
 import { formatTranslations } from '@/lib/format/formatTranslations'
+import { resolveCountryEmojiByAlpha2 } from '@/lib/format/formatCountryLookup'
+import { formatDisplayValues } from '@/lib/format/formatDisplayValues'
 import { DataSection } from '@/app/components/atoms/ui/dataSection'
-
-const lookup = require('country-data').lookup
+import { DETAILS_FOCUS_ZOOM_MULTIPLIER } from '@/app/constants/numbers'
 
 function isCountrySelection(selection: unknown): selection is Country {
    if (selection == null || typeof selection !== 'object') {
@@ -126,7 +127,7 @@ export function CountryDataDisplay(): React.JSX.Element {
 
    const country = selectedCountry
 
-   const countryEmoji = lookup?.countries({ alpha2: country.alpha2 })[0]?.emoji ?? ''
+   const countryEmoji = resolveCountryEmojiByAlpha2(country.alpha2)
 
    const displayedCountryName = countryProfile?.summary.name ?? country.country
    const displayedFlagUrl = countryProfile?.summary.flagPngUrl
@@ -135,9 +136,7 @@ export function CountryDataDisplay(): React.JSX.Element {
    const identityFields: FieldItem[] = [
       {
          label: 'Country',
-         value: countryEmoji.length > 0
-            ? `${displayedCountryName} ${countryEmoji}`
-            : displayedCountryName,
+         value: formatDisplayValues(displayedCountryName, countryEmoji),
          prominent: true,
       },
       {
@@ -303,11 +302,11 @@ export function CountryDataDisplay(): React.JSX.Element {
       Number.isFinite(country.latitude) && Number.isFinite(country.longitude)
 
    const focusOnCountry = (): void => {
-      if (!canFocusOnCountry) {
-         return
-      }
-
-      flyToCoordinates(country.latitude, country.longitude)
+      if (!canFocusOnCountry) return
+      
+      flyToCoordinates(country.latitude, country.longitude, {
+         zoomMultiplier: DETAILS_FOCUS_ZOOM_MULTIPLIER,
+      })
    }
 
    return (

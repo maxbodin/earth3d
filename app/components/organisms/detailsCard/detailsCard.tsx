@@ -1,21 +1,17 @@
 'use client'
 import { useCallback, useMemo } from 'react'
 import { GlassCard } from '@/app/components/molecules/glassCard/glassCard'
-import { PlaneDataDisplay } from '../../atoms/dataDisplay/planeDataDisplay/planeDataDisplay'
-import { AirportDataDisplay } from '../../atoms/dataDisplay/airportDataDisplay/airportDataDisplay'
-import { VesselDataDisplay } from '@/app/components/atoms/dataDisplay/vesselDataDisplay/vesselDataDisplay'
+import { PlaneDataDisplay } from '@/app/components/atoms/dataDisplay/planeDataDisplay'
+import { AirportDataDisplay } from '@/app/components/atoms/dataDisplay/airportDataDisplay'
+import { VesselDataDisplay } from '@/app/components/atoms/dataDisplay/vesselDataDisplay'
 import { ObjectType } from '@/app/enums/objectType'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { PlaceDataDisplay } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeDataDisplay'
-import {
-   clearCoordinatesFromCurrentUrl,
-} from '@/app/lib/coordinatesSearchParams'
-import {
-   clearCountryFromCurrentUrl,
-} from '@/app/lib/countrySearchParams'
-import { CountryDataDisplay } from '@/app/components/atoms/dataDisplay/countryDataDisplay/countryDataDisplay'
-import { EarthquakeDataDisplay } from '@/app/components/atoms/dataDisplay/earthquakeDataDisplay/earthquakeDataDisplay'
-import { MarkerDataDisplay } from '@/app/components/atoms/dataDisplay/markerDataDisplay/markerDataDisplay'
+import { clearCoordinatesFromCurrentUrl, } from '@/app/lib/coordinatesSearchParams'
+import { clearCountryFromCurrentUrl, } from '@/app/lib/countrySearchParams'
+import { CountryDataDisplay } from '@/app/components/atoms/dataDisplay/countryDataDisplay'
+import { EarthquakeDataDisplay } from '@/app/components/atoms/dataDisplay/earthquakeDataDisplay'
+import { MarkerDataDisplay } from '@/app/components/atoms/dataDisplay/markerDataDisplay'
 import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
 
 export function DetailsCard() {

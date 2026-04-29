@@ -14,6 +14,7 @@ import { reverseORS } from '@/app/server/services/openRouteService'
 import { GeocodeResponse } from '@/app/types/orsTypes'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { formatCoordinate } from '@/lib/format/formatCoordinate'
+import { DETAILS_FOCUS_ZOOM_MULTIPLIER } from '@/app/constants/numbers'
 
 function buildMarkerFields(marker: Marker): {
    headlineFields: FieldItem[]
@@ -51,11 +52,14 @@ export function MarkerDataDisplay(): React.JSX.Element {
    }
 
    const { headlineFields, locationFields, coordinateFields } = buildMarkerFields(marker)
-   const hasValidCoordinates = isValidCoordinate(marker.latitude, marker.longitude)
+   const hasValidCoordinates = isValidCoordinate({ latitude: marker.latitude, longitude: marker.longitude })
 
    const focusOnMarker = (): void => {
       if (!hasValidCoordinates) return
-      flyToCoordinates(marker.latitude, marker.longitude)
+
+      flyToCoordinates(marker.latitude, marker.longitude, {
+         zoomMultiplier: DETAILS_FOCUS_ZOOM_MULTIPLIER,
+      })
    }
 
    const viewPlaceData = useCallback(async (): Promise<void> => {
