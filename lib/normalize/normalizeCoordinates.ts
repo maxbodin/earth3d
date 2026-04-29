@@ -1,4 +1,4 @@
-import { Coordinates } from '@/app/types/coordinates'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 import { parseNumber } from '@/lib/parse/parseNumber'
 import { isValidLatitude } from '@/lib/isValid/isValidLatitude'
 import { isValidLongitude } from '@/lib/isValid/isValidLongitude'

@@ -330,7 +330,7 @@ export function MarkersDashboardView() {
    ])
 
    const focusMarkerAndDisplayPlace = useCallback(async (marker: Marker): Promise<void> => {
-      if (!isValidCoordinate(marker.latitude, marker.longitude)) {
+      if (!isValidCoordinate({ latitude: marker.latitude, longitude: marker.longitude })) {
          showToast('Marker coordinates are invalid.', 'danger')
          return
       }

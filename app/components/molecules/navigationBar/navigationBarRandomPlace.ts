@@ -1,7 +1,7 @@
 import countriesCoords from '@/app/data/country-codes-lat-long-alpha3.json'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
 import { reverseORS } from '@/app/server/services/openRouteService'
-import { Coordinates } from '@/app/types/coordinates'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 import { CountryCoordinateSeed } from '@/app/types/countryCoordinateSeed'
 import { RandomLandPlaceResult } from '@/app/types/randomLandPlaceResult'
 

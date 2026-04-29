@@ -17,12 +17,12 @@ import {
    readCountryFromCurrentUrl,
    updateCountryInCurrentUrl,
 } from '@/app/lib/countrySearchParams'
-import { Coordinates } from '@/app/types/coordinates'
 import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
 import { findCountryByName } from '@/app/lib/countrySearch'
 import { normalizeCountryName } from '@/lib/normalize/normalizeCountryName'
 import { normalizeCoordinates } from '@/lib/normalize/normalizeCoordinates'
 import { parseCoordinatesFromUnknown } from '@/lib/parse/parseCoordinates'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 
 function extractCoordinatesFromSelection(
    selectedObjectType: ObjectType,

@@ -7,19 +7,18 @@ import { CompassIcon, PlusIcon } from 'lucide-react'
 import { reverseORS } from '@/app/server/services/openRouteService'
 import { ObjectType } from '@/app/enums/objectType'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
-import {
-   getAntipodeCoordinates,
-   isFeature,
-   mergeDisplayValues,
-   normalizeDisplayValue,
-   parsePlaceCoordinates,
-} from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeDataDisplay.utils'
 import { PlaceImageCarousel, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/placeImageCarousel'
 import { usePlaceImages, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/usePlaceImages'
 import { FieldItem } from '@/app/types/fieldItem'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 import { DataSection } from '@/app/components/atoms/ui/dataSection'
+import { formatDisplayValues } from '@/lib/format/formatDisplayValues'
+import { isFeature } from '@/lib/is/isFeature'
+import { parsePlaceCoordinates } from '@/lib/parse/parsePlaceCoordinates'
+import { getAntipodeCoordinates } from '@/lib/geo/getAntipodeCoordinates'
+import { formatValue } from '@/lib/format/formatValue'
+import { DETAILS_FOCUS_ZOOM_MULTIPLIER } from '@/app/constants/numbers'
 
 export function PlaceDataDisplay(): React.JSX.Element {
    const {
@@ -42,14 +41,14 @@ export function PlaceDataDisplay(): React.JSX.Element {
    const data: Feature = selectedObjectData
 
    const properties: FeatureProperties = data.properties
-   const name: string = normalizeDisplayValue(properties.name)
-   const label: string = normalizeDisplayValue(properties.label)
-   const continent: string = normalizeDisplayValue(properties.continent)
-   const country: string = normalizeDisplayValue(properties.country)
-   const countryA: string = normalizeDisplayValue(properties.country_a)
-   const county: string = normalizeDisplayValue(properties.county)
-   const countyA: string = normalizeDisplayValue(properties.county_a)
-   const region: string = normalizeDisplayValue(properties.region)
+   const name: string = formatValue(properties.name)
+   const label: string = formatValue(properties.label)
+   const continent: string = formatValue(properties.continent)
+   const country: string = formatValue(properties.country)
+   const countryA: string = formatValue(properties.country_a)
+   const county: string = formatValue(properties.county)
+   const countyA: string = formatValue(properties.county_a)
+   const region: string = formatValue(properties.region)
 
    const {
       hasValidCoordinates,
@@ -70,7 +69,9 @@ export function PlaceDataDisplay(): React.JSX.Element {
    const focusOnPlace = (): void => {
       if (!hasValidCoordinates) return
 
-      flyToCoordinates(latitude, longitude)
+      flyToCoordinates(latitude, longitude, {
+         zoomMultiplier: DETAILS_FOCUS_ZOOM_MULTIPLIER,
+      })
    }
 
    const addPlaceToMarkers = (): void => {
@@ -135,11 +136,11 @@ export function PlaceDataDisplay(): React.JSX.Element {
       },
       {
          label: 'Country',
-         value: mergeDisplayValues(country, countryA),
+         value: formatDisplayValues(country, countryA, 'parens'),
       },
       {
          label: 'County',
-         value: mergeDisplayValues(county, countyA),
+         value: formatDisplayValues(county, countyA, 'parens'),
       },
       {
          label: 'Region',

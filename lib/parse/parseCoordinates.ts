@@ -1,4 +1,4 @@
-import { Coordinates } from '@/app/types/coordinates'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 import { normalizeCoordinates } from '@/lib/normalize/normalizeCoordinates'
 
 export function parseCoordinatesFromUnknown(rawCoordinates: unknown): Coordinates | null {

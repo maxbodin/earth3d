@@ -1,5 +1,4 @@
-import { Coordinates } from '@/app/types/coordinates'
-
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 
 export interface ParsedPlaceCoordinates extends Coordinates {
    hasValidCoordinates: boolean

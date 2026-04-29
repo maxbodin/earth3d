@@ -4,12 +4,16 @@ import { N_A_VALUE } from '@/app/constants/strings'
 import { UsgsEarthquakeFeature } from '@/app/types/earthquake/usgsEarthquakeFeature'
 import { FieldItem } from '@/app/types/fieldItem'
 import { formatOptional } from '@/lib/format/formatOptional'
+import { formatCoordinate } from '@/lib/format/formatCoordinate'
+import { formatEpochToLocale } from '@/lib/format/formatEpochToLocale'
+import { formatValue } from '@/lib/format/formatValue'
 import { DataSection } from '@/app/components/atoms/ui/dataSection'
 import { Link } from '@/app/components/atoms/ui/link'
 import { Button } from '@nextui-org/react'
 import { EyeIcon } from '@nextui-org/shared-icons'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { isValidCoordinate } from '@/lib/isValid/isValidCoordinate'
+import { DETAILS_FOCUS_ZOOM_MULTIPLIER } from '@/app/constants/numbers'
 
 const ALERT_LEVEL_CLASSES: Record<string, string> = {
    red: 'text-red-500 font-bold',
@@ -42,18 +46,18 @@ function buildEarthquakeFields(earthquake: UsgsEarthquakeFeature): {
    ]
 
    const coordinateFields: FieldItem[] = [
-      { label: 'Latitude', value: latitude?.toFixed(4) ?? N_A_VALUE },
-      { label: 'Longitude', value: longitude?.toFixed(4) ?? N_A_VALUE },
-      { label: 'Time', value: new Date(properties.time).toLocaleString() },
-      { label: 'Updated', value: new Date(properties.updated).toLocaleString() },
+      { label: 'Latitude', value: formatCoordinate(latitude) },
+      { label: 'Longitude', value: formatCoordinate(longitude) },
+      { label: 'Time', value: formatEpochToLocale(properties.time) },
+      { label: 'Updated', value: formatEpochToLocale(properties.updated) },
    ]
 
    const detailFields: FieldItem[] = [
-      ...(properties.felt != null ? [{ label: 'Felt reports', value: String(properties.felt) }] : []),
-      ...(properties.cdi != null ? [{ label: 'Community Intensity (CDI)', value: String(properties.cdi) }] : []),
-      ...(properties.mmi != null ? [{ label: 'Modified Mercalli (MMI)', value: String(properties.mmi) }] : []),
+      ...(properties.felt != null ? [{ label: 'Felt reports', value: formatValue(properties.felt) }] : []),
+      ...(properties.cdi != null ? [{ label: 'Community Intensity (CDI)', value: formatValue(properties.cdi) }] : []),
+      ...(properties.mmi != null ? [{ label: 'Modified Mercalli (MMI)', value: formatValue(properties.mmi) }] : []),
       { label: 'Status', value: properties.status },
-      { label: 'Significance', value: String(properties.sig) },
+      { label: 'Significance', value: formatValue(properties.sig) },
    ]
 
    return { headlineFields, coreFields, coordinateFields, detailFields }
@@ -71,12 +75,15 @@ export function EarthquakeDataDisplay(): React.JSX.Element {
    const { headlineFields, coreFields, coordinateFields, detailFields } = buildEarthquakeFields(earthquake)
    const { properties, geometry } = earthquake
    const [longitude, latitude] = geometry.coordinates
-   const hasValidCoordinates = isValidCoordinate(latitude, longitude)
+   const hasValidCoordinates = isValidCoordinate({ latitude: latitude, longitude: longitude })
    const { flyToCoordinates } = CameraFlyController()
 
-   const focusOnPlace = (): void => {
+   const focusOnEarthquake = (): void => {
       if (!hasValidCoordinates) return
-      flyToCoordinates(latitude, longitude)
+      
+      flyToCoordinates(latitude, longitude, {
+         zoomMultiplier: DETAILS_FOCUS_ZOOM_MULTIPLIER,
+      })
    }
 
    return (
@@ -107,12 +114,12 @@ export function EarthquakeDataDisplay(): React.JSX.Element {
                <Button
                   variant="bordered"
                   size="sm"
-                  aria-label="Focus view on place."
+                  aria-label="Focus view on earthquake."
                   className="z-50 bg-black/50"
                   endContent={<EyeIcon />}
-                  onPress={focusOnPlace}
+                  onPress={focusOnEarthquake}
                >
-                  Focus view on place
+                  Focus view on earthquake
                </Button>
             )}
          </section>

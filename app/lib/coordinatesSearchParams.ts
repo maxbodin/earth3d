@@ -1,4 +1,4 @@
-import { Coordinates } from '@/app/types/coordinates'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 import { serializeCoordinate } from '@/lib/serialize/serializeCoordinate'
 import { getCurrentUrl, replaceCurrentUrl } from '@/app/lib/searchParamsHelper'
 import { normalizeCoordinates } from '@/lib/normalize/normalizeCoordinates'
