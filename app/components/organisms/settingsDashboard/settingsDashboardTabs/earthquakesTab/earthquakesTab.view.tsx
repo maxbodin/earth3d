@@ -6,7 +6,7 @@ import {
    EarthquakesTabController,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/earthquakesTab/earthquakesTab.controller'
 import { useEarthquakes, } from '@/app/components/atoms/three/earthquakes/earthquakes.model'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { TIME_RANGE_OPTIONS, TimeRangeLabel } from '@/app/types/timeRangeLabel'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { UsgsEarthquakeFeature } from '@/app/types/earthquake/usgsEarthquakeFeature'
