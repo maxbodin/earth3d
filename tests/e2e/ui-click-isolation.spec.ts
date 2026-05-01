@@ -8,7 +8,8 @@ test.describe('UI click isolation from 3D scene', () => {
       await page.goto('/')
       await page.waitForTimeout(3000)
 
-      // Click the settings button — should NOT trigger a geocode call on the planet.
+      // TODO : It should test with select hand activated.
+      // Click the settings button, should NOT trigger a geocode call on the planet.
       const settingsButton = page.getByRole('button', { name: 'Open Settings' })
       await expect(settingsButton).toBeVisible()
 

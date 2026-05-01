@@ -1,5 +1,4 @@
 'use client'
-// @ts-ignore
 import { MapProvider } from 'geo-three'
 import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
 
@@ -31,25 +30,24 @@ export class CustomMapBoxProvider extends MapProvider {
     */
    public mapStyle: string = DEFAULT_MAP_STYLE_ID
 
-   public publicToken: string = ''
-
    public constructor() {
       super()
    }
 
-   public fetchTile(zoom: number, x: number, y: number): Promise<any> {
-      return new Promise(async (resolve, reject): Promise<any> => {
-         if (typeof window !== 'undefined') {
-            const image: HTMLImageElement = window.document.createElement('img')
-            image.onload = function(): void {
-               resolve(image)
-            }
-            image.onerror = function(): void {
-               reject()
-            }
-            // Load tiles from same-origin API route to avoid direct browser CORS issues.
-            image.src = `/api/mapbox/v4/${encodeURIComponent(this.mapStyle)}/${zoom}/${x}/${y}`
-         }
-      })
+   public fetchTile(
+      zoom: number,
+      x: number,
+      y: number,
+      signal?: AbortSignal,
+   ): Promise<HTMLImageElement> {
+      if (typeof window === 'undefined') {
+         return Promise.reject(new Error('CustomMapBoxProvider requires a browser environment.'))
+      }
+
+      // Load tiles from same-origin API route to avoid browser CORS issues.
+      return this.loadImage(
+         `/api/mapbox/v4/${encodeURIComponent(this.mapStyle)}/${zoom}/${x}/${y}`,
+         signal,
+      )
    }
 }

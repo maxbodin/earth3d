@@ -1,5 +1,6 @@
 export const OUTER_SPACE_RENDER_ORDER: number = 1
 export const EARTH_RENDER_ORDER: number = 10
+export const TECTONIC_PLATES_RENDER_ORDER: number = 20
 export const EARTHQUAKE_HEATMAP_RENDER_ORDER: number = 40
 export const EARTHQUAKE_DEPTH_LINE_RENDER_ORDER: number = 45
 export const EARTHQUAKE_RENDER_ORDER: number = 50
