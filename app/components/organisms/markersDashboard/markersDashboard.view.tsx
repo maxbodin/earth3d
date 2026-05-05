@@ -24,7 +24,6 @@ import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
 import {
-   CircleIcon,
    CrosshairIcon,
    DownloadIcon,
    Eye as VisibilityOnIcon,
@@ -1032,7 +1031,7 @@ export function MarkersDashboardView() {
                               <Button
                                  size="sm"
                                  onPress={createNewCircleMarker}
-                                 startContent={<CircleIcon />}
+                                 startContent={<PlusIcon />}
                                  aria-label="Create new circle marker"
                               >
                                  Create new circle marker

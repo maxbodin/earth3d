@@ -45,8 +45,8 @@ const CIRCLE_SURFACE_LIFT = EARTH_RADIUS * 0.002
 const PLANE_CIRCLE_LIFT = 70
 const LINE_BASE_WIDTH = EARTH_RADIUS / 2e2
 export const WEB_MERCATOR_MAX_LATITUDE = 85.05112878
-const SPHERICAL_HANDLE_SCALE_MULTIPLIER = 7
-const PLANE_HANDLE_SCALE_MULTIPLIER = 9
+const SPHERICAL_HANDLE_SCALE_MULTIPLIER = 3
+const PLANE_HANDLE_SCALE_MULTIPLIER = 2
 
 /** Three.js scene objects that make up a single rendered circle marker. */
 interface CircleSceneObjects {
@@ -210,8 +210,8 @@ function createCircleHandleMesh(circleMarker: CircleMarker): THREE.Mesh {
    const handleMaterial = new THREE.MeshBasicMaterial({
       color: lightenColor(circleMarker.color, 0.2),
       toneMapped: false,
-      depthTest: false,
-      depthWrite: false,
+      depthTest: true,
+      depthWrite: true,
    })
    const handleMesh = new THREE.Mesh(handleGeometry, handleMaterial)
    handleMesh.name = `circle-radius-handle:${circleMarker.id}`
