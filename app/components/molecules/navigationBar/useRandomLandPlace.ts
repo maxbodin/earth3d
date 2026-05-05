@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback, useState } from 'react'
 import { ObjectType } from '@/app/enums/objectType'
 import { getRandomLandPlace } from '@/app/components/molecules/navigationBar/navigationBarRandomPlace'
 import { Marker } from '@/app/types/marker'
-import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
+import { createMarkerFromPlaceFeature } from '@/lib/factories/markerFactory'
 
 interface UseRandomLandPlaceParams {
    flyToCoordinates: (latitude: number, longitude: number) => void

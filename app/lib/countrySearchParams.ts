@@ -1,4 +1,5 @@
-import { getCurrentUrl, replaceCurrentUrl } from '@/app/lib/searchParamsHelper'
+import { getCurrentUrl } from '@/lib/searchParams/getCurrentUrl'
+import { replaceCurrentUrl } from '@/lib/searchParams/replaceCurrentUrl'
 
 export const COUNTRY_SEARCH_PARAM_KEY = 'country'
 const COUNTRY_SEARCH_PARAMS_UPDATED_EVENT = 'country-search-params-updated'

@@ -1,17 +1,8 @@
 import { expect, Page, test } from '@playwright/test'
-import { ThreeSceneDebugSnapshot } from '@/tests/e2e/types/threeSceneDebugSnapshot'
-
-
-const getMarkerTitlesDebug = async (page: Page): Promise<ThreeSceneDebugSnapshot> => {
-   return page.evaluate(() => {
-      return (window as Window & {
-         __THREE_SCENE_DEBUG__?: ThreeSceneDebugSnapshot
-      }).__THREE_SCENE_DEBUG__ ?? {}
-   })
-}
+import { readSceneDebug } from '@/tests/e2e/utils/readSceneDebug'
 
 const getMarkerTitleTexts = async (page: Page): Promise<string[]> => {
-   const debug = await getMarkerTitlesDebug(page)
+   const debug = await readSceneDebug(page)
    return debug.markerTitleTexts ?? []
 }
 
@@ -42,7 +33,7 @@ test.describe('Marker titles', () => {
          return titles.includes('Observation Point')
       }).toBe(true)
       await expect.poll(async () => {
-         const debug = await getMarkerTitlesDebug(page)
+         const debug = await readSceneDebug(page)
          return debug.markerTitleMinVisualSize ?? 0
       }).toBeGreaterThan(1000)
 
@@ -99,7 +90,7 @@ test.describe('Marker titles', () => {
          return titles.includes('Your position')
       }).toBe(true)
       await expect.poll(async () => {
-         const debug = await getMarkerTitlesDebug(page)
+         const debug = await readSceneDebug(page)
          return debug.markerTitleMinVisualSize ?? 0
       }).toBeGreaterThan(1000)
 

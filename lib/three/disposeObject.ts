@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { disposeMaterial } from '@/app/helpers/threeHelper'
+import { disposeObjectMaterial } from '@/lib/three/disposeObjectMaterial'
 
 /**
  * Recursively dispose of an Object3D and all its resources.
@@ -15,7 +15,7 @@ export function disposeNode(node: THREE.Object3D): void {
 
    // Dispose materials and their textures.
    if (mesh.material) {
-      disposeMaterial(mesh.material)
+      disposeObjectMaterial(mesh.material)
       mesh.material = null as any
    }
 

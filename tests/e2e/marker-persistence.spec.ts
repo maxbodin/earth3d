@@ -4,14 +4,12 @@ import { Marker } from '@/app/types/marker'
 
 const stubMarker: Marker = {
    id: 'test-marker-1',
-   selection: '',
    name: 'Eiffel Tower',
    showTitleOnMap: true,
    address: 'Paris, France',
    latitude: 48.8584,
    longitude: 2.2945,
    color: '#ff0000',
-   actions: '',
    isPuck: false,
 }
 

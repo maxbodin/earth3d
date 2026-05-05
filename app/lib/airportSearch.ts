@@ -1,10 +1,5 @@
 import airportsDataJson from '@/app/data/Airports.json'
-import {
-   AirportAttributes,
-   AirportFeature,
-   AirportsDataset,
-   AirportSearchSuggestion,
-} from '@/app/types/airport'
+import { AirportAttributes, AirportFeature, AirportsDataset, AirportSearchSuggestion, } from '@/app/types/airport'
 
 interface AirportSearchEntry {
    key: string

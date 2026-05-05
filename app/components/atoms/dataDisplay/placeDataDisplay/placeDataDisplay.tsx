@@ -11,7 +11,6 @@ import { PlaceImageCarousel, } from '@/app/components/atoms/dataDisplay/placeDat
 import { usePlaceImages, } from '@/app/components/atoms/dataDisplay/placeDataDisplay/usePlaceImages'
 import { FieldItem } from '@/app/types/fieldItem'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
-import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 import { DataSection } from '@/app/components/atoms/ui/dataSection'
 import { formatDisplayValues } from '@/lib/format/formatDisplayValues'
 import { isFeature } from '@/lib/is/isFeature'
@@ -19,6 +18,7 @@ import { parsePlaceCoordinates } from '@/lib/parse/parsePlaceCoordinates'
 import { getAntipodeCoordinates } from '@/lib/geo/getAntipodeCoordinates'
 import { formatValue } from '@/lib/format/formatValue'
 import { DETAILS_FOCUS_ZOOM_MULTIPLIER } from '@/app/constants/numbers'
+import { createMarkerFromPlaceFeature } from '@/lib/factories/markerFactory'
 
 export function PlaceDataDisplay(): React.JSX.Element {
    const {

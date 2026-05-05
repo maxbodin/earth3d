@@ -7,19 +7,12 @@ import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { AssetManager } from '@/app/lib/assetManager'
-import { MARKER_GLB_MODEL, TEXT_FONT } from '@/app/constants/paths'
+import { MARKER_GLB_MODEL } from '@/app/constants/paths'
 import { Marker } from '@/app/types/marker'
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { EARTH_RADIUS } from '@/app/constants/numbers'
 import { MARKER_RENDER_ORDER, MARKER_TITLE_RENDER_ORDER } from '@/app/constants/renderOrder'
-import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
-import {
-   createCenteredTextGeometry,
-   EARTH_SCENE_TEXT_BASE_DEPTH,
-   EARTH_SCENE_TEXT_BASE_SIZE,
-   getObjectGeometryExtentFromOrigin,
-} from '@/app/lib/threeText3d'
 import {
    computeDampedScale,
    computeScaleDamping,
@@ -28,12 +21,21 @@ import {
    MARKER_PUCK_LOD_CONFIG,
 } from '@/app/lib/sceneLod'
 import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
+import { loadSharedTextFont } from '@/lib/three/loadSharedTextFont'
+import { createTextGeometry } from '@/lib/three/createTextGeometry'
+import { createSharedTextMaterials } from '@/lib/three/createSharedTextMaterials'
+import {
+   EARTH_SCENE_TEXT_BASE_DEPTH,
+   EARTH_SCENE_TEXT_BASE_SIZE,
+   getObjectGeometryExtentFromOrigin
+} from '@/lib/three/getObjectGeometryExtentFromOrigin'
+import { getTextMeshHalfHeight } from '@/lib/three/getTextMeshHalfHeight'
+import { publishThreeSceneDebug } from '@/lib/threeSceneDebug'
 
 let sharedMarkerTemplate: THREE.Group | null = null
 let markerModelLoadPromise: Promise<THREE.Group> | null = null
-let sharedMarkerTitleFont: Font | null = null
-let markerTitleFontLoadPromise: Promise<Font> | null = null
 
+// TODO : Refactor in constants.
 const UP_AXIS = new THREE.Vector3(0, 1, 0)
 const GLOBE_MARKER_SCALE_MULTIPLIER = 8
 const PLANE_MARKER_SCALE_MULTIPLIER = 10
@@ -43,7 +45,6 @@ const GLOBE_MARKER_TITLE_GAP_BASE = EARTH_RADIUS / 1e5
 const GLOBE_MARKER_TITLE_GAP_SCALE_MULTIPLIER = 0.003
 const PLANE_MARKER_TITLE_GAP_BASE = EARTH_RADIUS / 8e9
 const PLANE_MARKER_TITLE_GAP_SCALE_MULTIPLIER = 0.002
-const MARKER_TITLE_CURVE_SEGMENTS = 4
 
 const getMarkerLiftMultiplier = (sceneType: SceneType): number => {
    return sceneType === SceneType.SPHERICAL
@@ -193,32 +194,6 @@ async function loadSharedMarkerTemplate(): Promise<THREE.Group> {
    return markerModelLoadPromise
 }
 
-async function loadSharedMarkerTitleFont(): Promise<Font> {
-   if (sharedMarkerTitleFont != null) return sharedMarkerTitleFont
-   if (markerTitleFontLoadPromise != null) return markerTitleFontLoadPromise
-
-   markerTitleFontLoadPromise = AssetManager.loadFont(TEXT_FONT)
-      .then((loadedFont): Font => {
-         sharedMarkerTitleFont = loadedFont
-         return loadedFont
-      })
-
-   return markerTitleFontLoadPromise
-}
-
-const createMarkerTitleGeometry = (text: string, font: Font): TextGeometry => {
-   const geometry = createCenteredTextGeometry({
-      text,
-      font,
-      size: EARTH_SCENE_TEXT_BASE_SIZE,
-      depth: EARTH_SCENE_TEXT_BASE_DEPTH,
-      curveSegments: MARKER_TITLE_CURVE_SEGMENTS,
-      bevelEnabled: false,
-   })
-
-   return geometry
-}
-
 export function MarkersController(): null {
    const { displayedSceneData } = useScenes()
    const { markers, areMarkerTitlesVisible } = useMarkersDashboard()
@@ -289,19 +264,6 @@ export function MarkersController(): null {
       })
    }
 
-   const getTitleHalfHeight = (titleMesh: THREE.Mesh): number => {
-      const geometry = titleMesh.geometry as THREE.BufferGeometry
-
-      if (geometry.boundingBox == null) {
-         geometry.computeBoundingBox()
-      }
-
-      const boundingBox = geometry.boundingBox
-      if (boundingBox == null) return 0
-
-      return (boundingBox.max.y - boundingBox.min.y) / 2
-   }
-
    const updateMarkerTransform = (
       markerObject: THREE.Group,
       marker: Marker,
@@ -339,18 +301,10 @@ export function MarkersController(): null {
          return markerTitleMaterialsRef.current
       }
 
-      markerTitleMaterialsRef.current = [
-         new THREE.MeshBasicMaterial({
-            color: '#f8fafc',
-            toneMapped: false,
-            side: THREE.DoubleSide,
-         }),
-         new THREE.MeshBasicMaterial({
-            color: '#475569',
-            toneMapped: false,
-            side: THREE.DoubleSide,
-         }),
-      ]
+      markerTitleMaterialsRef.current = createSharedTextMaterials({
+         frontColor: '#f8fafc',
+         sideColor: '#475569',
+      })
 
       return markerTitleMaterialsRef.current
    }
@@ -369,7 +323,12 @@ export function MarkersController(): null {
          return null
       }
 
-      const newGeometry = createMarkerTitleGeometry(normalizedTitle, titleFont)
+      const newGeometry = createTextGeometry({
+         text: normalizedTitle,
+         font: titleFont,
+         size: EARTH_SCENE_TEXT_BASE_SIZE,
+         depth: EARTH_SCENE_TEXT_BASE_DEPTH,
+      })
       markerTitleGeometryCacheRef.current.set(normalizedTitle, newGeometry)
 
       return newGeometry
@@ -406,7 +365,7 @@ export function MarkersController(): null {
          cameraDistanceToPlanetCenter.current,
          COUNTRY_TEXT_LOD_CONFIG,
       )
-      const titleHalfHeight = getTitleHalfHeight(titleMesh)
+      const titleHalfHeight = getTextMeshHalfHeight(titleMesh)
       const titleGapFromMarkerTop = getMarkerTitleGapBase(sceneType)
          + markerScale * getMarkerTitleGapScaleMultiplier(sceneType)
       const titleLift = markerTopLift + titleGapFromMarkerTop + titleHalfHeight * titleScale
@@ -579,7 +538,7 @@ export function MarkersController(): null {
 
       if (markerTitleFontRef.current == null) {
          try {
-            markerTitleFontRef.current = await loadSharedMarkerTitleFont()
+            markerTitleFontRef.current = await loadSharedTextFont()
          } catch (error) {
             console.error('Error loading marker title font:', error)
          }

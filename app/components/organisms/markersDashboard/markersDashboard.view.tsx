@@ -1,12 +1,10 @@
 'use client'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useUi } from '@/app/context/uiContext'
-
-import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import {
    Button,
    Checkbox,
-   getKeyValue,
    Input,
    Switch,
    Table,
@@ -20,11 +18,13 @@ import {
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { CloseIcon, DeleteIcon, EyeIcon } from '@nextui-org/shared-icons'
 import { Marker } from '@/app/types/marker'
+import { CircleMarker } from '@/app/types/circleMarker'
 import { MarkersDashboardController } from '@/app/components/organisms/markersDashboard/markersDashboard.controller'
 import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
 import {
+   CircleIcon,
    CrosshairIcon,
    DownloadIcon,
    Eye as VisibilityOnIcon,
@@ -39,11 +39,34 @@ import { useSelection } from '@/app/components/atoms/clickHandler/selectionConte
 import { CursorModeType } from '@/app/enums/modeType'
 import { reverseORS } from '@/app/server/services/openRouteService'
 import { ObjectType } from '@/app/enums/objectType'
-import { MAX_LATITUDE, MAX_LONGITUDE, MIN_LATITUDE, MIN_LONGITUDE, } from '@/app/constants/numbers'
+import { CIRCLE_RADIUS_SLIDER_STEP_KM, MAX_CIRCLE_RADIUS_KM, MIN_CIRCLE_RADIUS_KM, } from '@/app/constants/numbers'
 import { isValidCoordinate } from '@/lib/isValid/isValidCoordinate'
+import { normalizeCircleRadiusKm } from '@/lib/normalize/normalizeCircleRadiusKm'
+import { parseNumberInput } from '@/lib/parse/parseNumberInput'
+import { isValidLatitude } from '@/lib/isValid/isValidLatitude'
+import { isValidLongitude } from '@/lib/isValid/isValidLongitude'
 
 
-const columns: string[] = ['Selection', 'Title', 'Address', 'Latitude', 'Longitude', 'Color', 'Actions']
+type MarkerColumnKey = 'selection' | 'name' | 'address' | 'latitude' | 'longitude' | 'color' | 'actions'
+type CircleColumnKey = keyof Pick<CircleMarker, 'name' | 'latitude' | 'longitude' | 'radiusKm' | 'color'> | 'actions'
+
+const markerColumns: { key: MarkerColumnKey, label: string }[] = [
+   { key: 'selection', label: 'Selection' },
+   { key: 'name', label: 'Title' },
+   { key: 'address', label: 'Address' },
+   { key: 'latitude', label: 'Latitude' },
+   { key: 'longitude', label: 'Longitude' },
+   { key: 'color', label: 'Color' },
+   { key: 'actions', label: 'Actions' },
+]
+const circleColumns: { key: CircleColumnKey, label: string }[] = [
+   { key: 'name', label: 'Title' },
+   { key: 'latitude', label: 'Center Latitude' },
+   { key: 'longitude', label: 'Center Longitude' },
+   { key: 'radiusKm', label: 'Radius (km)' },
+   { key: 'color', label: 'Color' },
+   { key: 'actions', label: 'Actions' },
+]
 
 type CoordinateField = 'latitude' | 'longitude'
 type ToastTone = 'danger' | 'info'
@@ -53,27 +76,24 @@ interface MarkerToast {
    tone: ToastTone
 }
 
-const parseCoordinateInput = (rawValue: string): number | null => {
-   const normalizedValue = rawValue.trim().replace(',', '.')
-
-   if (
-      normalizedValue === ''
-      || normalizedValue === '-'
-      || normalizedValue === '+'
-      || normalizedValue === '.'
-      || normalizedValue === '-.'
-      || normalizedValue === '+.'
-   ) {
-      return null
+/**
+ * Returns a validation error message for an out-of-range circle radius, or `null` if valid.
+ * @param value
+ */
+const getCircleRadiusErrorMessage = (value: number | null): string | null => {
+   if (value == null) return 'Radius must be a valid number.'
+   if (value < MIN_CIRCLE_RADIUS_KM || value > MAX_CIRCLE_RADIUS_KM) {
+      return `Radius must be between ${MIN_CIRCLE_RADIUS_KM} and ${MAX_CIRCLE_RADIUS_KM} km.`
    }
 
-   const parsedValue = Number(normalizedValue)
-
-   return Number.isFinite(parsedValue)
-      ? parsedValue
-      : null
+   return null
 }
 
+/**
+ * Returns a validation error message for an out-of-range coordinate, or `null` if valid.
+ * @param field
+ * @param value
+ */
 const getCoordinateErrorMessage = (
    field: CoordinateField,
    value: number | null,
@@ -84,11 +104,11 @@ const getCoordinateErrorMessage = (
          : 'Longitude must be a valid number.'
    }
 
-   if (field === 'latitude' && (value < MIN_LATITUDE || value > MAX_LATITUDE)) {
+   if (field === 'latitude' && isValidLatitude(value)) {
       return 'Latitude must be between -90 and 90.'
    }
 
-   if (field === 'longitude' && (value < MIN_LONGITUDE || value > MAX_LONGITUDE)) {
+   if (field === 'longitude' && isValidLongitude(value)) {
       return 'Longitude must be between -180 and 180.'
    }
 
@@ -100,10 +120,13 @@ export function MarkersDashboardView() {
       isMarkersDashboardOpen,
       setIsMarkersDashboardOpen,
       markers,
+      circleMarkers,
       areMarkerTitlesVisible,
       setAreMarkerTitlesVisible,
       coordinateSelectionMarkerId,
       setCoordinateSelectionMarkerId,
+      coordinateSelectionCircleId,
+      setCoordinateSelectionCircleId,
    } =
       useMarkersDashboard()
 
@@ -118,8 +141,11 @@ export function MarkersDashboardView() {
       exportSelectedMarkers,
       importMarkersFromFile,
       createNewMarker,
+      createNewCircleMarker,
       updateMarker,
+      updateCircleMarker,
       deleteMarker,
+      deleteCircleMarker,
       featureSuggestions,
       autoCompleteLoading,
       onSelectionChange,
@@ -132,6 +158,7 @@ export function MarkersDashboardView() {
 
    const [toast, setToast] = useState<MarkerToast | null>(null)
    const [coordinateErrors, setCoordinateErrors] = useState<Record<string, Partial<Record<CoordinateField, string>>>>({})
+   const [circleRadiusErrors, setCircleRadiusErrors] = useState<Record<string, string>>({})
    const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
    const isClosingForCoordinateSelectionRef = useRef<boolean>(false)
 
@@ -147,6 +174,7 @@ export function MarkersDashboardView() {
 
    const clearTransientFormState = useCallback((): void => {
       setCoordinateErrors({})
+      setCircleRadiusErrors({})
       setToast(null)
    }, [])
 
@@ -159,6 +187,7 @@ export function MarkersDashboardView() {
          } else {
             restoreMainUi()
             setCoordinateSelectionMarkerId(null)
+            setCoordinateSelectionCircleId(null)
             setCursorMode(CursorModeType.HAND)
          }
 
@@ -171,6 +200,7 @@ export function MarkersDashboardView() {
       clearTransientFormState,
       clearSelectedRows,
       restoreMainUi,
+      setCoordinateSelectionCircleId,
       setCoordinateSelectionMarkerId,
       setCursorMode,
       setIsMarkersDashboardOpen,
@@ -290,12 +320,13 @@ export function MarkersDashboardView() {
       field: CoordinateField,
       rawValue: string,
    ): void => {
-      const parsedValue = parseCoordinateInput(rawValue)
+      const parsedValue = parseNumberInput(rawValue)
       const errorMessage = getCoordinateErrorMessage(field, parsedValue)
 
-      if (errorMessage != null) {
-         setCoordinateError(marker.id, field, errorMessage)
-         showToast(errorMessage, 'danger')
+      if (parsedValue == null || errorMessage != null) {
+         const nextErrorMessage = errorMessage ?? getCoordinateErrorMessage(field, null) ?? 'Coordinate must be a valid number.'
+         setCoordinateError(marker.id, field, nextErrorMessage)
+         showToast(nextErrorMessage, 'danger')
          return
       }
 
@@ -310,15 +341,89 @@ export function MarkersDashboardView() {
       onCoordsChange(updatedMarker)
    }, [clearCoordinateError, onCoordsChange, setCoordinateError, showToast, updateMarker])
 
+   /**
+    *
+    */
+   const commitCircleCoordinateInput = useCallback((
+      circleMarker: CircleMarker,
+      rowIndex: number,
+      field: CoordinateField,
+      rawValue: string,
+   ): void => {
+      const parsedValue = parseNumberInput(rawValue)
+      const errorMessage = getCoordinateErrorMessage(field, parsedValue)
+
+      if (parsedValue == null || errorMessage != null) {
+         const nextErrorMessage = errorMessage ?? getCoordinateErrorMessage(field, null) ?? 'Coordinate must be a valid number.'
+         setCoordinateError(circleMarker.id, field, nextErrorMessage)
+         showToast(nextErrorMessage, 'danger')
+         return
+      }
+
+      clearCoordinateError(circleMarker.id, field)
+
+      updateCircleMarker(rowIndex, {
+         ...circleMarker,
+         [field]: parsedValue,
+      })
+   }, [clearCoordinateError, setCoordinateError, showToast, updateCircleMarker])
+
+   /**
+    *
+    */
+   const setCircleRadiusError = useCallback((circleMarkerId: string, errorMessage: string): void => {
+      setCircleRadiusErrors(prevErrors => ({
+         ...prevErrors,
+         [circleMarkerId]: errorMessage,
+      }))
+   }, [])
+
+   /**
+    *
+    */
+   const clearCircleRadiusError = useCallback((circleMarkerId: string): void => {
+      setCircleRadiusErrors(prevErrors => {
+         if (prevErrors[circleMarkerId] == null) return prevErrors
+
+         const nextErrors = { ...prevErrors }
+         delete nextErrors[circleMarkerId]
+         return nextErrors
+      })
+   }, [])
+
+   /**
+    *
+    */
+   const updateCircleRadiusFromInput = useCallback((
+      circleMarker: CircleMarker,
+      rowIndex: number,
+      rawValue: string,
+   ): void => {
+      const parsedValue = parseNumberInput(rawValue)
+      const errorMessage = getCircleRadiusErrorMessage(parsedValue)
+
+      if (parsedValue == null || errorMessage != null) {
+         setCircleRadiusError(circleMarker.id, errorMessage ?? 'Radius must be a valid number.')
+         return
+      }
+
+      clearCircleRadiusError(circleMarker.id)
+      updateCircleMarker(rowIndex, {
+         ...circleMarker,
+         radiusKm: normalizeCircleRadiusKm(parsedValue),
+      })
+   }, [clearCircleRadiusError, setCircleRadiusError, updateCircleMarker])
+
+   /**
+    * Activates map coordinate picking mode for a marker.
+    */
    const startMapCoordinateSelection = useCallback((
-      event: React.MouseEvent<SVGSVGElement>,
       marker: Marker,
    ): void => {
-      event.preventDefault()
-      event.stopPropagation()
 
       isClosingForCoordinateSelectionRef.current = true
       setCoordinateSelectionMarkerId(marker.id)
+      setCoordinateSelectionCircleId(null)
       setCursorMode(CursorModeType.POINTER)
       hideMainUi()
       handleMarkersDashboardOpenChange(false)
@@ -326,9 +431,33 @@ export function MarkersDashboardView() {
       hideMainUi,
       handleMarkersDashboardOpenChange,
       setCoordinateSelectionMarkerId,
+      setCoordinateSelectionCircleId,
       setCursorMode,
    ])
 
+   /**
+    * Activates map coordinate picking mode for a circle marker center.
+    */
+   const startCircleCenterSelection = useCallback((
+      circleMarker: CircleMarker,
+   ): void => {
+      isClosingForCoordinateSelectionRef.current = true
+      setCoordinateSelectionMarkerId(null)
+      setCoordinateSelectionCircleId(circleMarker.id)
+      setCursorMode(CursorModeType.POINTER)
+      hideMainUi()
+      handleMarkersDashboardOpenChange(false)
+   }, [
+      handleMarkersDashboardOpenChange,
+      hideMainUi,
+      setCoordinateSelectionMarkerId,
+      setCoordinateSelectionCircleId,
+      setCursorMode,
+   ])
+
+   /**
+    *
+    */
    const focusMarkerAndDisplayPlace = useCallback(async (marker: Marker): Promise<void> => {
       if (!isValidCoordinate({ latitude: marker.latitude, longitude: marker.longitude })) {
          showToast('Marker coordinates are invalid.', 'danger')
@@ -378,7 +507,42 @@ export function MarkersDashboardView() {
       })
    }, [updateMarker])
 
-   const renderCell = React.useCallback((marker: Marker, cellKey: string, cellValue: string | number | boolean, rowIndex: number) => {
+   /**
+    *
+    */
+   const patchCircleMarker = useCallback((
+      rowIndex: number,
+      circleMarker: CircleMarker,
+      patch: Partial<CircleMarker>,
+   ): void => {
+      updateCircleMarker(rowIndex, {
+         ...circleMarker,
+         ...patch,
+      })
+   }, [updateCircleMarker])
+
+   /**
+    *
+    */
+   const focusCircleCenter = useCallback((circleMarker: CircleMarker): void => {
+      const coordinates = {
+         latitude: circleMarker.latitude,
+         longitude: circleMarker.longitude,
+      }
+
+      if (!isValidCoordinate(coordinates)) {
+         showToast('Circle center coordinates are invalid.', 'danger')
+         return
+      }
+
+      handleMarkersDashboardClose()
+      flyToCoordinates(coordinates.latitude, coordinates.longitude)
+   }, [flyToCoordinates, handleMarkersDashboardClose, showToast])
+
+   /**
+    *
+    */
+   const renderCell = React.useCallback((marker: Marker, cellKey: MarkerColumnKey, rowIndex: number) => {
       const markerId = marker.id
 
       switch (cellKey) {
@@ -397,7 +561,7 @@ export function MarkersDashboardView() {
                   variant="bordered"
                   placeholder="Enter marker title"
                   aria-label="Enter marker title"
-                  value={marker.isPuck ? 'Your position' : cellValue.toString()}
+                  value={marker.isPuck ? 'Your position' : marker.name}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                      patchMarker(rowIndex, marker, {
                         name: event.target.value,
@@ -414,7 +578,7 @@ export function MarkersDashboardView() {
                      size="sm"
                      variant="bordered"
                      placeholder="Resolving your position..."
-                     value={cellValue.toString()}
+                     value={marker.address}
                   />
                )
             }
@@ -424,7 +588,7 @@ export function MarkersDashboardView() {
                value: feature.properties.id,
             }))
 
-            const value: Option = ({ label: cellValue.toString(), value: cellValue.toString() })
+            const value: Option = ({ label: marker.address, value: marker.address })
 
             return (
                <AutoComplete
@@ -448,8 +612,8 @@ export function MarkersDashboardView() {
                   variant="bordered"
                   placeholder="Enter the marker latitude"
                   size="sm"
-                  key={`latitude-${markerId}-${cellValue}`}
-                  defaultValue={cellValue.toString()}
+                  key={`latitude-${markerId}-${marker.latitude}`}
+                  defaultValue={marker.latitude.toString()}
                   isInvalid={coordinateErrors[markerId]?.latitude != null}
                   errorMessage={coordinateErrors[markerId]?.latitude}
                   onChange={(): void => {
@@ -469,8 +633,8 @@ export function MarkersDashboardView() {
                   variant="bordered"
                   placeholder="Enter the marker longitude"
                   size="sm"
-                  key={`longitude-${markerId}-${cellValue}`}
-                  defaultValue={cellValue.toString()}
+                  key={`longitude-${markerId}-${marker.longitude}`}
+                  defaultValue={marker.longitude.toString()}
                   isInvalid={coordinateErrors[markerId]?.longitude != null}
                   errorMessage={coordinateErrors[markerId]?.longitude}
                   onChange={(): void => {
@@ -490,7 +654,7 @@ export function MarkersDashboardView() {
                      })
                   }}
                   isDisabled={marker.isPuck}
-                  value={marker.isPuck ? PUCK_COLOR : cellValue.toString()}
+                  value={marker.isPuck ? PUCK_COLOR : marker.color}
                />
             )
          case 'actions':
@@ -500,34 +664,40 @@ export function MarkersDashboardView() {
             return (
                <div className="relative flex items-center gap-2">
                   <Tooltip content="View on map">
-                     <span className="text-lg text-default-400 cursor-pointer active:opacity-50">
-                        <EyeIcon onClick={(): void => {
-                           void focusMarkerAndDisplayPlace(marker)
-                        }} />
-                     </span>
+                     <Button isIconOnly size="sm" variant="light" aria-label="View on map" onPress={(): void => {
+                        void focusMarkerAndDisplayPlace(marker)
+                     }}>
+                        <EyeIcon />
+                     </Button>
                   </Tooltip>
                   {!marker.isPuck && <Tooltip
                      content={isCoordinateSelectionArmed ? 'Coordinate picker enabled' : 'Pick coordinates on map'}>
-                     <span
+                     <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
                         data-map-pick-ignore="true"
-                        className={`text-lg cursor-pointer active:opacity-50 ${isCoordinateSelectionArmed ? 'text-primary' : 'text-default-400'}`}>
-                        <CrosshairIcon className="h-[1em] w-[1em]" onClick={(event): void => {
-                           startMapCoordinateSelection(event, marker)
-                        }} />
-                     </span>
+                        aria-label="Pick coordinates on map"
+                        className={isCoordinateSelectionArmed ? 'text-primary' : 'text-default-400'}
+                        onPress={(): void => {
+                           startMapCoordinateSelection(marker)
+                        }}
+                     >
+                        <CrosshairIcon className="h-[1em] w-[1em]" />
+                     </Button>
                   </Tooltip>}
                   <Tooltip
                      content={marker.showTitleOnMap ? 'Hide title on map' : 'Show title on map'}>
-                     <button
-                        type="button"
+                     <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
                         aria-label="Toggle marker title on map"
                         data-title-visible={marker.showTitleOnMap ? 'true' : 'false'}
-                        disabled={!canToggleTitleVisibility}
-                        className={`text-lg active:opacity-50 ${canToggleTitleVisibility ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'} ${marker.showTitleOnMap ? 'text-primary' : 'text-default-400'}`}
-                        onClick={(): void => {
-                           if (!canToggleTitleVisibility) {
-                              return
-                           }
+                        isDisabled={!canToggleTitleVisibility}
+                        className={marker.showTitleOnMap ? 'text-primary' : 'text-default-400'}
+                        onPress={(): void => {
+                           if (!canToggleTitleVisibility) return
 
                            patchMarker(rowIndex, marker, {
                               showTitleOnMap: !marker.showTitleOnMap,
@@ -539,19 +709,19 @@ export function MarkersDashboardView() {
                         ) : (
                            <VisibilityOffIcon className="h-[1em] w-[1em]" />
                         )}
-                     </button>
+                     </Button>
                   </Tooltip>
                   {!marker.isPuck && <Tooltip color="danger" content="Delete marker">
-                     <span className="text-lg text-danger cursor-pointer active:opacity-50">
-                        <DeleteIcon onClick={(): void => {
-                           deleteMarker(marker)
-                        }} />
-                     </span>
+                     <Button isIconOnly size="sm" variant="light" aria-label="Delete marker" className="text-danger" onPress={(): void => {
+                        deleteMarker(marker)
+                     }}>
+                        <DeleteIcon />
+                     </Button>
                   </Tooltip>}
                </div>
             )
          default:
-            return cellValue
+            return null
       }
    }, [
       featureSuggestions,
@@ -567,6 +737,172 @@ export function MarkersDashboardView() {
       focusMarkerAndDisplayPlace,
       patchMarker,
       startMapCoordinateSelection,
+   ])
+
+   /**
+    *
+    */
+   const renderCircleCell = React.useCallback((circleMarker: CircleMarker, cellKey: CircleColumnKey, rowIndex: number) => {
+      switch (cellKey) {
+         case 'name':
+            return (
+               <Input
+                  type="text"
+                  size="sm"
+                  variant="bordered"
+                  placeholder="Enter circle title"
+                  aria-label="Enter circle title"
+                  value={circleMarker.name}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                     patchCircleMarker(rowIndex, circleMarker, {
+                        name: event.target.value,
+                     })
+                  }}
+               />
+            )
+         case 'latitude':
+            return (
+               <Input
+                  type="text"
+                  inputMode="decimal"
+                  variant="bordered"
+                  placeholder="Enter center latitude"
+                  aria-label="Enter circle center latitude"
+                  size="sm"
+                  key={`circle-latitude-${circleMarker.id}-${circleMarker.latitude}`}
+                  defaultValue={circleMarker.latitude.toString()}
+                  isInvalid={coordinateErrors[circleMarker.id]?.latitude != null}
+                  errorMessage={coordinateErrors[circleMarker.id]?.latitude}
+                  onChange={(): void => {
+                     clearCoordinateError(circleMarker.id, 'latitude')
+                  }}
+                  onBlur={(event: React.FocusEvent<HTMLInputElement>): void => {
+                     commitCircleCoordinateInput(circleMarker, rowIndex, 'latitude', event.target.value)
+                  }}
+               />
+            )
+         case 'longitude':
+            return (
+               <Input
+                  type="text"
+                  inputMode="decimal"
+                  variant="bordered"
+                  placeholder="Enter center longitude"
+                  aria-label="Enter circle center longitude"
+                  size="sm"
+                  key={`circle-longitude-${circleMarker.id}-${circleMarker.longitude}`}
+                  defaultValue={circleMarker.longitude.toString()}
+                  isInvalid={coordinateErrors[circleMarker.id]?.longitude != null}
+                  errorMessage={coordinateErrors[circleMarker.id]?.longitude}
+                  onChange={(): void => {
+                     clearCoordinateError(circleMarker.id, 'longitude')
+                  }}
+                  onBlur={(event: React.FocusEvent<HTMLInputElement>): void => {
+                     commitCircleCoordinateInput(circleMarker, rowIndex, 'longitude', event.target.value)
+                  }}
+               />
+            )
+         case 'radiusKm':
+            return (
+               <div className="grid min-w-[220px] grid-cols-[minmax(96px,1fr)_96px] items-center gap-3">
+                  <input
+                     type="range"
+                     min={MIN_CIRCLE_RADIUS_KM}
+                     max={MAX_CIRCLE_RADIUS_KM}
+                     step={CIRCLE_RADIUS_SLIDER_STEP_KM}
+                     value={circleMarker.radiusKm}
+                     aria-label="Drag circle radius"
+                     className="h-2 w-full cursor-pointer appearance-none rounded-full accent-primary"
+                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        updateCircleRadiusFromInput(circleMarker, rowIndex, event.target.value)
+                     }}
+                  />
+                  <Input
+                     type="text"
+                     inputMode="decimal"
+                     variant="bordered"
+                     placeholder="Radius"
+                     aria-label="Enter circle radius in kilometers"
+                     size="sm"
+                     key={`circle-radius-${circleMarker.id}-${circleMarker.radiusKm}`}
+                     defaultValue={circleMarker.radiusKm.toString()}
+                     isInvalid={circleRadiusErrors[circleMarker.id] != null}
+                     errorMessage={circleRadiusErrors[circleMarker.id]}
+                     endContent={<span className="text-xs text-default-400">km</span>}
+                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        updateCircleRadiusFromInput(circleMarker, rowIndex, event.target.value)
+                     }}
+                     onBlur={(): void => {
+                        const errorMessage = circleRadiusErrors[circleMarker.id]
+                        if (errorMessage != null) {
+                           showToast(errorMessage, 'danger')
+                        }
+                     }}
+                  />
+               </div>
+            )
+         case 'color':
+            return (
+               <ColorPicker
+                  onChange={(newColor: string): void => {
+                     patchCircleMarker(rowIndex, circleMarker, {
+                        color: newColor,
+                     })
+                  }}
+                  value={circleMarker.color}
+               />
+            )
+         case 'actions':
+            const isCircleCenterSelectionArmed: boolean = coordinateSelectionCircleId === circleMarker.id
+
+            return (
+               <div className="relative flex items-center gap-2">
+                  <Tooltip content="View circle center on map">
+                     <Button isIconOnly size="sm" variant="light" aria-label="View circle center on map" onPress={(): void => {
+                        focusCircleCenter(circleMarker)
+                     }}>
+                        <EyeIcon />
+                     </Button>
+                  </Tooltip>
+                  <Tooltip content={isCircleCenterSelectionArmed ? 'Center picker enabled' : 'Pick circle center on map'}>
+                     <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
+                        data-map-pick-ignore="true"
+                        aria-label="Pick circle center on map"
+                        className={isCircleCenterSelectionArmed ? 'text-primary' : 'text-default-400'}
+                        onPress={(): void => {
+                           startCircleCenterSelection(circleMarker)
+                        }}
+                     >
+                        <CrosshairIcon className="h-[1em] w-[1em]" />
+                     </Button>
+                  </Tooltip>
+                  <Tooltip color="danger" content="Delete circle marker">
+                     <Button isIconOnly size="sm" variant="light" aria-label="Delete circle marker" className="text-danger" onPress={(): void => {
+                        deleteCircleMarker(circleMarker)
+                     }}>
+                        <DeleteIcon />
+                     </Button>
+                  </Tooltip>
+               </div>
+            )
+         default:
+            return null
+      }
+   }, [
+      circleRadiusErrors,
+      clearCoordinateError,
+      commitCircleCoordinateInput,
+      coordinateErrors,
+      coordinateSelectionCircleId,
+      deleteCircleMarker,
+      focusCircleCenter,
+      patchCircleMarker,
+      showToast,
+      startCircleCenterSelection,
+      updateCircleRadiusFromInput,
    ])
 
    if (!isMarkersDashboardOpen) {
@@ -601,6 +937,7 @@ export function MarkersDashboardView() {
                <DrawerHeader className="flex justify-between items-center">
                   <div>
                      <DrawerTitle>📍 Manage and create markers on Earth</DrawerTitle>
+                     <DrawerDescription className="sr-only">Create, edit, delete, and manage markers and circle markers on the 3D map.</DrawerDescription>
                   </div>
                   <DrawerClose asChild>
                      <Button
@@ -615,18 +952,20 @@ export function MarkersDashboardView() {
                      </Button>
                   </DrawerClose>
                </DrawerHeader>
-               <div className="px-8">
-                  <div className="flex flex-wrap items-center justify-end gap-3 pb-3">
-                     <Switch
-                        data-testid="global-marker-titles-toggle"
-                        size="sm"
-                        aria-label="Show all marker titles"
-                        isSelected={areMarkerTitlesVisible}
-                        onValueChange={setAreMarkerTitlesVisible}
-                     >
-                        Show all marker titles
-                     </Switch>
-                  </div>
+               <div className="px-8 pb-6">
+                  <section>
+                     <div className="flex items-center justify-between pb-3">
+                        <p className="text-sm font-semibold uppercase text-white/45">Markers</p>
+                        <Switch
+                           data-testid="global-marker-titles-toggle"
+                           size="sm"
+                           aria-label="Show all marker titles"
+                           isSelected={areMarkerTitlesVisible}
+                           onValueChange={setAreMarkerTitlesVisible}
+                        >
+                           Show all marker titles
+                        </Switch>
+                     </div>
                   <div
                      data-testid="marker-drop-zone"
                      onDrop={handleDrop}
@@ -645,31 +984,73 @@ export function MarkersDashboardView() {
                         aria-label="Table of your markers"
                         color="primary">
                         <TableHeader>
-                           {columns.map((column: string, index: number) =>
-                              <TableColumn key={index}
-                                           align={column === 'Actions' ? 'center' : 'start'}>{column}</TableColumn>,
+                           {markerColumns.map(column =>
+                              <TableColumn key={column.key}
+                                           align={column.key === 'actions' ? 'center' : 'start'}>{column.label}</TableColumn>,
                            )}
                         </TableHeader>
                         <TableBody
                            className="h-2" emptyContent={
-                           <Button size="sm" onPress={createNewMarker} startContent={<PlusIcon />}>Create
-                              new
-                              marker</Button>
+                           <Button size="sm" onPress={createNewMarker} startContent={<PlusIcon />}>
+                              Create new marker
+                           </Button>
                         }>
                            {markers.map((row: Marker, rowIndex: number) => (
                               <TableRow key={rowIndex} className="h-4">
-                                 {Object.keys(row)
-                                    .filter((key: string): boolean => key !== 'id' && key !== 'isPuck' && key !== 'showTitleOnMap') // Filter out non-column fields.
-                                    .map((key: string) => (
-                                       <TableCell key={key}>
-                                          {renderCell(row, key, getKeyValue(row, key), rowIndex)}
-                                       </TableCell>
-                                    ))}
+                                 {markerColumns.map(column => (
+                                    <TableCell key={column.key}>
+                                       {renderCell(row, column.key, rowIndex)}
+                                    </TableCell>
+                                 ))}
                               </TableRow>
                            ))}
                         </TableBody>
                      </Table>
                   </div>
+                  </section>
+                  <section className="pt-6">
+                     <p className="mb-3 text-sm font-semibold uppercase text-white/45">Circle markers</p>
+                     <Table
+                        isHeaderSticky
+                        data-testid="circle-markers-table"
+                        className="overflow-auto max-h-[25vh]"
+                        aria-label="Table of your circle markers"
+                        color="primary">
+                        <TableHeader>
+                           {circleColumns.map(column => (
+                              <TableColumn
+                                 key={column.key}
+                                 align={column.key === 'actions' ? 'center' : 'start'}
+                              >
+                                 {column.label}
+                              </TableColumn>
+                           ))}
+                        </TableHeader>
+                        <TableBody
+                           className="h-2"
+                           emptyContent={
+                              <Button
+                                 size="sm"
+                                 onPress={createNewCircleMarker}
+                                 startContent={<CircleIcon />}
+                                 aria-label="Create new circle marker"
+                              >
+                                 Create new circle marker
+                              </Button>
+                           }
+                        >
+                           {circleMarkers.map((circleMarker: CircleMarker, rowIndex: number) => (
+                              <TableRow key={circleMarker.id} className="h-4">
+                                 {circleColumns.map(column => (
+                                    <TableCell key={column.key}>
+                                       {renderCircleCell(circleMarker, column.key, rowIndex)}
+                                    </TableCell>
+                                 ))}
+                              </TableRow>
+                           ))}
+                        </TableBody>
+                     </Table>
+                  </section>
                   <input
                      ref={fileInputRef}
                      type="file"
@@ -678,7 +1059,7 @@ export function MarkersDashboardView() {
                      aria-hidden="true"
                      onChange={handleFileInputChange}
                   />
-                  <div className="pt-4 pb-4 flex flex-row justify-evenly">
+                  <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4 mt-4">
                      {markers.length > 0 &&
                         <Button 
                            variant="bordered" 
@@ -690,6 +1071,16 @@ export function MarkersDashboardView() {
                            Create new marker
                         </Button>
                      }
+                     <Button
+                        variant="bordered"
+                        size="sm"
+                        onPress={createNewCircleMarker}
+                        startContent={<PlusIcon />}
+                        aria-label="Create new circle marker"
+                     >
+                        Create new circle marker
+                     </Button>
+                     <div className="h-5 w-px bg-white/10" />
                      <Button
                         variant="bordered"
                         size="sm"
@@ -709,6 +1100,7 @@ export function MarkersDashboardView() {
                      >
                         Export selected markers
                      </Button>
+                     <div className="h-5 w-px bg-white/10" />
                      <Button 
                         variant="bordered" 
                         size="sm" 
@@ -732,7 +1124,7 @@ export function MarkersDashboardView() {
                         isDisabled={selectedRows.length <= 1}
                         aria-label="Compute track with selected markers"
                      >
-                        Compute track with selected markers
+                        Compute track
                      </Button>
                   </div>
                </div>

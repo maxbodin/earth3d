@@ -11,6 +11,7 @@ export const STORAGE_KEY_SOLAR_SYSTEM_TRUE_SIZE = 'settings.solarSystem.trueSize
 export const STORAGE_KEY_SOLAR_SYSTEM_TRAJECTORIES = 'settings.solarSystem.showTrajectories'
 export const STORAGE_KEY_SOLAR_SYSTEM_TRAJECTORY_LINE_WIDTH = 'settings.solarSystem.trajectoryLineWidth'
 export const STORAGE_KEY_MARKERS = 'markers'
+export const STORAGE_KEY_CIRCLE_MARKERS = 'circleMarkers'
 export const STORAGE_KEY_EARTHQUAKES_ACTIVATED = 'settings.earthquakes.activated'
 export const STORAGE_KEY_EARTHQUAKES_HEATMAP = 'settings.earthquakes.heatmap'
 export const STORAGE_KEY_EARTHQUAKES_DEPTH_LINES = 'settings.earthquakes.depthLines'

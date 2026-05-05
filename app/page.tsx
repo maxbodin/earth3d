@@ -14,9 +14,10 @@ import { SearchBarView } from '@/app/components/organisms/searchBar/searchBar.vi
 import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
 import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
 import { CoordinatesSearchParamsSync } from '@/app/components/atoms/geolocation/coordinatesSearchParamsSync'
-import { MarkersController } from '@/app/components/atoms/three/markers/markers.controller'
 import { DistanceMeasurementController } from '@/app/components/atoms/three/distanceMeasurement.controller'
 import { CountriesProvider } from '@/app/components/atoms/three/countries/countries.model'
+import { CircleMarkersController } from '@/app/components/atoms/three/circleMarkers.controller'
+import { MarkersController } from '@/app/components/atoms/three/markers.controller'
 
 export default function Home() {
    return (
@@ -39,6 +40,7 @@ export default function Home() {
                   <SettingsDashboardView />
                   <Geolocation />
                   <MarkersController />
+                  <CircleMarkersController />
                   <DistanceMeasurementController />
                   <CoordinatesSearchParamsSync />
                </CountriesProvider>

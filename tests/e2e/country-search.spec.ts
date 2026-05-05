@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { ThreeSceneDebugSnapshot } from '@/tests/e2e/types/threeSceneDebugSnapshot'
+import { readSceneDebug } from '@/tests/e2e/utils/readSceneDebug'
 
 test.describe('Country search', () => {
    test('selecting a country sets URL param and forces country label/frontier visibility', async ({ page }) => {
@@ -50,32 +50,17 @@ test.describe('Country search', () => {
       await expect(page).toHaveURL(/[?&]country=France(?:&|$)/)
 
       await expect.poll(async (): Promise<number> => {
-         const debug = await page.evaluate((): ThreeSceneDebugSnapshot => {
-            return (window as Window & {
-               __THREE_SCENE_DEBUG__?: ThreeSceneDebugSnapshot
-            }).__THREE_SCENE_DEBUG__ ?? {}
-         })
-
+         const debug = await readSceneDebug(page)
          return debug.countryNamesCount ?? 0
       }).toBe(1)
 
       await expect.poll(async (): Promise<number> => {
-         const debug = await page.evaluate((): ThreeSceneDebugSnapshot => {
-            return (window as Window & {
-               __THREE_SCENE_DEBUG__?: ThreeSceneDebugSnapshot
-            }).__THREE_SCENE_DEBUG__ ?? {}
-         })
-
+         const debug = await readSceneDebug(page)
          return debug.selectedCountryFrontiersCount ?? 0
       }).toBeGreaterThan(0)
 
       await expect.poll(async (): Promise<number> => {
-         const debug = await page.evaluate((): ThreeSceneDebugSnapshot => {
-            return (window as Window & {
-               __THREE_SCENE_DEBUG__?: ThreeSceneDebugSnapshot
-            }).__THREE_SCENE_DEBUG__ ?? {}
-         })
-
+         const debug = await readSceneDebug(page)
          return debug.countryFrontiersCount ?? 0
       }).toBe(0)
 
@@ -95,22 +80,12 @@ test.describe('Country search', () => {
       await expect(page).toHaveURL(/[?&]country=France(?:&|$)/)
 
       await expect.poll(async (): Promise<number> => {
-         const debug = await page.evaluate((): ThreeSceneDebugSnapshot => {
-            return (window as Window & {
-               __THREE_SCENE_DEBUG__?: ThreeSceneDebugSnapshot
-            }).__THREE_SCENE_DEBUG__ ?? {}
-         })
-
+         const debug = await readSceneDebug(page)
          return debug.countryNamesCount ?? 0
       }).toBe(1)
 
       await expect.poll(async (): Promise<number> => {
-         const debug = await page.evaluate((): ThreeSceneDebugSnapshot => {
-            return (window as Window & {
-               __THREE_SCENE_DEBUG__?: ThreeSceneDebugSnapshot
-            }).__THREE_SCENE_DEBUG__ ?? {}
-         })
-
+         const debug = await readSceneDebug(page)
          return debug.selectedCountryFrontiersCount ?? 0
       }).toBeGreaterThan(0)
    })

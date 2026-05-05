@@ -41,10 +41,10 @@ import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch/
 import { EarthquakesController } from '@/app/components/atoms/three/earthquakes/earthquakes.controller'
 import { EarthquakeDataFetch } from '@/app/components/atoms/dataFetch/earthquakeDataFetch/earthquakeDataFetch'
 import { EarthquakeHeatmap } from '@/app/components/atoms/three/earthquakes/earthquakeHeatmap'
-import { TectonicPlatesOverlay } from '@/app/components/atoms/three/tectonicPlates/tectonicPlatesOverlay'
-import { DebugTilesOverlay } from '@/app/components/atoms/three/debugTiles/debugTilesOverlay'
 import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
 import { readModeFromCurrentUrl, updateModeInCurrentUrl } from '@/app/lib/modeSearchParams'
+import { DebugTilesOverlay } from '@/app/components/atoms/three/debugTilesOverlay'
+import { TectonicPlatesOverlay } from '@/app/components/atoms/three/tectonicPlatesOverlay'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)

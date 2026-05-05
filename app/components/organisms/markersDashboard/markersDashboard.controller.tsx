@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Marker } from '@/app/types/marker'
+import { CircleMarker } from '@/app/types/circleMarker'
 import { Feature, GeocodeResponse } from '@/app/types/orsTypes'
 import debounce from 'lodash/debounce'
 import { Option } from '@/shadcn/ui/autocomplete'
@@ -12,11 +13,12 @@ import {
    ValidatedMarkerEntry,
    validateMarkerFile,
 } from '@/app/components/organisms/markersDashboard/markerImportValidator'
-import { createMarker } from '@/app/lib/markerFactory'
 import { haversineDistance } from '@/lib/geo/haversineDistance'
 import { getRandomHighContrastColor } from '@/lib/color/getRandomHighContrastColor'
 import { midpoint } from '@/lib/geo/midpoint'
 import { DistanceMeasurement } from '@/app/types/distanceMeasurement'
+import { createCircleMarker } from '@/lib/factories/circleMarkerFactory'
+import { createMarker } from '@/lib/factories/markerFactory'
 
 export function MarkersDashboardController() {
    const [selectedRows, setSelectedRows] = useState<Marker[]>([])
@@ -28,7 +30,7 @@ export function MarkersDashboardController() {
 
    const { flyToCoordinates } = CameraFlyController()
 
-   const { markers, setMarkers, setDistanceMeasurement } = useMarkersDashboard()
+   const { markers, setMarkers, setCircleMarkers, setDistanceMeasurement } = useMarkersDashboard()
 
    const computeDistanceBetweenMarkers = useCallback((selected: Marker[]): DistanceMeasurement | null => {
       if (selected.length !== 2) return null
@@ -69,6 +71,12 @@ export function MarkersDashboardController() {
    const createNewMarker = (): void => {
       setMarkers(prevMarkers => {
          return [...prevMarkers, createMarker({ latitude: 0, longitude: 0 })]
+      })
+   }
+
+   const createNewCircleMarker = (): void => {
+      setCircleMarkers(prevCircleMarkers => {
+         return [...prevCircleMarkers, createCircleMarker()]
       })
    }
 
@@ -240,14 +248,31 @@ export function MarkersDashboardController() {
       })
    }
 
+   const updateCircleMarker = (index: number, newCircleMarker: CircleMarker): void => {
+      setCircleMarkers(prevCircleMarkers => {
+         const updatedRows = [...prevCircleMarkers]
+         updatedRows[index] = newCircleMarker
+         return updatedRows
+      })
+   }
+
    /**
     * Remove a given marker.
     * @param marker
     */
    const deleteMarker = (marker: Marker): void => {
       setMarkers(markers => {
-         // Filter out the marker that matches the one to be removed.
          return markers.filter(existingMarker => existingMarker.id !== marker.id)
+      })
+   }
+
+   /**
+    * 
+    * @param circleMarker 
+    */
+   const deleteCircleMarker = (circleMarker: CircleMarker): void => {
+      setCircleMarkers(prevCircleMarkers => {
+         return prevCircleMarkers.filter(existingCircleMarker => existingCircleMarker.id !== circleMarker.id)
       })
    }
 
@@ -358,9 +383,12 @@ export function MarkersDashboardController() {
       exportSelectedMarkers,
       importMarkersFromFile,
       createNewMarker,
+      createNewCircleMarker,
       updatePuckMarker,
       updateMarker,
+      updateCircleMarker,
       deleteMarker,
+      deleteCircleMarker,
       featureSuggestions,
       autoCompleteLoading,
       autoCompleteError,

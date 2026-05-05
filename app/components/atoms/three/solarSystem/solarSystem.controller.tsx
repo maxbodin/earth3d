@@ -25,7 +25,7 @@ import { SOLAR_SYSTEM_FRAGMENT_SHADER, SOLAR_SYSTEM_VERTEX_SHADER } from '@/app/
 import { AssetManager } from '@/app/lib/assetManager'
 import { buildTrajectoryPoints } from '@/app/components/atoms/three/solarSystem/solarSystemTrajectories.helper'
 import { clearGroup } from '@/lib/three/clearGroup'
-import { disposeMaterial } from '@/app/helpers/threeHelper'
+import { disposeObjectMaterial } from '@/lib/three/disposeObjectMaterial'
 
 // Shared materials for text labels.
 const textMaterialFront = new THREE.MeshBasicMaterial({ color: '#ffffff' })
@@ -314,8 +314,8 @@ export function SolarSystemController(): null {
       textGeometryCache.clear()
 
       // Dispose materials.
-      disposeMaterial(textMaterialFront)
-      disposeMaterial(textMaterialSide)
+      disposeObjectMaterial(textMaterialFront)
+      disposeObjectMaterial(textMaterialSide)
       solarSystemMaterials.forEach((material): void => {
          material.dispose()
       })

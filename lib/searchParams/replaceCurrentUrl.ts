@@ -1,8 +1,3 @@
-export function getCurrentUrl(): URL | null {
-   if (typeof window === 'undefined') return null
-   return new URL(window.location.href)
-}
-
 export function replaceCurrentUrl(currentUrl: URL, eventName: string, detail: unknown): void {
    const queryString = currentUrl.searchParams.toString()
    const nextRelativeUrl = `${currentUrl.pathname}${

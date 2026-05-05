@@ -5,7 +5,7 @@ import { TabType } from '@/app/enums/tabType'
 import { SettingsDashboardController } from '@/app/components/organisms/settingsDashboard/settingsDashboard.controller'
 import { Tabs } from '@/app/components/atoms/ui/tabs'
 import { CloseIcon } from '@nextui-org/shared-icons'
-import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
 import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
 import {
@@ -92,6 +92,7 @@ export function SettingsDashboardView() {
                   <DrawerHeader className="flex justify-between items-center">
                      <div>
                         <DrawerTitle>⚙️ Settings</DrawerTitle>
+                        <DrawerDescription className="sr-only">Configure application settings and display preferences.</DrawerDescription>
                      </div>
                      <DrawerClose asChild>
                         <Button

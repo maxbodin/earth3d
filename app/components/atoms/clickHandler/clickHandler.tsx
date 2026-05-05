@@ -18,10 +18,11 @@ import { usePlaneMap } from '@/app/components/atoms/three/planeMapContext'
 import { SceneType } from '@/app/enums/sceneType'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { parseSelectedPlaneStateVector } from '@/lib/parse/parseSelectedPlaneStateVector'
-import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 import { Marker } from '@/app/types/marker'
 import { isValidCoordinate } from '@/lib/isValid/isValidCoordinate'
 import { parseCoordinatesFromUnknown } from '@/lib/parse/parseCoordinates'
+import { createMarkerFromPlaceFeature } from '@/lib/factories/markerFactory'
+import { isOccludedByEarth } from '@/lib/geo/isOccludedByEarth'
 
 export function ClickHandler(): null {
 
@@ -40,11 +41,20 @@ export function ClickHandler(): null {
    const {
       markers,
       setMarkers,
+      circleMarkers,
+      setCircleMarkers,
       coordinateSelectionMarkerId,
       setCoordinateSelectionMarkerId,
+      coordinateSelectionCircleId,
+      setCoordinateSelectionCircleId,
       setIsMarkersDashboardOpen,
    } = useMarkersDashboard()
 
+   /**
+    *
+    * @param latitude
+    * @param longitude
+    */
    const applyPickedCoordinatesToMarker = async (
       latitude: number,
       longitude: number,
@@ -107,17 +117,56 @@ export function ClickHandler(): null {
    }
 
    /**
+    *
+    * @param latitude
+    * @param longitude
+    */
+   const applyPickedCoordinatesToCircle = (
+      latitude: number,
+      longitude: number,
+   ): void => {
+      if (coordinateSelectionCircleId == null) {
+         return
+      }
+
+      const selectedCircleMarker = circleMarkers.find(circleMarker => circleMarker.id === coordinateSelectionCircleId)
+      if (selectedCircleMarker == null) {
+         setCoordinateSelectionCircleId(null)
+         return
+      }
+
+      setCircleMarkers(prevCircleMarkers => {
+         return prevCircleMarkers.map(circleMarker => {
+            if (circleMarker.id !== coordinateSelectionCircleId) {
+               return circleMarker
+            }
+
+            return {
+               ...circleMarker,
+               latitude,
+               longitude,
+            }
+         })
+      })
+
+      setCoordinateSelectionCircleId(null)
+      setIsMarkersDashboardOpen(true)
+      setCursorMode(CursorModeType.HAND)
+   }
+
+   /**
     * Handle click on planet.
     */
    const clickOnPlanet = async (): Promise<void> => {
-      if (!planet) return
-      if (coordinateSelectionMarkerId == null && cursorMode == CursorModeType.HAND) return
+      if (displayedSceneData.type === SceneType.SPHERICAL && planet == null) return
+      if (displayedSceneData.type === SceneType.PLANE && planeMap == null) return
+      if (coordinateSelectionMarkerId == null && coordinateSelectionCircleId == null && cursorMode == CursorModeType.HAND) return
 
       let geolocation: Geolocation | null = null
 
       if (displayedSceneData.type == SceneType.SPHERICAL) {
          const intersectPlanet = raycaster.intersectObject(
-            planet,
+            planet!,
          )
 
          if (intersectPlanet.length > 0) {
@@ -142,6 +191,14 @@ export function ClickHandler(): null {
 
       if (coordinateSelectionMarkerId != null) {
          await applyPickedCoordinatesToMarker(
+            geolocation.latitude,
+            geolocation.longitude,
+         )
+         return
+      }
+
+      if (coordinateSelectionCircleId != null) {
+         applyPickedCoordinatesToCircle(
             geolocation.latitude,
             geolocation.longitude,
          )
@@ -175,6 +232,24 @@ export function ClickHandler(): null {
    }
 
    /**
+    * Returns the first raycast intersection that is not occluded by the Earth sphere.
+    * In non-spherical scenes, returns the closest intersection without filtering.
+    *
+    * @param intersections
+    */
+   const findVisibleIntersection = (
+      intersections: THREE.Intersection[],
+   ): THREE.Intersection | null => {
+      for (const intersection of intersections) {
+         if (!isOccludedByEarth(intersection.point, raycaster, displayedSceneData.type)) {
+            return intersection
+         }
+      }
+
+      return null
+   }
+
+   /**
     * Handle click on vessel.
     */
    const clickOnVessel = (): void => {
@@ -184,8 +259,9 @@ export function ClickHandler(): null {
          Array.from(displayedVesselsGroup),
       )
 
-      if (intersectsVessels.length > 0) {
-         const selectedVesselObject: any = intersectsVessels[0].object.parent
+      const visibleHit = findVisibleIntersection(intersectsVessels)
+      if (visibleHit != null) {
+         const selectedVesselObject: any = visibleHit.object.parent
          const selectedVesselData: any = selectedVesselObject.userData.data
 
          if (selectedVesselData === null || selectedVesselData === undefined)
@@ -211,8 +287,9 @@ export function ClickHandler(): null {
          Array.from(displayedAirportsGroup),
       )
 
-      if (intersects.length > 0) {
-         const airportData = intersects[0].object.userData
+      const visibleHit = findVisibleIntersection(intersects)
+      if (visibleHit != null) {
+         const airportData = visibleHit.object.userData
          setSelectedObjectData(airportData)
          setSelectedObjectType(ObjectType.AIRPORT)
 
@@ -252,8 +329,9 @@ export function ClickHandler(): null {
          displayedPlanesGroup!.children,
       )
 
-      if (intersects.length > 0) {
-         const selectedPlaneData = resolvePlaneSelectionData(intersects[0].object)
+      const visibleHit = findVisibleIntersection(intersects)
+      if (visibleHit != null) {
+         const selectedPlaneData = resolvePlaneSelectionData(visibleHit.object)
          if (selectedPlaneData == null) {
             return
          }
@@ -283,10 +361,11 @@ export function ClickHandler(): null {
       if (markerObjects.length === 0) return
 
       const intersects = raycaster.intersectObjects(markerObjects, true)
-      if (intersects.length === 0) return
+      const visibleHit = findVisibleIntersection(intersects)
+      if (visibleHit == null) return
 
       let markerData: Marker | null = null
-      let current: THREE.Object3D | null = intersects[0].object
+      let current: THREE.Object3D | null = visibleHit.object
       while (current != null) {
          if (current.userData?.data != null && current.name.startsWith('marker:')) {
             markerData = current.userData.data as Marker
@@ -312,8 +391,9 @@ export function ClickHandler(): null {
          displayedEarthquakesGroup.children,
       )
 
-      if (intersects.length > 0) {
-         const earthquakeFeature = intersects[0].object.userData?.earthquakeFeature
+      const visibleHit = findVisibleIntersection(intersects)
+      if (visibleHit != null) {
+         const earthquakeFeature = visibleHit.object.userData?.earthquakeFeature
 
          if (!earthquakeFeature) return 
 
@@ -351,7 +431,7 @@ export function ClickHandler(): null {
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
       raycaster.setFromCamera(mouse, displayedSceneData.camera)
 
-      if (coordinateSelectionMarkerId != null) {
+      if (coordinateSelectionMarkerId != null || coordinateSelectionCircleId != null) {
          void clickOnPlanet()
          return
       }
@@ -377,9 +457,11 @@ export function ClickHandler(): null {
       displayedSceneData,
       cursorMode,
       coordinateSelectionMarkerId,
+      coordinateSelectionCircleId,
       planet,
       planeMap,
       markers,
+      circleMarkers,
       displayedVesselsGroup,
       displayedAirportsGroup,
       displayedPlanesGroup,

@@ -8,27 +8,18 @@ import { Selection } from '@nextui-org/react'
 import { useSearchBar } from '@/app/components/organisms/searchBar/searchBar.model'
 import { Key } from '@react-types/shared'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
-import {
-   clearCoordinatesFromCurrentUrl,
-   updateCoordinatesInCurrentUrl,
-} from '@/app/lib/coordinatesSearchParams'
-import {
-   clearCountryFromCurrentUrl,
-   updateCountryInCurrentUrl,
-} from '@/app/lib/countrySearchParams'
+import { clearCoordinatesFromCurrentUrl, updateCoordinatesInCurrentUrl, } from '@/app/lib/coordinatesSearchParams'
+import { clearCountryFromCurrentUrl, updateCountryInCurrentUrl, } from '@/app/lib/countrySearchParams'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { ObjectType } from '@/app/enums/objectType'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
-import { createMarkerFromPlaceFeature } from '@/app/lib/markerFactory'
 import { searchAirports } from '@/app/lib/airportSearch'
 import { AirportSearchSuggestion } from '@/app/types/airport'
 import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
-import {
-   filterCountriesByPrefix,
-   findCountryByName,
-} from '@/app/lib/countrySearch'
+import { filterCountriesByPrefix, findCountryByName, } from '@/app/lib/countrySearch'
+import { createMarkerFromPlaceFeature } from '@/lib/factories/markerFactory'
 
 const PLACE_SEARCH_ZOOM_MULTIPLIER = 0.12
 const PLACE_SEARCH_PLANISPHERE_ZOOM_MULTIPLIER = 0.01
