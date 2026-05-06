@@ -95,7 +95,10 @@ export function ThreeScene() {
    const lastGlobeAltitudeRef = useRef<number>(MIN_EARTH_DISTANCE_GLOBE_SCENE - EARTH_RADIUS)
    const lastEarthGeoRef = useRef<Geolocation | null>(null)
    const transitionCooldownUntilRef = useRef<number>(0)
-   const FRANCE_DEFAULT_GEO = useRef<Geolocation>(new Geolocation(46.2276, 2.2137))
+   const RANDOM_DEFAULT_GEO = useRef<Geolocation>(new Geolocation(
+      Math.random() * 180 - 90,
+      Math.random() * 360 - 180,
+   ))
    const debugLogTimeRef = useRef<number>(0)
 
    const PLANE_TO_SPHERE_EXIT_DISTANCE = SPHERE_TO_PLANE_TOGGLE_DISTANCE * 1.2
@@ -171,8 +174,8 @@ export function ThreeScene() {
          distanceToPlaneSurface.current = planeStartAltitude
          const planeSceneData = scenes.current[SceneType.PLANE]
          const worldCoords = ThreeGeoUnitsUtils.datumsToSpherical(
-            FRANCE_DEFAULT_GEO.current.latitude,
-            FRANCE_DEFAULT_GEO.current.longitude,
+            RANDOM_DEFAULT_GEO.current.latitude,
+            RANDOM_DEFAULT_GEO.current.longitude,
          )
          planeSceneData.controls.target.set(worldCoords.x, 0, -worldCoords.y)
          planeSceneData.camera.position.set(worldCoords.x, planeStartAltitude, -worldCoords.y)
@@ -495,7 +498,7 @@ export function ThreeScene() {
             const earthToCamera = currentScene.camera.position.clone().sub(earthPosition).normalize()
             coords = earthToCamera.lengthSq() > 0
                ? ThreeGeoUnitsUtils.vectorToDatums(earthToCamera)
-               : FRANCE_DEFAULT_GEO.current
+               : RANDOM_DEFAULT_GEO.current
          }
       }
 

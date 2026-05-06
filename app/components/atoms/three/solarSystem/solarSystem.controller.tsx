@@ -345,8 +345,11 @@ export function SolarSystemController(): null {
          return
       }
 
+      const cameraDistance = displayedSceneData.controls.getDistance()
+
+      // TODO : Refactor in constant.
       astresNamesAdjustedScale.current = clamp(
-         displayedSceneData.controls.getDistance() / 1e10,
+         cameraDistance / 1e10,
          SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MIN_SCALE,
          SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE,
       )
@@ -357,6 +360,11 @@ export function SolarSystemController(): null {
             astresNamesAdjustedScale.current,
             astresNamesAdjustedScale.current,
          )
+
+         if (name.name === 'Moon Label') {
+            // TODO : Refactor in constant.
+            name.visible = cameraDistance < 1e9
+         }
       })
    }
 

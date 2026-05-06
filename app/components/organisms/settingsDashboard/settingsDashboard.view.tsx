@@ -89,7 +89,7 @@ export function SettingsDashboardView() {
                }}
             >
                <div className="mx-auto w-full">
-                  <DrawerHeader className="flex justify-between items-center">
+                  <DrawerHeader className="flex justify-between items-center pt-0">
                      <div>
                         <DrawerTitle>⚙️ Settings</DrawerTitle>
                         <DrawerDescription className="sr-only">Configure application settings and display preferences.</DrawerDescription>

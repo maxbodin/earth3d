@@ -126,7 +126,7 @@ export const EarthquakeTable = React.memo(function EarthquakeTable({
                         </td>
                         <td className="px-3 py-2">
                            <span className="text-xs text-white/70">
-                              {feature.geometry.coordinates[2] ?? '-'}
+                              {feature.geometry.coordinates[2] != null ? feature.geometry.coordinates[2].toFixed(3) : '-'}
                            </span>
                         </td>
                         <td className="px-3 py-2">

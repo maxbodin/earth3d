@@ -4,6 +4,7 @@ import { CircleMarker } from '@/app/types/circleMarker'
 import { DistanceMeasurement } from '@/app/types/distanceMeasurement'
 import { useLocalStorageState } from '@/app/hooks/useLocalStorageState'
 import { STORAGE_KEY_CIRCLE_MARKERS, STORAGE_KEY_MARKERS } from '@/app/constants/storageKeys'
+import { Coordinates } from '@/app/types/coordinates/coordinates'
 
 interface MarkersDashboardContextValue {
    isMarkersDashboardOpen: boolean
@@ -20,6 +21,8 @@ interface MarkersDashboardContextValue {
    setCoordinateSelectionCircleId: React.Dispatch<React.SetStateAction<string | null>>
    distanceMeasurement: DistanceMeasurement | null
    setDistanceMeasurement: React.Dispatch<React.SetStateAction<DistanceMeasurement | null>>
+   distanceFirstPoint: Coordinates | null
+   setDistanceFirstPoint: React.Dispatch<React.SetStateAction<Coordinates | null>>
 }
 
 const MarkersDashboardContext = createContext<MarkersDashboardContextValue | null>(null)
@@ -40,6 +43,7 @@ export function MarkersDashboardProvider({ children }: { children: ReactNode }) 
    const [coordinateSelectionMarkerId, setCoordinateSelectionMarkerId] = useState<string | null>(null)
    const [coordinateSelectionCircleId, setCoordinateSelectionCircleId] = useState<string | null>(null)
    const [distanceMeasurement, setDistanceMeasurement] = useState<DistanceMeasurement | null>(null)
+   const [distanceFirstPoint, setDistanceFirstPoint] = useState<Coordinates | null>(null)
 
    const value: MarkersDashboardContextValue = useMemo(() => ({
       isMarkersDashboardOpen,
@@ -56,6 +60,8 @@ export function MarkersDashboardProvider({ children }: { children: ReactNode }) 
       setCoordinateSelectionCircleId,
       distanceMeasurement,
       setDistanceMeasurement,
+      distanceFirstPoint,
+      setDistanceFirstPoint,
    }), [
       isMarkersDashboardOpen,
       markers,
@@ -64,6 +70,7 @@ export function MarkersDashboardProvider({ children }: { children: ReactNode }) 
       coordinateSelectionMarkerId,
       coordinateSelectionCircleId,
       distanceMeasurement,
+      distanceFirstPoint,
    ])
 
    return (

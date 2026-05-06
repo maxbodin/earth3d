@@ -12,6 +12,7 @@ import {
    LocateFixedIcon,
    MousePointer2Icon,
    OrbitIcon,
+   RulerIcon,
    ShuffleIcon,
 } from 'lucide-react'
 import { CursorModeType } from '@/app/enums/modeType'
@@ -29,6 +30,7 @@ interface NavigationBarActionGroupProps {
    onBackToEarth: () => void
    onFocusUserPosition: () => void
    onToggleCursorMode: () => void
+   onToggleDistanceMode: () => void
    onOpenMarkers: () => void
    onOpenSettings: () => void
    onOpenData: () => void
@@ -48,6 +50,7 @@ export function NavigationBarActionGroup({
                                              onBackToEarth,
                                              onFocusUserPosition,
                                              onToggleCursorMode,
+                                             onToggleDistanceMode,
                                              onOpenMarkers,
                                              onOpenSettings,
                                              onOpenData,
@@ -124,6 +127,19 @@ export function NavigationBarActionGroup({
                      onPress={onToggleCursorMode}
                   >
                      {cursorMode === CursorModeType.POINTER ? <MousePointer2Icon /> : <HandIcon />}
+                  </Button>
+               </Tooltip>
+
+               <Tooltip content={cursorMode === CursorModeType.DISTANCE ? 'Cancel Distance Measurement' : 'Measure Distance (2 clicks)'}>
+                  <Button
+                     size="lg"
+                     isIconOnly
+                     variant="bordered"
+                     aria-label="Measure Distance"
+                     onPress={onToggleDistanceMode}
+                     className={cursorMode === CursorModeType.DISTANCE ? 'bg-white/20' : ''}
+                  >
+                     <RulerIcon />
                   </Button>
                </Tooltip>
 

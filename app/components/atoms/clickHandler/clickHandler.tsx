@@ -23,6 +23,10 @@ import { isValidCoordinate } from '@/lib/isValid/isValidCoordinate'
 import { parseCoordinatesFromUnknown } from '@/lib/parse/parseCoordinates'
 import { createMarkerFromPlaceFeature } from '@/lib/factories/markerFactory'
 import { isOccludedByEarth } from '@/lib/geo/isOccludedByEarth'
+import { haversineDistance } from '@/lib/geo/haversineDistance'
+import { midpoint } from '@/lib/geo/midpoint'
+import { getRandomHighContrastColor } from '@/lib/color/getRandomHighContrastColor'
+import { createMarker } from '@/lib/factories/markerFactory'
 
 export function ClickHandler(): null {
 
@@ -48,6 +52,9 @@ export function ClickHandler(): null {
       coordinateSelectionCircleId,
       setCoordinateSelectionCircleId,
       setIsMarkersDashboardOpen,
+      distanceFirstPoint,
+      setDistanceFirstPoint,
+      setDistanceMeasurement,
    } = useMarkersDashboard()
 
    /**
@@ -160,7 +167,7 @@ export function ClickHandler(): null {
    const clickOnPlanet = async (): Promise<void> => {
       if (displayedSceneData.type === SceneType.SPHERICAL && planet == null) return
       if (displayedSceneData.type === SceneType.PLANE && planeMap == null) return
-      if (coordinateSelectionMarkerId == null && coordinateSelectionCircleId == null && cursorMode == CursorModeType.HAND) return
+      if (coordinateSelectionMarkerId == null && coordinateSelectionCircleId == null && cursorMode === CursorModeType.HAND) return
 
       let geolocation: Geolocation | null = null
 
@@ -202,6 +209,32 @@ export function ClickHandler(): null {
             geolocation.latitude,
             geolocation.longitude,
          )
+         return
+      }
+
+      // TODO : Refactor in dedicated function.
+      if (cursorMode === CursorModeType.DISTANCE) {
+         const clickedPoint = { latitude: geolocation.latitude, longitude: geolocation.longitude }
+
+         if (distanceFirstPoint == null) {
+            setDistanceFirstPoint(clickedPoint)
+         } else {
+            const distanceKm = haversineDistance(distanceFirstPoint, clickedPoint)
+            const mid = midpoint(distanceFirstPoint, clickedPoint)
+            const markerA = createMarker({ latitude: distanceFirstPoint.latitude, longitude: distanceFirstPoint.longitude, name: 'A' })
+            const markerB = createMarker({ latitude: clickedPoint.latitude, longitude: clickedPoint.longitude, name: 'B' })
+
+            setDistanceMeasurement({
+               markerA,
+               markerB,
+               midpoint: mid,
+               distanceKm,
+               color: getRandomHighContrastColor(),
+            })
+
+            setDistanceFirstPoint(null)
+            setCursorMode(CursorModeType.HAND)
+         }
          return
       }
 
@@ -458,6 +491,7 @@ export function ClickHandler(): null {
       cursorMode,
       coordinateSelectionMarkerId,
       coordinateSelectionCircleId,
+      distanceFirstPoint,
       planet,
       planeMap,
       markers,
