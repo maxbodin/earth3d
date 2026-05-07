@@ -1,22 +1,15 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import type { Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { useMarkersDashboard, } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { haversineDistance } from '@/lib/geo/haversineDistance'
 import { SceneType } from '@/app/enums/sceneType'
-import { AssetManager } from '@/app/lib/assetManager'
-import { TEXT_FONT } from '@/app/constants/paths'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { EARTH_RADIUS } from '@/app/constants/numbers'
 import { DISTANCE_LABEL_RENDER_ORDER, DISTANCE_LINE_RENDER_ORDER } from '@/app/constants/renderOrder'
-import {
-   createCenteredTextGeometry,
-   EARTH_SCENE_TEXT_BASE_DEPTH,
-   EARTH_SCENE_TEXT_BASE_SIZE,
-} from '@/app/lib/threeText3d'
+
 import {
    computeDampedScale,
    computeSceneLodScale,
@@ -27,27 +20,19 @@ import { DistanceMeasurement } from '@/app/types/distanceMeasurement'
 import { midpoint } from '@/lib/geo/midpoint'
 import { formatDistanceLabel } from '@/lib/format/formatDistanceLabel'
 import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
+import { lightenColor } from '@/lib/color/lightenColor'
+import { darkenColor } from '@/lib/color/darkenColor'
+import { loadSharedTextFont } from '@/lib/three/loadSharedTextFont'
+import { disposeObjectMaterial } from '@/lib/three/disposeObjectMaterial'
+import { EARTH_SCENE_TEXT_BASE_DEPTH, EARTH_SCENE_TEXT_BASE_SIZE } from '@/lib/three/getObjectGeometryExtentFromOrigin'
+import { createSharedTextMaterials } from '@/lib/three/createSharedTextMaterials'
+import { createTextGeometry } from '@/lib/three/createTextGeometry'
 
 const ARC_SEGMENTS = 64
 const ARC_ALTITUDE_FACTOR = 0.03
 const ARC_BASE_OFFSET = EARTH_RADIUS * 0.001
 const PLANE_SEGMENT_LIFT = 50
 const LINE_BASE_WIDTH = EARTH_RADIUS / 2e2
-
-let sharedFontPromise: Promise<Font> | null = null
-let sharedFont: Font | null = null
-
-async function loadFont(): Promise<Font> {
-   if (sharedFont != null) return sharedFont
-   if (sharedFontPromise != null) return sharedFontPromise
-
-   sharedFontPromise = AssetManager.loadFont(TEXT_FONT).then((f): Font => {
-      sharedFont = f
-      return f
-   })
-
-   return sharedFontPromise
-}
 
 function buildGreatCircleArcPoints(
    latA: number,
@@ -111,18 +96,6 @@ function buildPlaneSegmentPoints(
    return points
 }
 
-function lightenColor(hex: string, factor: number): string {
-   const color = new THREE.Color(hex)
-   color.lerp(new THREE.Color(0xffffff), factor)
-   return `#${color.getHexString()}`
-}
-
-function darkenColor(hex: string, factor: number): string {
-   const color = new THREE.Color(hex)
-   color.multiplyScalar(factor)
-   return `#${color.getHexString()}`
-}
-
 export function DistanceMeasurementController(): null {
    const { displayedSceneData } = useScenes()
    const { markers, distanceMeasurement, setDistanceMeasurement } = useMarkersDashboard()
@@ -148,10 +121,7 @@ export function DistanceMeasurementController(): null {
       if (labelRef.current != null) {
          labelRef.current.removeFromParent()
          labelRef.current.geometry.dispose()
-         const materials = Array.isArray(labelRef.current.material)
-            ? labelRef.current.material
-            : [labelRef.current.material]
-         materials.forEach(m => m.dispose())
+         disposeObjectMaterial(labelRef.current.material)
          labelRef.current = null
       }
 
@@ -223,43 +193,30 @@ export function DistanceMeasurementController(): null {
       lineMeshRef.current = lineMesh
       lineMaterialRef.current = lineMaterial
 
-      let font: Font
+      let font
       try {
-         font = await loadFont()
+         font = await loadSharedTextFont()
       } catch {
          return
       }
 
-      const textGeometry = createCenteredTextGeometry({
+      const textGeometry = createTextGeometry({
          text: formatDistanceLabel(distanceKm),
          font,
          size: EARTH_SCENE_TEXT_BASE_SIZE,
          depth: EARTH_SCENE_TEXT_BASE_DEPTH,
-         curveSegments: 4,
-         bevelEnabled: false,
       })
 
       const labelColor = lightenColor(color, 0.3)
       const labelSideColor = darkenColor(labelColor, 0.4)
 
-      const labelMaterials = [
-         new THREE.MeshBasicMaterial({
-            color: labelColor,
-            toneMapped: false,
-            side: THREE.DoubleSide,
-            depthTest: false,
-            depthWrite: false,
-            transparent: true,
-         }),
-         new THREE.MeshBasicMaterial({
-            color: labelSideColor,
-            toneMapped: false,
-            side: THREE.DoubleSide,
-            depthTest: false,
-            depthWrite: false,
-            transparent: true,
-         }),
-      ]
+      const labelMaterials = createSharedTextMaterials({
+         frontColor: labelColor,
+         sideColor: labelSideColor,
+         depthTest: false,
+         depthWrite: false,
+         transparent: true,
+      })
 
       const label = new THREE.Mesh(textGeometry, labelMaterials)
       label.renderOrder = DISTANCE_LABEL_RENDER_ORDER

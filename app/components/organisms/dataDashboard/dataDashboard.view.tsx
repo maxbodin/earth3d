@@ -2,7 +2,7 @@
 import React, { useCallback } from 'react'
 import { useUi } from '@/app/context/uiContext'
 
-import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
 import { CloseIcon } from '@nextui-org/shared-icons'
 import { useDataDashboard } from '@/app/components/organisms/dataDashboard/dataDashboard.model'
@@ -52,6 +52,7 @@ export function DataDashboardView() {
                <DrawerHeader className="flex justify-between items-center">
                   <div>
                      <DrawerTitle>📊 Analyze Earth data</DrawerTitle>
+                     <DrawerDescription className="sr-only">View and analyze geospatial data on the 3D map.</DrawerDescription>
                   </div>
                   <DrawerClose asChild>
                      <Button

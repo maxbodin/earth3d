@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import {
-   isMapboxStyleUrl,
-   parseMapboxStyleUrl,
-} from '@/app/constants/mapStyles'
+import { isMapboxStyleUrl, parseMapboxStyleUrl, } from '@/app/constants/mapStyles'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'

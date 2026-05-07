@@ -9,7 +9,7 @@ import { useEarthquakes, } from '@/app/components/atoms/three/earthquakes/earthq
 import { EARTHQUAKE_FETCH_INTERVAL_MS, MAX_DISPLAYED_EARTHQUAKES } from '@/app/constants/numbers'
 import { EarthquakeQueryParams } from '@/app/types/earthquake/earthquakeQueryParams'
 import { getTimeRangeStartIso } from '@/lib/getTimeRangeStartIso'
-import { LoadingTracker, LOADING_STEPS } from '@/app/lib/loadingTracker'
+import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
 
 export function EarthquakeDataFetch(): null {
    const { setEarthquakeData } = useEarthquakes()

@@ -19,7 +19,7 @@ import {
 // Shared texture loader - single instance for all celestial bodies.
 const sharedTextureLoader = new THREE.TextureLoader()
 
-// Pre-load all textures once at module initialization.
+// Preload all textures once at module initialization.
 const textureCache = {
    sun: sharedTextureLoader.load(SUN_TEXTURE_JPG),
    mercury: sharedTextureLoader.load(MERCURY_TEXTURE_JPG),

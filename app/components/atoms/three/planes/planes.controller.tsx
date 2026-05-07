@@ -17,7 +17,7 @@ import {
    PLANE_FALLBACK_CONE_RADIUS,
    PLANE_FALLBACK_CONE_ROTATION_X,
 } from '@/app/constants/numbers'
-import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
+import { publishThreeSceneDebug } from '@/lib/threeSceneDebug'
 import { OpenSkyStateVector } from '@/app/types/openSky/openSkyStateVector'
 import { RenderablePlane } from '@/app/types/plane/renderablePlane'
 import {

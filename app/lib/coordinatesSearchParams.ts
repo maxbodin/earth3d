@@ -1,7 +1,8 @@
 import { Coordinates } from '@/app/types/coordinates/coordinates'
 import { serializeCoordinate } from '@/lib/serialize/serializeCoordinate'
-import { getCurrentUrl, replaceCurrentUrl } from '@/app/lib/searchParamsHelper'
 import { normalizeCoordinates } from '@/lib/normalize/normalizeCoordinates'
+import { getCurrentUrl } from '@/lib/searchParams/getCurrentUrl'
+import { replaceCurrentUrl } from '@/lib/searchParams/replaceCurrentUrl'
 
 export const LATITUDE_SEARCH_PARAM_KEY = 'lat'
 export const LONGITUDE_SEARCH_PARAM_KEY = 'lon'

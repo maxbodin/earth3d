@@ -39,7 +39,7 @@ test.describe('Geo-Three radial LOD', () => {
 
    test('restores cached children as visible after they finish loading while simplified', () => {
       class TestNode extends MapNode {
-         public constructor(parentNode: MapNode | null, mapView: any, location = QuadTreePosition.root, level = 0, x = 0, y = 0) {
+         public constructor(parentNode: MapNode | undefined, mapView: any, location = QuadTreePosition.root, level = 0, x = 0, y = 0) {
             super(parentNode, mapView, location, level, x, y, new THREE.BufferGeometry(), new THREE.MeshBasicMaterial())
             this.visible = false
          }
@@ -62,7 +62,7 @@ test.describe('Geo-Three radial LOD', () => {
          materialFactory: null,
          renderOrder: 0,
       }
-      const root = new TestNode(null, mapView)
+      const root = new TestNode(undefined, mapView)
 
       root.subdivide()
       ;(root.children[0] as TestNode).nodeReady()

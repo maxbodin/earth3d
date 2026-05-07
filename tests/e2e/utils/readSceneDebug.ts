@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test'
-import { ThreeSceneDebugSnapshot } from '@/tests/e2e/types/threeSceneDebugSnapshot'
+import { ThreeSceneDebugSnapshot } from '@/lib/threeSceneDebug'
 
 export const readSceneDebug = async (page: Page): Promise<ThreeSceneDebugSnapshot> => {
    return page.evaluate(() => {

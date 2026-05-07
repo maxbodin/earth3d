@@ -27,14 +27,12 @@ export function createMarker({
 }: CreateMarkerParams): Marker {
    return {
       id: generateMarkerId(),
-      selection: 'selection',
       name,
       showTitleOnMap,
       address,
       latitude,
       longitude,
       color: color ?? getRandomVibrantColor(),
-      actions: 'actions',
       isPuck,
    }
 }

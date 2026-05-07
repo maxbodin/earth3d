@@ -17,18 +17,18 @@ import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TEXT_FONT } from '@/app/constants/paths'
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { publishThreeSceneDebug } from '@/app/lib/threeSceneDebug'
-import {
-   createCenteredTextGeometry,
-   EARTH_SCENE_TEXT_BASE_SIZE,
-   getObjectGeometryExtentFromOrigin,
-} from '@/app/lib/threeText3d'
 import { computeSceneLodScale, COUNTRY_TEXT_LOD_CONFIG } from '@/app/lib/sceneLod'
 import {
    useCountriesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/countriesTab/countriesTab.model'
 import { normalizeCountryName } from '@/lib/normalize/normalizeCountryName'
 import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
+import { publishThreeSceneDebug } from '@/lib/threeSceneDebug'
+import {
+   EARTH_SCENE_TEXT_BASE_SIZE,
+   getObjectGeometryExtentFromOrigin
+} from '@/lib/three/getObjectGeometryExtentFromOrigin'
+import { createTextGeometry } from '@/lib/three/createTextGeometry'
 
 const geoJson = require('world-geojson')
 
@@ -210,7 +210,7 @@ export function CountriesController(): null {
          let textGeo = textGeometryCacheRef.current.get(cacheKey)
 
          if (!textGeo) {
-            textGeo = createCenteredTextGeometry({
+            textGeo = createTextGeometry({
                text: country.country,
                font: font.current,
                size: nameSize,

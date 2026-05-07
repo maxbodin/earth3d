@@ -101,11 +101,15 @@ export function NavigationBar() {
    useEffect((): void => {
       document.body.style.cursor = cursorMode === CursorModeType.HAND
          ? 'pointer'
-         : 'default'
+         : 'crosshair'
    }, [cursorMode])
 
    const reverseCursorMode = useCallback((): void => {
       setCursorMode(cursorMode == CursorModeType.HAND ? CursorModeType.POINTER : CursorModeType.HAND)
+   }, [cursorMode, setCursorMode])
+
+   const toggleDistanceMode = useCallback((): void => {
+      setCursorMode(cursorMode === CursorModeType.DISTANCE ? CursorModeType.HAND : CursorModeType.DISTANCE)
    }, [cursorMode, setCursorMode])
 
    const reverseSolarSystemTrueSize = useCallback((): void => {
@@ -151,6 +155,7 @@ export function NavigationBar() {
                   onBackToEarth={handleBackToEarth}
                   onFocusUserPosition={focusOnUserPosition}
                   onToggleCursorMode={reverseCursorMode}
+                  onToggleDistanceMode={toggleDistanceMode}
                   onOpenMarkers={openMarkers}
                   onOpenSettings={openDashboard}
                   onOpenData={openData}

@@ -5,7 +5,7 @@ import { TabType } from '@/app/enums/tabType'
 import { SettingsDashboardController } from '@/app/components/organisms/settingsDashboard/settingsDashboard.controller'
 import { Tabs } from '@/app/components/atoms/ui/tabs'
 import { CloseIcon } from '@nextui-org/shared-icons'
-import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
 import { useSettingsDashboard } from '@/app/components/organisms/settingsDashboard/settingsDashboard.model'
 import {
@@ -89,9 +89,10 @@ export function SettingsDashboardView() {
                }}
             >
                <div className="mx-auto w-full">
-                  <DrawerHeader className="flex justify-between items-center">
+                  <DrawerHeader className="flex justify-between items-center pt-0">
                      <div>
                         <DrawerTitle>⚙️ Settings</DrawerTitle>
+                        <DrawerDescription className="sr-only">Configure application settings and display preferences.</DrawerDescription>
                      </div>
                      <DrawerClose asChild>
                         <Button
@@ -106,11 +107,10 @@ export function SettingsDashboardView() {
                         </Button>
                      </DrawerClose>
                   </DrawerHeader>
-                  <div className="px-8 pb-6 flex flex-row gap-6 max-h-[45vh] min-h-[45vh]">
+                  <div className="px-8 pb-6 flex flex-col gap-4 max-h-[45vh] min-h-[45vh]">
                      <Tabs
                         selectedTabIndex={activeSettingsDashboardTab}
                         tabTitles={TAB_TITLES}
-                        className="shrink-0"
                         onTabSelect={handleTabSelection}
                      />
 

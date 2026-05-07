@@ -41,10 +41,10 @@ import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch/
 import { EarthquakesController } from '@/app/components/atoms/three/earthquakes/earthquakes.controller'
 import { EarthquakeDataFetch } from '@/app/components/atoms/dataFetch/earthquakeDataFetch/earthquakeDataFetch'
 import { EarthquakeHeatmap } from '@/app/components/atoms/three/earthquakes/earthquakeHeatmap'
-import { TectonicPlatesOverlay } from '@/app/components/atoms/three/tectonicPlates/tectonicPlatesOverlay'
-import { DebugTilesOverlay } from '@/app/components/atoms/three/debugTiles/debugTilesOverlay'
 import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
 import { readModeFromCurrentUrl, updateModeInCurrentUrl } from '@/app/lib/modeSearchParams'
+import { DebugTilesOverlay } from '@/app/components/atoms/three/debugTilesOverlay'
+import { TectonicPlatesOverlay } from '@/app/components/atoms/three/tectonicPlatesOverlay'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -95,7 +95,10 @@ export function ThreeScene() {
    const lastGlobeAltitudeRef = useRef<number>(MIN_EARTH_DISTANCE_GLOBE_SCENE - EARTH_RADIUS)
    const lastEarthGeoRef = useRef<Geolocation | null>(null)
    const transitionCooldownUntilRef = useRef<number>(0)
-   const FRANCE_DEFAULT_GEO = useRef<Geolocation>(new Geolocation(46.2276, 2.2137))
+   const RANDOM_DEFAULT_GEO = useRef<Geolocation>(new Geolocation(
+      Math.random() * 180 - 90,
+      Math.random() * 360 - 180,
+   ))
    const debugLogTimeRef = useRef<number>(0)
 
    const PLANE_TO_SPHERE_EXIT_DISTANCE = SPHERE_TO_PLANE_TOGGLE_DISTANCE * 1.2
@@ -171,8 +174,8 @@ export function ThreeScene() {
          distanceToPlaneSurface.current = planeStartAltitude
          const planeSceneData = scenes.current[SceneType.PLANE]
          const worldCoords = ThreeGeoUnitsUtils.datumsToSpherical(
-            FRANCE_DEFAULT_GEO.current.latitude,
-            FRANCE_DEFAULT_GEO.current.longitude,
+            RANDOM_DEFAULT_GEO.current.latitude,
+            RANDOM_DEFAULT_GEO.current.longitude,
          )
          planeSceneData.controls.target.set(worldCoords.x, 0, -worldCoords.y)
          planeSceneData.camera.position.set(worldCoords.x, planeStartAltitude, -worldCoords.y)
@@ -264,9 +267,8 @@ export function ThreeScene() {
    const getSolarEarthSurfacePointFromView = (currentScene: SceneData): THREE.Vector3 | null => {
       const earthPosition = getPlanetPosition(Body.Earth, dateValueToDate(selectedDate))
       const origin = currentScene.camera.position.clone()
-      const target = currentScene.controls.target.clone()
-      const direction = target.sub(origin).normalize()
-      const localOrigin = origin.sub(earthPosition)
+      const direction = currentScene.controls.target.clone().sub(origin).normalize()
+      const localOrigin = origin.clone().sub(earthPosition)
 
       const a = direction.dot(direction)
       const b = 2 * localOrigin.dot(direction)
@@ -483,17 +485,20 @@ export function ThreeScene() {
          const target = currentScene.controls.target
          coords = ThreeGeoUnitsUtils.sphericalToDatums(target.x, -target.z)
       } else {
-         // Prefer captured Earth geolocation from solar view for exact continuity.
-         if (lastEarthGeoRef.current != null) {
-            coords = lastEarthGeoRef.current
+         // Use the current camera-to-Earth direction in solar view for exact continuity.
+         const earthPosition = getPlanetPosition(Body.Earth, dateValueToDate(selectedDate))
+         const solarPoint = getSolarEarthSurfacePointFromView(currentScene)
+
+         if (solarPoint != null) {
+            coords = ThreeGeoUnitsUtils.vectorToDatums(
+               solarPoint.clone().sub(earthPosition),
+            )
          } else {
-            const solarPoint = getSolarEarthSurfacePointFromView(currentScene)
-            const earthPosition = getPlanetPosition(Body.Earth, dateValueToDate(selectedDate))
-            coords = solarPoint != null
-               ? ThreeGeoUnitsUtils.vectorToDatums(
-                  solarPoint.clone().sub(earthPosition),
-               )
-               : FRANCE_DEFAULT_GEO.current
+            // Fallback: derive direction from Earth center toward camera.
+            const earthToCamera = currentScene.camera.position.clone().sub(earthPosition).normalize()
+            coords = earthToCamera.lengthSq() > 0
+               ? ThreeGeoUnitsUtils.vectorToDatums(earthToCamera)
+               : RANDOM_DEFAULT_GEO.current
          }
       }
 

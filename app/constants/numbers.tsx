@@ -211,6 +211,7 @@ export const MIN_LATITUDE = -90
 export const MAX_LATITUDE = 90
 export const MIN_LONGITUDE = -180
 export const MAX_LONGITUDE = 180
+export const FULL_CIRCLE_DEGREES = 360
 export const MAX_LATITUDE_SPAN = 16
 export const MAX_LONGITUDE_SPAN = 24
 
@@ -243,3 +244,9 @@ export const ONE_WEEK_IN_MS = ONE_DAY_IN_MS * 7
 export const ONE_MONTH_IN_MS = ONE_DAY_IN_MS * 30
 
 export const DETAILS_FOCUS_ZOOM_MULTIPLIER = 0.06
+
+export const DEFAULT_CIRCLE_RADIUS_KM = 500
+export const MIN_CIRCLE_RADIUS_KM = 1
+export const MAX_CIRCLE_RADIUS_KM = Math.round(Math.PI * EARTH_RADIUS_KM)
+export const CIRCLE_RADIUS_SLIDER_STEP_KM = 10
+export const CIRCLE_GEOMETRY_SEGMENTS = 96

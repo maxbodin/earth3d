@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { UsgsEarthquakeFeature } from '@/app/types/earthquake/usgsEarthquakeFeature'
-import { Tooltip } from '@nextui-org/react'
+import { Button, Tooltip } from '@nextui-org/react'
 import { EyeIcon } from '@nextui-org/shared-icons'
 import { formatEpochToLocale } from '@/lib/format/formatEpochToLocale'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
@@ -126,7 +126,7 @@ export const EarthquakeTable = React.memo(function EarthquakeTable({
                         </td>
                         <td className="px-3 py-2">
                            <span className="text-xs text-white/70">
-                              {feature.geometry.coordinates[2] ?? '-'}
+                              {feature.geometry.coordinates[2] != null ? feature.geometry.coordinates[2].toFixed(3) : '-'}
                            </span>
                         </td>
                         <td className="px-3 py-2">
@@ -136,13 +136,15 @@ export const EarthquakeTable = React.memo(function EarthquakeTable({
                         </td>
                         <td className="px-3 py-2 text-center">
                            <Tooltip content="Focus on map">
-                              <button
-                                 className="text-lg text-default-400 cursor-pointer active:opacity-50 inline-flex"
-                                 onClick={() => onFocusEarthquake(feature)}
+                              <Button
+                                 isIconOnly
+                                 size="sm"
+                                 variant="light"
                                  aria-label={`Focus on ${feature.properties.place ?? feature.properties.title}`}
+                                 onPress={() => onFocusEarthquake(feature)}
                               >
                                  <EyeIcon />
-                              </button>
+                              </Button>
                            </Tooltip>
                         </td>
                      </tr>

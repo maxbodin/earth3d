@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect } from 'react'
 import { useUi } from '@/app/context/uiContext'
 import { useCredit } from '@/app/components/organisms/credit/credit.model'
-import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/shadcn/ui/drawer'
 import { Button } from '@nextui-org/react'
 import { CloseIcon } from '@nextui-org/shared-icons'
 import { CreditGridSkeleton, } from '@/app/components/organisms/credit/creditGridSkeleton'
@@ -95,6 +95,7 @@ export function CreditView() {
                <DrawerHeader className="flex justify-between items-center">
                   <div>
                      <DrawerTitle>✨ Credit</DrawerTitle>
+                     <DrawerDescription className="sr-only">Acknowledgements and credits for the application.</DrawerDescription>
                   </div>
                   <DrawerClose asChild>
                      <Button

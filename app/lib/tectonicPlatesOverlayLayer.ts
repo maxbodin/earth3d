@@ -159,6 +159,23 @@ function configureTectonicSingleMaterial(material: THREE.Material, sceneType: Sc
    material.userData._tectonicConfiguredFor = sceneType
 }
 
+/**
+ * Creates a material factory that applies tectonic plate styling and render order
+ * to each tile node and its material.
+ */
+export function createTectonicMaterialFactory(sceneType: SceneType, opacityRef: OpacityRef): MaterialFactory {
+   return (node, material) => {
+      if (node && typeof node === 'object' && 'frustumCulled' in node) {
+         const object = node as THREE.Object3D
+         object.renderOrder = TECTONIC_PLATES_RENDER_ORDER
+         if (sceneType === SceneType.SPHERICAL) {
+            object.frustumCulled = false
+         }
+      }
+      return configureTectonicMaterial(material, sceneType, opacityRef.current)
+   }
+}
+
 // TODO : refactor in separate file as generic.
 /**
  * Applies an opacity value (0–1) to all materials in a MapView tree.

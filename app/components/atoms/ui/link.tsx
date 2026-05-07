@@ -5,7 +5,7 @@ export function Link({ link, title }: { link: string; title: string }) {
             href={link}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center font-medium text-blue-800 hover:underline"
+            className="inline-flex items-center font-medium text-blue-400 hover:underline"
          >
             {title}
             <svg

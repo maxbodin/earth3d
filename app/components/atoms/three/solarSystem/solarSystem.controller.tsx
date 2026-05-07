@@ -25,7 +25,7 @@ import { SOLAR_SYSTEM_FRAGMENT_SHADER, SOLAR_SYSTEM_VERTEX_SHADER } from '@/app/
 import { AssetManager } from '@/app/lib/assetManager'
 import { buildTrajectoryPoints } from '@/app/components/atoms/three/solarSystem/solarSystemTrajectories.helper'
 import { clearGroup } from '@/lib/three/clearGroup'
-import { disposeMaterial } from '@/app/helpers/threeHelper'
+import { disposeObjectMaterial } from '@/lib/three/disposeObjectMaterial'
 
 // Shared materials for text labels.
 const textMaterialFront = new THREE.MeshBasicMaterial({ color: '#ffffff' })
@@ -314,8 +314,8 @@ export function SolarSystemController(): null {
       textGeometryCache.clear()
 
       // Dispose materials.
-      disposeMaterial(textMaterialFront)
-      disposeMaterial(textMaterialSide)
+      disposeObjectMaterial(textMaterialFront)
+      disposeObjectMaterial(textMaterialSide)
       solarSystemMaterials.forEach((material): void => {
          material.dispose()
       })
@@ -345,8 +345,11 @@ export function SolarSystemController(): null {
          return
       }
 
+      const cameraDistance = displayedSceneData.controls.getDistance()
+
+      // TODO : Refactor in constant.
       astresNamesAdjustedScale.current = clamp(
-         displayedSceneData.controls.getDistance() / 1e10,
+         cameraDistance / 1e10,
          SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MIN_SCALE,
          SOLAR_SYSTEM_SCENE_ASTRES_NAMES_MAX_SCALE,
       )
@@ -357,6 +360,11 @@ export function SolarSystemController(): null {
             astresNamesAdjustedScale.current,
             astresNamesAdjustedScale.current,
          )
+
+         if (name.name === 'Moon Label') {
+            // TODO : Refactor in constant.
+            name.visible = cameraDistance < 1e9
+         }
       })
    }
 

@@ -1,5 +1,6 @@
 import { SceneType } from '@/app/enums/sceneType'
-import { getCurrentUrl, replaceCurrentUrl } from '@/app/lib/searchParamsHelper'
+import { getCurrentUrl } from '@/lib/searchParams/getCurrentUrl'
+import { replaceCurrentUrl } from '@/lib/searchParams/replaceCurrentUrl'
 
 export const MODE_SEARCH_PARAM_KEY = 'mode'
 export const MODE_SEARCH_PARAMS_UPDATED_EVENT = 'mode-search-params-updated'

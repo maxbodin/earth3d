@@ -11,7 +11,7 @@ import {
    usePlanesTab,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/planesTab/planesTab.model'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
-import { LoadingTracker, LOADING_STEPS } from '@/app/lib/loadingTracker'
+import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
 
 const PLANES_FETCH_INTERVAL_MS = 30_000
 

@@ -1,5 +1,4 @@
 'use client'
-import * as THREE from 'three'
 import { useCallback, useEffect, useRef } from 'react'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { useMapTab } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/mapTab/mapTab.model'
@@ -8,31 +7,15 @@ import { TectonicPlatesProvider } from '@/app/lib/tectonicPlatesProvider'
 import {
    applyOpacityToMapView,
    configureTectonicMapView,
-   configureTectonicMaterial,
+   createTectonicMaterialFactory,
    disposeTectonicMapView,
-   MaterialFactory,
-   OpacityRef,
 } from '@/app/lib/tectonicPlatesOverlayLayer'
-import { TECTONIC_PLATES_RENDER_ORDER } from '@/app/constants/renderOrder'
 
 /**
  * LODRadial thresholds for the spherical tectonic overlay. TODO : Refactor in constants.
  */
 const SPHERE_LOD_SUBDIVIDE_DISTANCE = 200000
 const SPHERE_LOD_SIMPLIFY_DISTANCE = SPHERE_LOD_SUBDIVIDE_DISTANCE * 8
-
-export function createTectonicMaterialFactory(sceneType: SceneType, opacityRef: OpacityRef): MaterialFactory {
-   return (node, material) => {
-      if (node && typeof node === 'object' && 'frustumCulled' in node) {
-         const object = node as THREE.Object3D
-         object.renderOrder = TECTONIC_PLATES_RENDER_ORDER
-         if (sceneType === SceneType.SPHERICAL) {
-            object.frustumCulled = false
-         }
-      }
-      return configureTectonicMaterial(material, sceneType, opacityRef.current)
-   }
-}
 
 export function TectonicPlatesOverlay(): null {
    const mapViewRef = useRef<any>(null)
