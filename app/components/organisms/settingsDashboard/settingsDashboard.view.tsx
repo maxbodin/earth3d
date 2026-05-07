@@ -107,11 +107,10 @@ export function SettingsDashboardView() {
                         </Button>
                      </DrawerClose>
                   </DrawerHeader>
-                  <div className="px-8 pb-6 flex flex-row gap-6 max-h-[45vh] min-h-[45vh]">
+                  <div className="px-8 pb-6 flex flex-col gap-4 max-h-[45vh] min-h-[45vh]">
                      <Tabs
                         selectedTabIndex={activeSettingsDashboardTab}
                         tabTitles={TAB_TITLES}
-                        className="shrink-0"
                         onTabSelect={handleTabSelection}
                      />
 

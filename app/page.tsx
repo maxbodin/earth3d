@@ -11,13 +11,13 @@ import { AstresListView } from '@/app/components/organisms/astresList/astresList
 import { NavigationBar } from '@/app/components/molecules/navigationBar/navigationBar'
 import { MarkersDashboardView } from '@/app/components/organisms/markersDashboard/markersDashboard.view'
 import { SearchBarView } from '@/app/components/organisms/searchBar/searchBar.view'
-import { DetailsCard } from '@/app/components/organisms/detailsCard/detailsCard'
 import { Geolocation } from '@/app/components/atoms/geolocation/geolocation'
 import { CoordinatesSearchParamsSync } from '@/app/components/atoms/geolocation/coordinatesSearchParamsSync'
 import { DistanceMeasurementController } from '@/app/components/atoms/three/distanceMeasurement.controller'
 import { CountriesProvider } from '@/app/components/atoms/three/countries/countries.model'
 import { CircleMarkersController } from '@/app/components/atoms/three/circleMarkers.controller'
 import { MarkersController } from '@/app/components/atoms/three/markers.controller'
+import { DetailsCard } from '@/app/components/organisms/detailsCard'
 
 export default function Home() {
    return (

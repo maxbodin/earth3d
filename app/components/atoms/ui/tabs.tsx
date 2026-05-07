@@ -42,7 +42,8 @@ export function Tabs({
 
          setIndicatorStyle({
             opacity: 1,
-            transform: `translateY(${tabRect.top - listRect.top}px)`,
+            transform: `translateX(${tabRect.left - listRect.left}px)`,
+            width: `${tabRect.width}px`,
             height: `${tabRect.height}px`,
          })
       }
@@ -56,11 +57,11 @@ export function Tabs({
    }, [activeTabIndex, tabTitles])
 
    return (
-      <div className={clsx('w-56', className)}>
-         <div className="rounded-2xl border border-black/20 bg-white p-2 shadow-md">
-            <div ref={tabsListRef} className="relative flex flex-col gap-1">
+      <div className={clsx('w-full', className)}>
+         <div className="rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-sm">
+            <div ref={tabsListRef} className="relative flex flex-row gap-1">
                <div
-                  className="pointer-events-none absolute left-0 right-0 top-0 z-0 rounded-xl bg-black transition-all duration-200 ease-out"
+                  className="pointer-events-none absolute left-0 top-0 z-0 rounded-xl bg-white/15 transition-all duration-200 ease-out"
                   style={indicatorStyle}
                />
 
@@ -76,16 +77,10 @@ export function Tabs({
                         type="button"
                         onClick={(): void => onTabSelect(index)}
                         className={clsx(
-                           'relative z-10 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors duration-200',
-                           isActive ? 'text-white' : 'text-black/70 hover:text-black',
+                           'relative z-10 flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-200',
+                           isActive ? 'text-white' : 'text-white/50 hover:text-white/80',
                         )}
                      >
-                        <span
-                           className={clsx(
-                              'h-2 w-2 rounded-full transition-colors duration-200',
-                              isActive ? 'bg-white' : 'bg-black/35',
-                           )}
-                        />
                         <span className="truncate">{tabTitle}</span>
                      </button>
                   )
