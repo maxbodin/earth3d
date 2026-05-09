@@ -33,6 +33,9 @@ import {
 import {
    EarthquakesTabView,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/earthquakesTab/earthquakesTab.view'
+import {
+   VolcanoesTabView,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/volcanoesTab/volcanoesTab.view'
 
 export function SettingsDashboardView() {
    const { activeSettingsDashboardTab, isSettingsDashboardOpen, handleSettingsOpenChange } =
@@ -54,6 +57,8 @@ export function SettingsDashboardView() {
             return <VesselsTabView />
          case TabType.EARTHQUAKES:
             return <EarthquakesTabView />
+         case TabType.VOLCANOES:
+            return <VolcanoesTabView />
          case TabType.MAP:
             return <MapTabView />
          case TabType.OUTER_SPACE:

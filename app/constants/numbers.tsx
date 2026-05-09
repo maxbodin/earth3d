@@ -229,10 +229,25 @@ export const EARTHQUAKE_BASE_RADIUS: number = 8000
 export const EARTHQUAKE_DEPTH_LINE_WIDTH: number = 2
 export const EARTHQUAKE_HEATMAP_RADIUS: number = EARTH_RADIUS * 1.02
 
+/**
+ * Volcano constants.
+ */
+export const VOLCANO_BASE_RADIUS: number = 10000
+
+/**
+ * Tectonic plates constants.
+ */
 export const TECTONIC_PLATES_RADIUS: number = EARTH_RADIUS * 1.012
 export const TECTONIC_PLATES_PLANE_Y_OFFSET = 20_000
+
+/**
+ * Debug constants.
+ */
 export const DEBUG_TILES_PLANE_Y_OFFSET = 10_000
 
+/**
+ * Heatmap constants.
+ */
 export const HEATMAP_CANVAS_WIDTH = 2048
 export const HEATMAP_CANVAS_HEIGHT = 1024
 export const HEATMAP_DOT_RADIUS = 5

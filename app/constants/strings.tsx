@@ -16,6 +16,7 @@ export const TAB_TITLES: string[] = [
    'Airports',
    'Vessels',
    'Earthquakes',
+   'Volcanoes',
    'Map',
    'Outer Space',
    'Countries',
@@ -55,6 +56,8 @@ export const EARTHQUAKE_API_PATH = '/api/earthquakes'
 
 export const OPEN_SKY_API_BASE_URL = 'https://opensky-network.org/api'
 export const OPEN_SKY_TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token'
+
+export const VOLCANO_API_PATH = '/api/volcanoes'
 
 export const EARTHQUAKE_HEATMAP_NAME: string = 'EARTHQUAKE_HEATMAP'
 export const TECTONIC_PLATES_NAME: string = 'TECTONIC_PLATES'

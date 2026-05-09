@@ -41,6 +41,8 @@ import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch/
 import { EarthquakesController } from '@/app/components/atoms/three/earthquakes/earthquakes.controller'
 import { EarthquakeDataFetch } from '@/app/components/atoms/dataFetch/earthquakeDataFetch/earthquakeDataFetch'
 import { EarthquakeHeatmap } from '@/app/components/atoms/three/earthquakes/earthquakeHeatmap'
+import { VolcanoesController } from '@/app/components/atoms/three/volcanoes/volcanoes.controller'
+import { VolcanoDataFetch } from '@/app/components/atoms/dataFetch/volcanoDataFetch/volcanoDataFetch'
 import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
 import { readModeFromCurrentUrl, updateModeInCurrentUrl } from '@/app/lib/modeSearchParams'
 import { DebugTilesOverlay } from '@/app/components/atoms/three/debugTilesOverlay'
@@ -942,6 +944,7 @@ export function ThreeScene() {
                   <PlanesController />
                   <EarthquakesController />
                   <EarthquakeHeatmap />
+                  <VolcanoesController />
                   <TectonicPlatesOverlay />
                   <DebugTilesOverlay />
                </PlanetProvider>
@@ -952,6 +955,7 @@ export function ThreeScene() {
 
                <PlaneDataFetch />
                <EarthquakeDataFetch />
+               <VolcanoDataFetch />
 
                <Atmosphere />
                <PlaneSky />

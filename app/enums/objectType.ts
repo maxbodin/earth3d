@@ -7,4 +7,5 @@ export enum ObjectType {
    COUNTRY,
    EARTHQUAKE,
    MARKER,
+   VOLCANO,
 }

@@ -4,6 +4,7 @@ export const TECTONIC_PLATES_RENDER_ORDER: number = 20
 export const EARTHQUAKE_HEATMAP_RENDER_ORDER: number = 40
 export const EARTHQUAKE_DEPTH_LINE_RENDER_ORDER: number = 45
 export const EARTHQUAKE_RENDER_ORDER: number = 50
+export const VOLCANO_RENDER_ORDER: number = 55
 export const VESSEL_RENDER_ORDER: number = 100
 export const AIRPORT_RENDER_ORDER: number = 1000
 export const DISTANCE_LINE_RENDER_ORDER: number = 1050

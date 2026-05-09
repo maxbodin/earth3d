@@ -11,6 +11,7 @@ import { clearCoordinatesFromCurrentUrl, } from '@/app/lib/coordinatesSearchPara
 import { clearCountryFromCurrentUrl, } from '@/app/lib/countrySearchParams'
 import { CountryDataDisplay } from '@/app/components/atoms/dataDisplay/countryDataDisplay'
 import { EarthquakeDataDisplay } from '@/app/components/atoms/dataDisplay/earthquakeDataDisplay'
+import { VolcanoDataDisplay } from '@/app/components/atoms/dataDisplay/volcanoDataDisplay'
 import { MarkerDataDisplay } from '@/app/components/atoms/dataDisplay/markerDataDisplay'
 import { useCountries } from '@/app/components/atoms/three/countries/countries.model'
 
@@ -57,6 +58,8 @@ export function DetailsCard() {
             return <CountryDataDisplay />
          case ObjectType.EARTHQUAKE:
             return <EarthquakeDataDisplay />
+         case ObjectType.VOLCANO:
+            return <VolcanoDataDisplay />
          case ObjectType.MARKER:
             return <MarkerDataDisplay />
          default:

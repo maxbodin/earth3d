@@ -22,7 +22,7 @@ import { CrosshairIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, Pl
 import { PUCK_COLOR } from '@/app/constants/colors'
 import { parseNumberInput } from '@/lib/parse/parseNumberInput'
 import { getCoordinateErrorMessage } from '@/lib/error/getCoordinateErrorMessage'
-import { CoordinateField } from '@/lib/types/coordinatesField'
+import { CoordinateField } from '@/lib/types/coordinateField'
 
 type MarkerColumnKey = 'selection' | 'name' | 'address' | 'latitude' | 'longitude' | 'color' | 'actions'
 
