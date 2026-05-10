@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { Button } from '@nextui-org/react'
 import { CloseIcon } from '@nextui-org/shared-icons'
 
+// TODO : refactor or delete.
 export function GlassCard({
                              isVisible,
                              content,
@@ -27,7 +28,7 @@ export function GlassCard({
          >
             <CloseIcon />
          </Button>
-         <div className="p-4">{content}</div>
+         <div className="p-4 max-h-[70vh] overflow-y-auto">{content}</div>
       </div>
    )
 }

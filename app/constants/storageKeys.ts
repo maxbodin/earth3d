@@ -18,6 +18,7 @@ export const STORAGE_KEY_EARTHQUAKES_DEPTH_LINES = 'settings.earthquakes.depthLi
 export const STORAGE_KEY_EARTHQUAKES_MIN_MAGNITUDE = 'settings.earthquakes.minMagnitude'
 export const STORAGE_KEY_EARTHQUAKES_TIME_RANGE = 'settings.earthquakes.timeRange'
 export const STORAGE_KEY_VOLCANOES_ACTIVATED = 'settings.volcanoes.activated'
+export const STORAGE_KEY_VOLCANOES_HEATMAP = 'settings.volcanoes.heatmap'
 export const STORAGE_KEY_TECTONIC_PLATES = 'settings.map.tectonicPlates'
 export const STORAGE_KEY_TECTONIC_PLATES_OPACITY = 'settings.map.tectonicPlatesOpacity'
 export const STORAGE_KEY_DEBUG_TILES = 'settings.map.debugTiles'

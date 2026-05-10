@@ -5,20 +5,31 @@ import { useVolcanoes } from '@/app/components/atoms/three/volcanoes/volcanoes.m
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
-import { VOLCANO_BASE_RADIUS } from '@/app/constants/numbers'
 import { VOLCANO_RENDER_ORDER } from '@/app/constants/renderOrder'
-import { useVolcanoesTab } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/volcanoesTab/volcanoesTab.model'
+import {
+   useVolcanoesTab
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/volcanoesTab/volcanoesTab.model'
 import { Volcano } from '@/app/types/volcano/volcano'
 import { clearGroup } from '@/lib/three/clearGroup'
 import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
+import { VOLCANO_LOD_CONFIG } from '@/app/lib/sceneLod'
+import { VOLCANO_COLOR } from '@/lib/constants/colors'
+import { useSceneLodScaler } from '@/app/hooks/useSceneLodScaler'
 
-// TODO : Refactor in constants.
 const SHARED_CONE_GEOMETRY = new THREE.ConeGeometry(1, 2, 3)
-const VOLCANO_COLOR = new THREE.Color(0xff4500)
 
+const LOD_DISTANCE_CHANGE_THRESHOLD = 500
+
+/**
+ *
+ * @param volcano
+ * @param sceneType
+ * @param scale
+ */
 function createVolcanoMarkerMesh(
    volcano: Volcano,
    sceneType: SceneType,
+   scale: number,
 ): THREE.Mesh | null {
    const { latitude, longitude } = volcano
    if (latitude == null || longitude == null) return null
@@ -42,7 +53,7 @@ function createVolcanoMarkerMesh(
 
    const mesh = new THREE.Mesh(SHARED_CONE_GEOMETRY, material)
    mesh.position.copy(surfacePosition)
-   mesh.scale.setScalar(VOLCANO_BASE_RADIUS)
+   mesh.scale.setScalar(scale)
 
    if (sceneType === SceneType.SPHERICAL) {
       mesh.lookAt(new THREE.Vector3(0, 0, 0))
@@ -59,6 +70,18 @@ export function VolcanoesController(): null {
    const { volcanoData, displayedVolcanoesGroup } = useVolcanoes()
    const { displayedSceneData } = useScenes()
    const { volcanoesActivated } = useVolcanoesTab()
+
+   const applyScaleToGroup = useCallback((scale: number): void => {
+      for (const child of displayedVolcanoesGroup.children) {
+         child.scale.setScalar(scale)
+      }
+   }, [displayedVolcanoesGroup])
+
+   const lodScaler = useSceneLodScaler({
+      config: VOLCANO_LOD_CONFIG,
+      distanceThreshold: LOD_DISTANCE_CHANGE_THRESHOLD,
+      onScaleChange: applyScaleToGroup,
+   })
 
    const renderVolcanoes = useCallback((): void => {
       const sceneData = displayedSceneData
@@ -77,8 +100,11 @@ export function VolcanoesController(): null {
 
       if (volcanoData.length === 0) return
 
+      const cameraDistance = sceneData.controls?.getDistance() ?? 0
+      const scale = lodScaler.initialize(sceneData.type, cameraDistance)
+
       for (const volcano of volcanoData) {
-         const mesh = createVolcanoMarkerMesh(volcano, sceneData.type)
+         const mesh = createVolcanoMarkerMesh(volcano, sceneData.type, scale)
          if (mesh != null) {
             displayedVolcanoesGroup.add(mesh)
          }
@@ -88,16 +114,27 @@ export function VolcanoesController(): null {
       displayedSceneData,
       volcanoesActivated,
       volcanoData,
+      lodScaler,
    ])
 
    useEffect(() => {
       renderVolcanoes()
 
+      if (!displayedSceneData?.controls || !volcanoesActivated) {
+         return () => {
+            clearGroup(displayedVolcanoesGroup)
+            displayedVolcanoesGroup.parent?.remove(displayedVolcanoesGroup)
+         }
+      }
+
+      lodScaler.attach(displayedSceneData.controls, displayedSceneData.type)
+
       return () => {
+         lodScaler.detach()
          clearGroup(displayedVolcanoesGroup)
          displayedVolcanoesGroup.parent?.remove(displayedVolcanoesGroup)
       }
-   }, [displayedVolcanoesGroup, renderVolcanoes])
+   }, [displayedVolcanoesGroup, displayedSceneData, volcanoesActivated, renderVolcanoes, lodScaler])
 
    return null
 }

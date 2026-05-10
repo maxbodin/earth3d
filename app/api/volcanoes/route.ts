@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
+import { Eruption } from '@/app/types/volcano/eruption'
 import { Volcano } from '@/app/types/volcano/volcano'
 import { VolcanoResponse } from '@/app/types/volcano/volcanoResponse'
-import { NoaaVolcanoEruption, NoaaVolcanoResponse } from '@/app/types/volcano/noaaVolcanoEruption'
+import { NoaaVolcanoResponse } from '@/app/types/volcano/noaaVolcanoEruption'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -9,7 +10,7 @@ export const runtime = 'nodejs'
 const NOAA_API_BASE = 'https://www.ngdc.noaa.gov/hazel/hazard-service/api/v1/volcanoes'
 const MAX_ROWS = 1000
 
-async function fetchAllEruptions(): Promise<NoaaVolcanoEruption[]> {
+async function fetchAllEruptions(): Promise<Eruption[]> {
    const firstPage = await fetch(`${NOAA_API_BASE}?maxRows=${MAX_ROWS}&page=1`, {
       next: { revalidate: 86_400 },
    })
@@ -19,7 +20,7 @@ async function fetchAllEruptions(): Promise<NoaaVolcanoEruption[]> {
    }
 
    const firstData = (await firstPage.json()) as NoaaVolcanoResponse
-   const allItems: NoaaVolcanoEruption[] = [...firstData.items]
+   const allItems: Eruption[] = [...firstData.items]
 
    const fetches: Promise<Response>[] = []
    for (let page = 2; page <= firstData.totalPages; page++) {
@@ -41,7 +42,7 @@ async function fetchAllEruptions(): Promise<NoaaVolcanoEruption[]> {
    return allItems
 }
 
-function deduplicateVolcanoes(eruptions: NoaaVolcanoEruption[]): Volcano[] {
+function deduplicateVolcanoes(eruptions: Eruption[]): Volcano[] {
    const volcanoMap = new Map<number, { volcano: Volcano; latestYear: number }>()
 
    for (const eruption of eruptions) {
@@ -82,6 +83,7 @@ export async function GET(): Promise<NextResponse> {
       const volcanoes = deduplicateVolcanoes(eruptions)
 
       const response: VolcanoResponse = {
+         eruptions,
          items: volcanoes,
          totalCount: volcanoes.length,
       }

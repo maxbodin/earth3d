@@ -1,13 +1,16 @@
 import React, { createContext, ReactNode, useContext, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { Eruption } from '@/app/types/volcano/eruption'
 import { Volcano } from '@/app/types/volcano/volcano'
 
 interface VolcanoesContextValue {
    displayedVolcanoesGroup: THREE.Group
-   volcanoData: Volcano[]
-   setVolcanoData: React.Dispatch<React.SetStateAction<Volcano[]>>
+   eruptionData: Eruption[]
    selectedVolcano: Volcano | null
+   setEruptionData: React.Dispatch<React.SetStateAction<Eruption[]>>
    setSelectedVolcano: React.Dispatch<React.SetStateAction<Volcano | null>>
+   setVolcanoData: React.Dispatch<React.SetStateAction<Volcano[]>>
+   volcanoData: Volcano[]
 }
 
 const VolcanoesContext = createContext<VolcanoesContextValue | null>(null)
@@ -22,18 +25,21 @@ export function useVolcanoes(): VolcanoesContextValue {
 
 export function VolcanoesProvider({ children }: { children: ReactNode }) {
    const displayedVolcanoesGroupRef = useRef<THREE.Group>(new THREE.Group())
+   const [eruptionData, setEruptionData] = useState<Eruption[]>([])
    const [volcanoData, setVolcanoData] = useState<Volcano[]>([])
    const [selectedVolcano, setSelectedVolcano] = useState<Volcano | null>(null)
 
    const value: VolcanoesContextValue = useMemo(
       () => ({
          displayedVolcanoesGroup: displayedVolcanoesGroupRef.current,
-         volcanoData,
-         setVolcanoData,
+         eruptionData,
          selectedVolcano,
+         setEruptionData,
          setSelectedVolcano,
+         setVolcanoData,
+         volcanoData,
       }),
-      [volcanoData, selectedVolcano],
+      [eruptionData, volcanoData, selectedVolcano],
    )
 
    return (

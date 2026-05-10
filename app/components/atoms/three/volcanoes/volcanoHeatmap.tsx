@@ -1,43 +1,35 @@
 'use client'
 import * as THREE from 'three'
-import { useCallback, useEffect, useRef } from 'react'
-import { useEarthquakes, } from '@/app/components/atoms/three/earthquakes/earthquakes.model'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useVolcanoes } from '@/app/components/atoms/three/volcanoes/volcanoes.model'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
-import { EARTHQUAKE_HEATMAP_RADIUS, HEATMAP_CANVAS_HEIGHT, HEATMAP_CANVAS_WIDTH, ONE_HOUR_IN_MS, } from '@/app/constants/numbers'
-import { EARTHQUAKE_HEATMAP_RENDER_ORDER } from '@/app/constants/renderOrder'
+import { HEATMAP_CANVAS_HEIGHT, HEATMAP_CANVAS_WIDTH, VOLCANO_HEATMAP_RADIUS, } from '@/app/constants/numbers'
+import { VOLCANO_HEATMAP_RENDER_ORDER } from '@/app/constants/renderOrder'
 import {
-   useEarthquakesTab,
-} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/earthquakesTab/earthquakesTab.model'
-import { EARTHQUAKE_HEATMAP_NAME } from '@/app/constants/strings'
-import { UsgsEarthquakeFeature } from '@/app/types/earthquake/usgsEarthquakeFeature'
+   useVolcanoesTab
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/volcanoesTab/volcanoesTab.model'
+import { VOLCANO_HEATMAP_NAME } from '@/app/constants/strings'
+import { Eruption } from '@/app/types/volcano/eruption'
+import { drawHeatmapPointFromCoords } from '@/lib/three/heatmap/drawHeatmapPointFromCoords'
 import { createHeatmapCanvas } from '@/lib/three/heatmap/createHeatmapCanvas'
 import { createHeatmapMesh } from '@/lib/three/heatmap/createHeatmapMesh'
-import { drawHeatmapPointFromCoords } from '@/lib/three/heatmap/drawHeatmapPointFromCoords'
 
-export function EarthquakeHeatmap(): null {
+export function VolcanoHeatmap(): null {
    const heatmapMeshRef = useRef<THREE.Mesh | null>(null)
    const textureRef = useRef<THREE.CanvasTexture | null>(null)
    const canvasRef = useRef<HTMLCanvasElement | null>(null)
-   const { earthquakeData, playbackTime } = useEarthquakes()
+   const { eruptionData } = useVolcanoes()
    const { displayedSceneData } = useScenes()
-   const { earthquakesActivated, earthquakeHeatmapEnabled } = useEarthquakesTab()
+   const { volcanoesActivated, volcanoHeatmapEnabled, eruptionYearMin, eruptionYearMax } = useVolcanoesTab()
 
-   const getVisibleData = useCallback((): UsgsEarthquakeFeature[] => {
-      if (playbackTime == null) return earthquakeData
-      if (earthquakeData.length === 0) return []
-
-      const times = earthquakeData.map(f => f.properties.time)
-      const minTime = Math.min(...times)
-      const maxTime = Math.max(...times)
-      const totalRange = maxTime - minTime
-      const windowSize = Math.max(totalRange * 0.1, ONE_HOUR_IN_MS)
-
-      return earthquakeData.filter(f => {
-         const t = f.properties.time
-         return t <= playbackTime && t >= playbackTime - windowSize
+   const filteredEruptions = useMemo((): Eruption[] => {
+      if (eruptionData.length === 0) return []
+      return eruptionData.filter(e => {
+         if (e.year == null) return false
+         return e.year >= eruptionYearMin && e.year <= eruptionYearMax
       })
-   }, [earthquakeData, playbackTime])
+   }, [eruptionData, eruptionYearMin, eruptionYearMax])
 
    const removeHeatmap = useCallback((): void => {
       if (heatmapMeshRef.current) {
@@ -57,18 +49,16 @@ export function EarthquakeHeatmap(): null {
    const renderHeatmap = useCallback((): void => {
       const sceneData = displayedSceneData
 
-      if (!earthquakesActivated || !earthquakeHeatmapEnabled || sceneData == null || sceneData.type !== SceneType.SPHERICAL) {
+      if (!volcanoesActivated || !volcanoHeatmapEnabled || sceneData == null || sceneData.type !== SceneType.SPHERICAL) {
          removeHeatmap()
          return
       }
 
-      const visibleData = getVisibleData()
-      if (visibleData.length === 0) {
+      if (filteredEruptions.length === 0) {
          removeHeatmap()
          return
       }
 
-      // Create or reuse canvas.
       if (!canvasRef.current) {
          canvasRef.current = createHeatmapCanvas()
       }
@@ -79,20 +69,23 @@ export function EarthquakeHeatmap(): null {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      const maxMag = Math.max(
-         ...visibleData.map(f => f.properties.mag ?? 0),
+      const maxVei = Math.max(
+         ...filteredEruptions.map(e => e.vei ?? 0),
          1,
       )
 
-      for (const feature of visibleData) {
-         const [lon, lat] = feature.geometry.coordinates
-         const mag = feature.properties.mag ?? 0
-         const intensity = Math.min(mag / maxMag, 1)
-
-         drawHeatmapPointFromCoords(ctx, lat, lon, intensity, HEATMAP_CANVAS_WIDTH, HEATMAP_CANVAS_HEIGHT)
+      for (const eruption of filteredEruptions) {
+         const intensity = (eruption.vei ?? 0) / maxVei
+         drawHeatmapPointFromCoords(
+            ctx,
+            eruption.latitude,
+            eruption.longitude,
+            intensity,
+            HEATMAP_CANVAS_WIDTH,
+            HEATMAP_CANVAS_HEIGHT,
+         )
       }
 
-      // Create or update texture.
       if (!textureRef.current) {
          textureRef.current = new THREE.CanvasTexture(canvas)
          textureRef.current.wrapS = THREE.RepeatWrapping
@@ -101,13 +94,12 @@ export function EarthquakeHeatmap(): null {
          textureRef.current.needsUpdate = true
       }
 
-      // Create or update mesh.
       if (!heatmapMeshRef.current) {
          heatmapMeshRef.current = createHeatmapMesh(
             textureRef.current,
-            EARTHQUAKE_HEATMAP_RADIUS,
-            EARTHQUAKE_HEATMAP_RENDER_ORDER,
-            EARTHQUAKE_HEATMAP_NAME,
+            VOLCANO_HEATMAP_RADIUS,
+            VOLCANO_HEATMAP_RENDER_ORDER,
+            VOLCANO_HEATMAP_NAME,
          )
       } else {
          const material = heatmapMeshRef.current.material as THREE.ShaderMaterial
@@ -119,9 +111,9 @@ export function EarthquakeHeatmap(): null {
       }
    }, [
       displayedSceneData,
-      earthquakesActivated,
-      earthquakeHeatmapEnabled,
-      getVisibleData,
+      volcanoesActivated,
+      volcanoHeatmapEnabled,
+      filteredEruptions,
       removeHeatmap,
    ])
 

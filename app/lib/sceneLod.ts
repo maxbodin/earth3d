@@ -8,6 +8,8 @@ import {
    GLOBE_SCENE_PUCK_MIN_SCALE,
    GLOBE_SCENE_VESSEL_MAX_SCALE,
    GLOBE_SCENE_VESSEL_MIN_SCALE,
+   GLOBE_VOLCANO_MAX_SCALE,
+   GLOBE_VOLCANO_MIN_SCALE,
    PLANE_SCENE_AIRPORT_MAX_SCALE,
    PLANE_SCENE_AIRPORT_MIN_SCALE,
    PLANE_SCENE_COUNTRIES_NAMES_MAX_SCALE,
@@ -18,6 +20,8 @@ import {
    PLANE_SCENE_PUCK_MIN_SCALE,
    PLANE_SCENE_VESSEL_MAX_SCALE,
    PLANE_SCENE_VESSEL_MIN_SCALE,
+   PLANE_SCENE_VOLCANO_MAX_SCALE,
+   PLANE_SCENE_VOLCANO_MIN_SCALE,
 } from '@/app/constants/numbers'
 import { clamp } from '@/lib/math/clamp'
 import { interpolate } from '@/lib/math/interpolate'
@@ -121,6 +125,21 @@ export const DISTANCE_LINE_LOD_CONFIG: SceneLodConfig = {
       distanceOffset: 0,
       minScale: 0.001,
       maxScale: 0.2,
+   },
+}
+
+export const VOLCANO_LOD_CONFIG: SceneLodConfig = {
+   spherical: {
+      distanceDivisor: 10,
+      distanceOffset: 0,
+      minScale: GLOBE_VOLCANO_MIN_SCALE,
+      maxScale: GLOBE_VOLCANO_MAX_SCALE,
+   },
+   plane: {
+      distanceDivisor: 10,
+      distanceOffset: 0,
+      minScale: PLANE_SCENE_VOLCANO_MIN_SCALE,
+      maxScale: PLANE_SCENE_VOLCANO_MAX_SCALE,
    },
 }
 

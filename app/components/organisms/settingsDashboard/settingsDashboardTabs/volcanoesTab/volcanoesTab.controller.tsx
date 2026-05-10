@@ -3,7 +3,10 @@ import {
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/volcanoesTab/volcanoesTab.model'
 
 export function VolcanoesTabController() {
-   const { setVolcanoesActivated } = useVolcanoesTab()
+   const {
+      setVolcanoesActivated,
+      setVolcanoHeatmapEnabled,
+   } = useVolcanoesTab()
 
    function activateVolcanoes(): void {
       setVolcanoesActivated(true)
@@ -13,8 +16,18 @@ export function VolcanoesTabController() {
       setVolcanoesActivated(false)
    }
 
+   function enableHeatmap(): void {
+      setVolcanoHeatmapEnabled(true)
+   }
+
+   function disableHeatmap(): void {
+      setVolcanoHeatmapEnabled(false)
+   }
+
    return {
       activateVolcanoes,
       deactivateVolcanoes,
+      disableHeatmap,
+      enableHeatmap,
    }
 }

@@ -7,3 +7,5 @@ export const SELECTED_COUNTRY_COLOR: THREE.Color = new THREE.Color(
 )
 
 export const PUCK_COLOR: string = '0xff0000'
+
+export const VOLCANO_COLOR = new THREE.Color(0xff4500)

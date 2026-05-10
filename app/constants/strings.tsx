@@ -60,4 +60,5 @@ export const OPEN_SKY_TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/
 export const VOLCANO_API_PATH = '/api/volcanoes'
 
 export const EARTHQUAKE_HEATMAP_NAME: string = 'EARTHQUAKE_HEATMAP'
+export const VOLCANO_HEATMAP_NAME: string = 'VOLCANO_HEATMAP'
 export const TECTONIC_PLATES_NAME: string = 'TECTONIC_PLATES'
