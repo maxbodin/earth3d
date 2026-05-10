@@ -1,15 +1,15 @@
 import { expect, test } from '@playwright/test'
 import {
-   computeSceneLodScale,
-   computeScaleDamping,
-   computeDampedScale,
-   COUNTRY_TEXT_LOD_CONFIG,
-   MARKER_PUCK_LOD_CONFIG,
    AIRCRAFT_LOD_CONFIG,
    AIRPORT_LOD_CONFIG,
-   VESSEL_LOD_CONFIG,
+   computeDampedScale,
+   computeScaleDamping,
+   computeSceneLodScale,
+   COUNTRY_TEXT_LOD_CONFIG,
    DISTANCE_LINE_LOD_CONFIG,
+   MARKER_PUCK_LOD_CONFIG,
    type SceneLodConfig,
+   VESSEL_LOD_CONFIG,
 } from '@/app/lib/sceneLod'
 import { SceneType } from '@/app/enums/sceneType'
 

@@ -5,6 +5,7 @@ import { VesselsProvider } from '@/app/components/atoms/three/vessels/vessels.mo
 import { AirportsProvider } from '@/app/components/atoms/three/airports/airports.model'
 import { PlanesProvider } from '@/app/components/atoms/three/planes/planes.model'
 import { EarthquakesProvider } from '@/app/components/atoms/three/earthquakes/earthquakes.model'
+import { VolcanoesProvider } from '@/app/components/atoms/three/volcanoes/volcanoes.model'
 
 /**
  * Hell. x3
@@ -17,7 +18,9 @@ export function EntitiesProviders({ children }: { children: React.ReactNode }) {
          <AirportsProvider>
             <PlanesProvider>
                <EarthquakesProvider>
-                  {children}
+                  <VolcanoesProvider>
+                     {children}
+                  </VolcanoesProvider>
                </EarthquakesProvider>
             </PlanesProvider>
          </AirportsProvider>

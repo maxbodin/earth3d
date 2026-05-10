@@ -310,7 +310,7 @@ export function CountryDataDisplay(): React.JSX.Element {
    }
 
    return (
-      <div className="w-full min-w-0 max-w-full max-h-[40rem] space-y-4 overflow-x-hidden overflow-y-auto pr-1">
+      <div className="w-full min-w-0 max-w-full space-y-4 overflow-x-hidden pr-1">
          <section className="space-y-2">
             <div className="flex items-center gap-3">
                <img

@@ -7,7 +7,7 @@ import { Option } from '@/shadcn/ui/autocomplete'
 import { CameraFlyController } from '@/app/components/atoms/three/cameraFlyController'
 import { useMarkersDashboard } from '@/app/components/organisms/markersDashboard/markersDashboard.model'
 import { autocompleteORS, reverseORS } from '@/app/server/services/openRouteService'
-import { PUCK_COLOR } from '@/app/constants/colors'
+import { PUCK_COLOR } from '@/lib/constants/colors'
 import {
    parseMarkerJson,
    ValidatedMarkerEntry,

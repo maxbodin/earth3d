@@ -19,10 +19,10 @@ import { ColorPicker } from '@/shadcn/ui/colorPicker'
 import { AutoComplete, Option } from '@/shadcn/ui/autocomplete'
 import { Feature } from '@/app/types/orsTypes'
 import { CrosshairIcon, Eye as VisibilityOnIcon, EyeOff as VisibilityOffIcon, PlusIcon, } from 'lucide-react'
-import { PUCK_COLOR } from '@/app/constants/colors'
+import { PUCK_COLOR } from '@/lib/constants/colors'
 import { parseNumberInput } from '@/lib/parse/parseNumberInput'
 import { getCoordinateErrorMessage } from '@/lib/error/getCoordinateErrorMessage'
-import { CoordinateField } from '@/lib/types/coordinatesField'
+import { CoordinateField } from '@/lib/types/coordinateField'
 
 type MarkerColumnKey = 'selection' | 'name' | 'address' | 'latitude' | 'longitude' | 'color' | 'actions'
 

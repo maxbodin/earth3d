@@ -37,14 +37,17 @@ import { SceneData } from '@/app/types/sceneData'
 import { OuterSpaceProvider } from '@/app/components/atoms/three/outerSpace/outerSpace.model'
 import { DEFAULT_MAP_STYLE_ID } from '@/app/constants/mapStyles'
 import { PlanesController } from '@/app/components/atoms/three/planes/planes.controller'
-import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch/planeDataFetch'
 import { EarthquakesController } from '@/app/components/atoms/three/earthquakes/earthquakes.controller'
-import { EarthquakeDataFetch } from '@/app/components/atoms/dataFetch/earthquakeDataFetch/earthquakeDataFetch'
 import { EarthquakeHeatmap } from '@/app/components/atoms/three/earthquakes/earthquakeHeatmap'
+import { VolcanoesController } from '@/app/components/atoms/three/volcanoes/volcanoes.controller'
+import { VolcanoHeatmap } from '@/app/components/atoms/three/volcanoes/volcanoHeatmap'
+import { VolcanoDataFetch } from '@/app/components/atoms/dataFetch/volcanoDataFetch'
 import { LOADING_STEPS, LoadingTracker } from '@/app/lib/loadingTracker'
 import { readModeFromCurrentUrl, updateModeInCurrentUrl } from '@/app/lib/modeSearchParams'
 import { DebugTilesOverlay } from '@/app/components/atoms/three/debugTilesOverlay'
 import { TectonicPlatesOverlay } from '@/app/components/atoms/three/tectonicPlatesOverlay'
+import { PlaneDataFetch } from '@/app/components/atoms/dataFetch/planeDataFetch'
+import { EarthquakeDataFetch } from '@/app/components/atoms/dataFetch/earthquakeDataFetch'
 
 export function ThreeScene() {
    const mountRef = useRef<HTMLDivElement>(null)
@@ -932,7 +935,6 @@ export function ThreeScene() {
                      overflow: 'hidden',
                   }}
                />
-               {/*<Heatmap />*/}
                <PlanetProvider>
                   <SolarSystemController />
                   <PlanetController />
@@ -942,6 +944,10 @@ export function ThreeScene() {
                   <PlanesController />
                   <EarthquakesController />
                   <EarthquakeHeatmap />
+                  <VolcanoesController />
+                  <VolcanoHeatmap />
+
+               {/*<Heatmap /> TODO : Heatmaps in dedicated components ? */}
                   <TectonicPlatesOverlay />
                   <DebugTilesOverlay />
                </PlanetProvider>
@@ -952,6 +958,7 @@ export function ThreeScene() {
 
                <PlaneDataFetch />
                <EarthquakeDataFetch />
+               <VolcanoDataFetch />
 
                <Atmosphere />
                <PlaneSky />

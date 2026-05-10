@@ -1,6 +1,6 @@
 import { isValidLatitude } from '@/lib/isValid/isValidLatitude'
 import { isValidLongitude } from '@/lib/isValid/isValidLongitude'
-import { CoordinateField } from '@/lib/types/coordinatesField'
+import { CoordinateField } from '@/lib/types/coordinateField'
 
 /**
  * Returns a validation error message for an out-of-range coordinate, or `null` if valid.

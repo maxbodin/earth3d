@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { useScenes } from '@/app/components/templates/scenes/scenes.model'
 import { SceneType } from '@/app/enums/sceneType'
@@ -9,16 +9,16 @@ import {
    PLANE_MIN_ALLOWED_VESSEL_DISTANCE_TO_CAMERA,
 } from '@/app/constants/numbers'
 import { VESSEL_GLB_MODEL } from '@/app/constants/paths'
-import { computeSceneLodScale, VESSEL_LOD_CONFIG } from '@/app/lib/sceneLod'
+import { VESSEL_LOD_CONFIG } from '@/app/lib/sceneLod'
 import { clamp } from '@/lib/math/clamp'
 import { VESSEL_MATERIAL } from '@/app/constants/materials'
 import { useVessels } from '@/app/components/atoms/three/vessels/vessels.model'
-import { debounce } from 'lodash'
 import { VESSEL_RENDER_ORDER } from '@/app/constants/renderOrder'
 import { ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
 import { gsap } from 'gsap'
 import { AssetManager } from '@/app/lib/assetManager'
 import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
+import { useSceneLodScaler } from '@/app/hooks/useSceneLodScaler'
 
 type VesselCoordinate = [number, number]
 type VesselCoordinatesHistory = VesselCoordinate[]
@@ -163,7 +163,7 @@ export function VesselsController(): null {
       vesselsModels.current.clear()
 
       const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
-      const scale = isSpherical ? globeAdjustedScale.current : planeAdjustedScale.current
+      const scale = lodScaler.currentScale
 
       for (const vesselData of vessels) {
          if (!vesselModel.current) continue
@@ -213,7 +213,7 @@ export function VesselsController(): null {
       if (!vesselModel.current || !displayedSceneData) return
 
       const isSpherical = displayedSceneData.type === SceneType.SPHERICAL
-      const scale = isSpherical ? globeAdjustedScale.current : planeAdjustedScale.current
+      const scale = lodScaler.currentScale
 
       displayedVesselsGroup.forEach((vessel): void => {
          const mmsi = vessel.userData?.data?.message?.mmsi
@@ -292,58 +292,27 @@ export function VesselsController(): null {
 
 
    const cameraDistanceToPlanetCenter = useRef<number>(0)
-   const planeAdjustedScale = useRef<number>(VESSEL_LOD_CONFIG.plane.maxScale)
-   const globeAdjustedScale = useRef<number>(VESSEL_LOD_CONFIG.spherical.maxScale)
 
-   /**
-    * Called each times controls change (Zoom, camera move, ...)
-    */
-   const onControlsChange = (): void => {
-      if (displayedVesselsGroup == null || displayedSceneData == null) {
-         return
-      }
-
-      cameraDistanceToPlanetCenter.current =
-         displayedSceneData.controls.getDistance()
-
-      const vesselScale = computeSceneLodScale(
-         displayedSceneData.type,
-         cameraDistanceToPlanetCenter.current,
-         VESSEL_LOD_CONFIG,
-      )
-
-      if (displayedSceneData.type === SceneType.SPHERICAL) {
-         globeAdjustedScale.current = vesselScale
-      } else if (displayedSceneData.type === SceneType.PLANE) {
-         planeAdjustedScale.current = vesselScale
-      }
-
+   const applyVesselScale = useCallback((scale: number): void => {
       displayedVesselsGroup.forEach((vessel): void => {
-         vessel.scale.setScalar(vesselScale)
+         vessel.scale.setScalar(scale)
       })
-   }
+   }, [displayedVesselsGroup])
 
-   /**
-    * Debounce the onControlsChange function to limit how often it can be called.
-    */
-   const debouncedOnControlsChange = debounce(onControlsChange, 2)
-
-   /**
-    * Cleanup : remove events listeners.
-    */
-   const cleanup = (): void => {
-      displayedSceneData?.controls?.removeEventListener(
-         'change',
-         debouncedOnControlsChange,
-      )
-   }
+   const lodScaler = useSceneLodScaler({
+      config: VESSEL_LOD_CONFIG,
+      onScaleChange: applyVesselScale,
+   })
 
    useEffect(() => {
-      displayedSceneData?.controls?.addEventListener('change', debouncedOnControlsChange)
+      if (displayedSceneData?.controls == null) return
 
-      // Clean up the event listener.
-      return cleanup
-   }, [displayedSceneData])
+      lodScaler.attach(displayedSceneData.controls, displayedSceneData.type)
+
+      return () => {
+         lodScaler.detach()
+      }
+   }, [displayedSceneData, lodScaler])
 
    return null
 }

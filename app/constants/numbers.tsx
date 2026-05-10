@@ -229,14 +229,36 @@ export const EARTHQUAKE_BASE_RADIUS: number = 8000
 export const EARTHQUAKE_DEPTH_LINE_WIDTH: number = 2
 export const EARTHQUAKE_HEATMAP_RADIUS: number = EARTH_RADIUS * 1.02
 
+/**
+ * Volcano constants.
+ */
+export const GLOBE_VOLCANO_MIN_SCALE: number = 3e3
+export const GLOBE_VOLCANO_MAX_SCALE: number = 5e4
+export const PLANE_SCENE_VOLCANO_MIN_SCALE: number = 100
+export const PLANE_SCENE_VOLCANO_MAX_SCALE: number = 3e4
+export const VOLCANO_HEATMAP_RADIUS: number = EARTH_RADIUS * 1.025
+
+/**
+ * Tectonic plates constants.
+ */
 export const TECTONIC_PLATES_RADIUS: number = EARTH_RADIUS * 1.012
 export const TECTONIC_PLATES_PLANE_Y_OFFSET = 20_000
+
+/**
+ * Debug constants.
+ */
 export const DEBUG_TILES_PLANE_Y_OFFSET = 10_000
 
+/**
+ * Heatmap constants.
+ */
 export const HEATMAP_CANVAS_WIDTH = 2048
 export const HEATMAP_CANVAS_HEIGHT = 1024
 export const HEATMAP_DOT_RADIUS = 5
 
+/**
+ * Time constants.
+ */
 export const ONE_MINUTE_IN_MS = 60_000
 export const ONE_HOUR_IN_MS = ONE_MINUTE_IN_MS * 60
 export const ONE_DAY_IN_MS = ONE_HOUR_IN_MS * 24

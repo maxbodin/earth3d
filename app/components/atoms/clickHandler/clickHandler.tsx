@@ -7,6 +7,7 @@ import { useAirports } from '@/app/components/atoms/three/airports/airports.mode
 import { ObjectType } from '@/app/enums/objectType'
 import { usePlanes } from '@/app/components/atoms/three/planes/planes.model'
 import { useEarthquakes } from '@/app/components/atoms/three/earthquakes/earthquakes.model'
+import { useVolcanoes } from '@/app/components/atoms/three/volcanoes/volcanoes.model'
 import { useSelection } from '@/app/components/atoms/clickHandler/selectionContext'
 import { usePlanet } from '@/app/components/atoms/three/planet/planet.model'
 import { Geolocation, ThreeGeoUnitsUtils } from '@/app/lib/micUnitsUtils'
@@ -39,6 +40,7 @@ export function ClickHandler(): null {
    const { displayedAirportsGroup } = useAirports()
    const { displayedPlanesGroup } = usePlanes()
    const { displayedEarthquakesGroup, setSelectedEarthquake } = useEarthquakes()
+   const { displayedVolcanoesGroup, setSelectedVolcano } = useVolcanoes()
    const { planet } = usePlanet()
    const { flyToCoordinates } = CameraFlyController()
    const { planeMap } = usePlaneMap()
@@ -443,6 +445,33 @@ export function ClickHandler(): null {
    }
 
    /**
+    * Handle click on volcano.
+    */
+   const clickOnVolcanoes = (): void => {
+      if (!displayedVolcanoesGroup || displayedVolcanoesGroup.children.length === 0) return
+
+      const intersects = raycaster.intersectObjects(
+         displayedVolcanoesGroup.children,
+      )
+
+      const visibleHit = findVisibleIntersection(intersects)
+      if (visibleHit != null) {
+         const volcanoFeature = visibleHit.object.userData?.volcanoFeature
+
+         if (!volcanoFeature) return
+
+         setSelectedVolcano(volcanoFeature)
+         setSelectedObjectData(volcanoFeature)
+         setSelectedObjectType(ObjectType.VOLCANO)
+
+         const coords = { latitude: volcanoFeature.latitude, longitude: volcanoFeature.longitude }
+         if (isValidCoordinate(coords)) {
+            flyToCoordinates(coords.latitude, coords.longitude)
+         }
+      }
+   }
+
+   /**
     * Function to handle click events.
     * @param event
     */
@@ -474,6 +503,7 @@ export function ClickHandler(): null {
       clickOnAirport()
       clickOnPlanes()
       clickOnEarthquakes()
+      clickOnVolcanoes()
       clickOnMarker()
    }
 

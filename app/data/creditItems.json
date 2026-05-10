@@ -194,5 +194,37 @@
             "url": "https://planetpixelemporium.com/pluto.html"
          }
       ]
+   },
+   {
+      "id": "usgs",
+      "title": "USGS Earthquake Hazards Program",
+      "description": "Real-time earthquake data sourced from the USGS Earthquake Hazards Program GeoJSON feed.",
+      "tags": ["data", "earthquakes"],
+      "links": [
+         {
+            "label": "USGS Earthquake Hazards",
+            "url": "https://earthquake.usgs.gov"
+         },
+         {
+            "label": "GeoJSON Feed Documentation",
+            "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php"
+         }
+      ]
+   },
+   {
+      "id": "noaa",
+      "title": "NOAA National Centers for Environmental Information",
+      "description": "Volcano and eruption data sourced from the NOAA Significant Volcanic Eruptions Database via the Hazard Service API.",
+      "tags": ["data", "volcanoes"],
+      "links": [
+         {
+            "label": "NOAA NCEI Hazards",
+            "url": "https://www.ngdc.noaa.gov/hazel/view/hazards/volcano/search"
+         },
+         {
+            "label": "Hazard Service API",
+            "url": "https://www.ngdc.noaa.gov/hazel/hazard-service/api/v1/volcanoes"
+         }
+      ]
    }
 ]

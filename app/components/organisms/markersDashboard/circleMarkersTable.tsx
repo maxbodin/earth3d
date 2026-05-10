@@ -18,7 +18,7 @@ import { CrosshairIcon, PlusIcon } from 'lucide-react'
 import { CIRCLE_RADIUS_SLIDER_STEP_KM, MAX_CIRCLE_RADIUS_KM, MIN_CIRCLE_RADIUS_KM, } from '@/app/constants/numbers'
 import { parseNumberInput } from '@/lib/parse/parseNumberInput'
 import { normalizeCircleRadiusKm } from '@/lib/normalize/normalizeCircleRadiusKm'
-import { CoordinateField } from '@/lib/types/coordinatesField'
+import { CoordinateField } from '@/lib/types/coordinateField'
 import { getCoordinateErrorMessage } from '@/lib/error/getCoordinateErrorMessage'
 
 type CircleColumnKey = keyof Pick<CircleMarker, 'name' | 'latitude' | 'longitude' | 'radiusKm' | 'color'> | 'actions'

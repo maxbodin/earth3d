@@ -20,6 +20,9 @@ import {
 import {
    EarthquakesTabProvider,
 } from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/earthquakesTab/earthquakesTab.model'
+import {
+   VolcanoesTabProvider,
+} from '@/app/components/organisms/settingsDashboard/settingsDashboardTabs/volcanoesTab/volcanoesTab.model'
 
 /**
  * Hell. x2
@@ -39,7 +42,9 @@ export function DashboardTabsProviders({
                   <PlanesTabProvider>
                      <AirportsTabProvider>
                         <EarthquakesTabProvider>
-                           {children}
+                           <VolcanoesTabProvider>
+                              {children}
+                           </VolcanoesTabProvider>
                         </EarthquakesTabProvider>
                      </AirportsTabProvider>
                   </PlanesTabProvider>

@@ -3,6 +3,7 @@ export enum TabType {
    AIRPORTS,
    VESSELS,
    EARTHQUAKES,
+   VOLCANOES,
    MAP,
    OUTER_SPACE,
    COUNTRIES,

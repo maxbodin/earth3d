@@ -17,6 +17,10 @@ import { latLongToVector3 } from '@/lib/geo/latLongToVector3'
 
 const SHARED_SPHERE_GEOMETRY = new THREE.SphereGeometry(1, 12, 8)
 
+/**
+ *
+ * @param mag
+ */
 function magnitudeToColor(mag: number): THREE.Color {
    // Green(low) -> Yellow(mid) -> Red(high)
    const t = Math.min(Math.max((mag - 1) / 7, 0), 1)
@@ -28,6 +32,10 @@ function magnitudeToColor(mag: number): THREE.Color {
    return new THREE.Color(1, 1 - s, 0)
 }
 
+/**
+ *
+ * @param mag
+ */
 function magnitudeToRadius(mag: number): number {
    return Math.max(Math.pow(2, mag) * 0.3, 0.5)
 }
@@ -39,6 +47,11 @@ interface RenderableEarthquake {
    magnitude: number
 }
 
+/**
+ *
+ * @param feature
+ * @param sceneType
+ */
 function buildRenderableEarthquake(
    feature: UsgsEarthquakeFeature,
    sceneType: SceneType,
@@ -65,6 +78,10 @@ function buildRenderableEarthquake(
    }
 }
 
+/**
+ *
+ * @param renderable
+ */
 function createEarthquakeMarkerMesh(
    renderable: RenderableEarthquake,
 ): THREE.Mesh {
@@ -88,6 +105,11 @@ function createEarthquakeMarkerMesh(
    return mesh
 }
 
+/**
+ *
+ * @param renderable
+ * @param sceneType
+ */
 function createDepthLine(
    renderable: RenderableEarthquake,
    sceneType: SceneType,
